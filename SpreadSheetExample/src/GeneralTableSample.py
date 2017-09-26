@@ -40,8 +40,31 @@ def macro():
 	# Set cell value.
 	cell.setValue(1234)
 	# Get cell value.
-	dblval = cell.getValue()*2
-	sheet[1,0].setValue(dblval)
+	flag = cell.getValue()*2
+	sheet[1,0].setValue(flag)
+	# *** Create a FORMULA CELL and query error type ***
+	cell = sheet[2,0]
+	# Set formula string.
+	cell.setFormula( "=1/0" )
+	# Get error type.
+	flag = (cell.getError() == 0);
+	# Get formula string.
+	atext = "The formula {} is {}".format(cell.getFormula())
+	atext += "valid." if flag else "erroneous."
+	# *** Insert a TEXT CELL using the XText interface ***
+	cell = sheet[3,0]
+	textcursor = cell.createTextCursor()
+	cell.insertString(textcursor, atext, False)
+	# *** Change cell properties ***
+	
+	
+	
+	
+	
+	
+
+
+
 
 
 
