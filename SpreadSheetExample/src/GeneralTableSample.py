@@ -1,51 +1,22 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
-	def wrapper(*args, **kwargs):
-		frame = None
-		doc = XSCRIPTCONTEXT.getDocument()
-		if doc:  # ドキュメントが取得できた時
-			frame = doc.getCurrentController().getFrame()  # ドキュメントのフレームを取得。
-		else:
-			currentframe = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()  # モードレスダイアログのときはドキュメントが取得できないので、モードレスダイアログのフレームからCreatorのフレームを取得する。
-			frame = currentframe.getCreator()
-		if frame:   
-			import time
-			indicator = frame.createStatusIndicator()  # フレームからステータスバーを取得する。
-			maxrange = 2  # ステータスバーに表示するプログレスバーの目盛りの最大値。2秒ロスするが他に適当な告知手段が思いつかない。
-			indicator.start("Trying to connect to the PyDev Debug Server for about 20 seconds.", maxrange)  # ステータスバーに表示する文字列とプログレスバーの目盛りを設定。
-			t = 1  # プレグレスバーの初期値。
-			while t<=maxrange:  # プログレスバーの最大値以下の間。
-				indicator.setValue(t)  # プレグレスバーの位置を設定。
-				time.sleep(1)  # 1秒待つ。
-				t += 1  # プログレスバーの目盛りを増やす。
-			indicator.end()  # reset()の前にend()しておかないと元に戻らない。
-			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
-		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
-		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。
-		except:
-			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
-	return wrapper
-# @enableRemoteDebugging
+from com.sun.star.awt import Rectangle
 def macro():
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
 	sheets = doc.getSheets()
-	sheet = sheets[0]
+	sheet = sheets[0]	
 	# *** Access and modify a VALUE CELL ***
-	cell = sheet[0,0]
+	cell = sheet[0, 0]
 	# Set cell value.
 	cell.setValue(1234)
 	# Get cell value.
 	val = cell.getValue()*2
-	sheet[1,0].setValue(val)
+	sheet[1, 0].setValue(val)
 	# *** Create a FORMULA CELL and query error type ***
-	cell = sheet[2,0]
+	cell = sheet[2, 0]
 	# Set formula string.
-	cell.setFormula( "=1/0" )
+	cell.setFormula("=1/0")
 	# Get error type.
 	flag = (cell.getError() == 0)  # cell.getError() return 532
 	# Get formula string.
@@ -64,7 +35,7 @@ def macro():
 	# Change properties of the range.
 	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
 	# Accessing a cell range over its name.
-	cellrange = sheet["C4:D5"]
+	cellrange = sheet["C4:D5"] 
 	# Change properties of the range.
 	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
 	# *** Using the CELL CURSOR to add some data below of the filled area ***
@@ -73,8 +44,8 @@ def macro():
 	# Move to the last filled cell.
 	cursor.gotoEnd()
 	# Move one row down.
-	cursor.gotoOffset(0,1) # (ColumnOffset, RowOffset)
-	cursor[0,0].setFormula("Beyond of the last filled cell.")
+	cursor.gotoOffset(0, 1) # (ColumnOffset, RowOffset)
+	cursor[0, 0].setFormula("Beyond of the last filled cell.")
 	# *** Modifying COLUMNS and ROWS ***
 	columns = sheet.getColumns()
 	rows = sheet.getRows()
@@ -90,22 +61,30 @@ def macro():
 	# Get row 7 by index (interface XIndexAccess)
 	row = rows[6]
 	row.setPropertyValue("Height", 5000)
-	sheet[6,2].setFormula("What a big cell.")
+	sheet[6, 2].setFormula("What a big cell.")
 	# Create a cell series with the values 1 ... 7.
-	sheet[8:15,0].setDataArray([[i,] for i in range(1,8)])
+	sheet[8:15, 0].setDataArray([[i] for i in range(1,8)])
 	# Insert a row between 1 and 2
-	
-	
-	
-	
-	
-
-
-
-
-
-
-
+	rows.insertByIndex(9, 1)
+	# Delete the rows with the values 3 and 4.
+	rows.removeByIndex(11, 2)
+	# *** Inserting CHARTS ***
+	charts = sheet.getCharts()
+	# The chart will base on the last cell series, initializing all values.
+	chartname = "newChart"
+	rectangle = Rectangle(X=10000, Y=3000, Width=5000, Height = 5000)
+	rng = sheet["A9:A14"].getRangeAddress()
+	# Create the chart.
+	charts.addNewByName(chartname, rectangle, (rng,), False, False)
+	# Get the chart by name.
+	chart = charts.getByName(chartname)
+	# Query the state of row and column headers.
+	txt = "Chart has column headers: "
+	txt += "yes" if chart.getHasColumnHeaders() else "no"
+	sheet[8, 2].setFormula(txt)
+	txt = "Chart has row headers: "
+	txt += "yes" if chart.getHasRowHeaders() else "no"
+	sheet[9, 2].setFormula(txt)
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
