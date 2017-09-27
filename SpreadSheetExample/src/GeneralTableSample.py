@@ -88,7 +88,7 @@ def macro():
 	column = columns["D"]
 	column.setPropertyValue("IsVisible", False)
 	# Get row 7 by index (interface XIndexAccess)
-	row = rows[7]
+	row = rows[6]
 	row.setPropertyValue("Height", 5000)
 	sheet[6,2].setFormula("What a big cell.")
 	# Create a cell series with the values 1 ... 7.
