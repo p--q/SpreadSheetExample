@@ -18,7 +18,7 @@ def macro():
 	# Set formula string.
 	cell.setFormula("=1/0")
 	# Get error type.
-	flag = (cell.getError() == 0)  # cell.getError() return 532
+	flag = (cell.getError()==0)  # cell.getError() return 532
 	# Get formula string.
 	txt = "The formula {} is ".format(cell.getFormula())
 	txt += "valid." if flag else "erroneous."
@@ -63,7 +63,7 @@ def macro():
 	row.setPropertyValue("Height", 5000)
 	sheet[6, 2].setFormula("What a big cell.")
 	# Create a cell series with the values 1 ... 7.
-	sheet[8:15, 0].setDataArray([[i] for i in range(1,8)])
+	sheet[8:15, 0].setDataArray([[i] for i in range(1, 8)])
 	# Insert a row between 1 and 2
 	rows.insertByIndex(9, 1)
 	# Delete the rows with the values 3 and 4.
