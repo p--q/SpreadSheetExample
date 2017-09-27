@@ -30,8 +30,8 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 	return wrapper
 # @enableRemoteDebugging
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
 	sheets = doc.getSheets()
 	sheet = sheets[0]
@@ -40,23 +40,60 @@ def macro():
 	# Set cell value.
 	cell.setValue(1234)
 	# Get cell value.
-	flag = cell.getValue()*2
-	sheet[1,0].setValue(flag)
+	val = cell.getValue()*2
+	sheet[1,0].setValue(val)
 	# *** Create a FORMULA CELL and query error type ***
 	cell = sheet[2,0]
 	# Set formula string.
 	cell.setFormula( "=1/0" )
 	# Get error type.
-	flag = (cell.getError() == 0);
+	flag = (cell.getError() == 0)  # cell.getError() return 532
 	# Get formula string.
-	atext = "The formula {} is {}".format(cell.getFormula())
-	atext += "valid." if flag else "erroneous."
+	txt = "The formula {} is ".format(cell.getFormula())
+	txt += "valid." if flag else "erroneous."
 	# *** Insert a TEXT CELL using the XText interface ***
 	cell = sheet[3,0]
 	textcursor = cell.createTextCursor()
-	cell.insertString(textcursor, atext, False)
+	cell.insertString(textcursor, txt, False)
 	# *** Change cell properties ***
-	
+	color = 0x00FF00 if flag else 0xFF4040
+	cell.setPropertyValue("CellBackColor", color)
+	# *** Accessing a CELL RANGE ***
+	# Accessing a cell range over its position.
+	cellrange = sheet[:2,2:4]
+	# Change properties of the range.
+	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
+	# Accessing a cell range over its name.
+	cellrange = sheet["C4:D5"]
+	# Change properties of the range.
+	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
+	# *** Using the CELL CURSOR to add some data below of the filled area ***
+	cell = sheet["A1"]
+	cursor = sheet.createCursorByRange(cell)
+	# Move to the last filled cell.
+	cursor.gotoEnd()
+	# Move one row down.
+	cursor.gotoOffset(0,1) # (ColumnOffset, RowOffset)
+	cursor[0,0].setFormula("Beyond of the last filled cell.")
+	# *** Modifying COLUMNS and ROWS ***
+	columns = sheet.getColumns()
+	rows = sheet.getRows()
+	# Get column C by index (interface XIndexAccess).
+	column = columns[2]
+	column.setPropertyValue("Width", 5000)
+	# Get the name of the column.
+	txt = "The name of this column is {}.".format(column.getName())
+	sheet[2,2].setFormula(txt)
+	# Get column D by name (interface XNameAccess).
+	column = columns["D"]
+	column.setPropertyValue("IsVisible", False)
+	# Get row 7 by index (interface XIndexAccess)
+	row = rows[7]
+	row.setPropertyValue("Height", 5000)
+	sheet[6,2].setFormula("What a big cell.")
+	# Create a cell series with the values 1 ... 7.
+	sheet[8:15,0].setDataArray([[i,] for i in range(1,8)])
+	# Insert a row between 1 and 2
 	
 	
 	
