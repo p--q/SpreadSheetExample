@@ -1,42 +1,71 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
-	def wrapper(*args, **kwargs):
-		frame = None
-		doc = XSCRIPTCONTEXT.getDocument()
-		if doc:  # ドキュメントが取得できた時
-			frame = doc.getCurrentController().getFrame()  # ドキュメントのフレームを取得。
-		else:
-			currentframe = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()  # モードレスダイアログのときはドキュメントが取得できないので、モードレスダイアログのフレームからCreatorのフレームを取得する。
-			frame = currentframe.getCreator()
-		if frame:   
-			import time
-			indicator = frame.createStatusIndicator()  # フレームからステータスバーを取得する。
-			maxrange = 2  # ステータスバーに表示するプログレスバーの目盛りの最大値。2秒ロスするが他に適当な告知手段が思いつかない。
-			indicator.start("Trying to connect to the PyDev Debug Server for about 20 seconds.", maxrange)  # ステータスバーに表示する文字列とプログレスバーの目盛りを設定。
-			t = 1  # プレグレスバーの初期値。
-			while t<=maxrange:  # プログレスバーの最大値以下の間。
-				indicator.setValue(t)  # プレグレスバーの位置を設定。
-				time.sleep(1)  # 1秒待つ。
-				t += 1  # プログレスバーの目盛りを増やす。
-			indicator.end()  # reset()の前にend()しておかないと元に戻らない。
-			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
-		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
-		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。
-		except:
-			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
-	return wrapper
-# @enableRemoteDebugging
+from com.sun.star.table import BorderLine
+from com.sun.star.table import TableBorder
+from com.sun.star.awt import FontWeight
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
 
+	doCellSamples(doc)
+	doCellRangeSamples()
+	doCellRangesSamples()
+	doCellCursorSamples()
+	doFormattingSamples()
+	doDocumentSamples()
+	doDatabaseSamples()
+	doDataPilotSamples()
+	doNamedRangesSamples()
+	doFunctionAccessSamples()
+	doApplicationSettingsSamples()
 
+def	doCellSamples(doc):
+	sheets = doc.getSheets()
+	sheet = sheets[0]	
+	prepareRange(sheet, "A1:C7", "Cells and Cell Ranges")
+	
+	
 
-
+# ** Draws a colored border around the range and writes the headline in the first cell.
+def prepareRange(sheet, rng, headline):
+	# draw border
+	cellrange = sheet[rng]
+	borderline = BorderLine(Color=0x99CCFF, InnerLineWidth=0, LineDistance=0, OuterLineWidth=100)
+	tableborder = TableBorder(TopLine=borderline, BottomLine=borderline, LeftLine=borderline, RightLine=borderline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=True, IsRightLineValid=True)
+	cellrange.setPropertyValue("TableBorder", tableborder)
+	# draw headline
+	cellrange.setPropertyValue("CellBackColor", 0x99CCFF)
+	# write headline
+	cell = cellrange[0, 0]
+	cell.setFormula(headline)
+	cell.setPropertyValues(("CharColor", "CharWeight"), (0x003399, FontWeight.BOLD))
+	
+	
+	
+	
+	
+def	doCellRangeSamples():
+	pass
+def	doCellRangesSamples():
+	pass
+def	doCellCursorSamples():
+	pass
+def	doFormattingSamples():
+	pass
+def	doDocumentSamples():
+	pass
+def	doDatabaseSamples():
+	pass
+def	doDataPilotSamples():
+	pass
+def	doNamedRangesSamples():
+	pass
+def	doFunctionAccessSamples():
+	pass
+def	doApplicationSettingsSamples():
+	pass
 
 
 

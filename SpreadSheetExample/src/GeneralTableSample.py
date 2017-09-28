@@ -44,7 +44,8 @@ def macro():
 	# Move to the last filled cell.
 	cursor.gotoEnd()
 	# Move one row down.
-	cursor.gotoOffset(0, 1) # (ColumnOffset, RowOffset)
+# 	cursor.gotoOffset(*reversed([1, 0])) # gotoOffset(ColumnOffset, RowOffset)
+	cursor.gotoOffset(*(1, 0)[::-1])
 	cursor[0, 0].setFormula("Beyond of the last filled cell.")
 	# *** Modifying COLUMNS and ROWS ***
 	columns = sheet.getColumns()
