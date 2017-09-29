@@ -5,6 +5,7 @@ from com.sun.star.table import BorderLine
 from com.sun.star.table import TableBorder
 from com.sun.star.awt import FontWeight
 from com.sun.star.text import ControlCharacter
+from com.sun.star.sheet import GeneralFunction
 def macro():
 	
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -77,30 +78,80 @@ def	doCellRangeSamples(sheets):
 	sheet["B5"].setFormula("First cell")
 	sheet["B6"].setFormula("Second cell")
 	# Get cell range B5:B6 by position - (column, row, column, row)
-	rng = sheet[4:6, 1]
+	cellrng = sheet[4:6, 1]
 	# --- Change cell range properties. ---
 	# from com.sun.star.styles.CharacterProperties
-	rng.setPropertyValues(("CharColor", "CharHeight"), (0x003399, 20.0))
+	cellrng.setPropertyValues(("CharColor", "CharHeight"), (0x003399, 20.0))
 	# from com.sun.star.styles.ParagraphProperties
-	rng.setPropertyValue("ParaLeftMargin", 500)
+	cellrng.setPropertyValue("ParaLeftMargin", 500)
 	# from com.sun.star.table.CellProperties
-	rng.setPropertyValues(("IsCellBackgroundTransparent", "CellBackColor"), (False, 0x99CCFF))
+	cellrng.setPropertyValues(("IsCellBackgroundTransparent", "CellBackColor"), (False, 0x99CCFF))
 	# --- Replace text in all cells. ---
-	replacedesc = rng.createReplaceDescriptor()
+	replacedesc = cellrng.createReplaceDescriptor()
 	replacedesc.setSearchString("cell") 
 	replacedesc.setReplaceString("text")
 	# property SearchWords searches for whole cells!
 	replacedesc.setPropertyValue("SearchWords", False)
-	c = rng.replaceAll(replacedesc)
+	c = cellrng.replaceAll(replacedesc)
 	print("Search text replaced {} times.".format(c))
 	# --- Merge cells. ---
-	rng = sheet["F3:G6"]
+	cellrng = sheet["F3:G6"]
 	prepareRange(sheet, "E1:H7", "XMergeable")
-	rng.merge(True)
-
-
-
-
+	cellrng.merge(True)
+	# --- Change indentation. ---
+	# does not work (bug in XIndent implementation)
+# 	prepareRange(sheet, "I20:I23", "XIndent" )
+# 	sheet["I21"].setValue(1)
+# 	sheet["I22"].setValue(1)
+# 	sheet["I23"].setValue(1)
+# 	cellrange = sheet["I21:I22"]
+# 	cellrange.incrementIndent()
+# 	cellrange = sheet["I21:I23"]
+# 	cellrange.incrementIndent()
+	# --- Column properties. ---
+	cellrange = sheet["B1"]
+	columns = cellrange.getColumns()
+	column = columns[0]
+	column.setPropertyValue("Width", 6000)
+	print("The name of the wide column is {}.".forget(column.getName()))
+	# --- Cell range data ---
+	prepareRange(sheet, "A9:C30", "XCellRangeData")
+	cellrange = sheet["A10:C30"]
+	vals = 	("Name",   "Fruit",	"Quantity"),\
+			("Alice",  "Apples",  3.0),\
+			("Alice",  "Oranges",7.0 ),\
+			("Bob",	"Apples",  3.0),\
+			("Alice",  "Apples",  9.0),\
+			("Bob",	"Apples",  5.0),\
+			("Bob",	"Oranges", 6.0),\
+			("Alice",  "Oranges", 3.0),\
+			("Alice",  "Apples",  8.0),\
+			("Alice",  "Oranges", 1.0),\
+			("Bob",	"Oranges", 2.0),\
+			("Bob",	"Oranges", 7.0),\
+			("Bob",	"Apples",  1.0),\
+			("Alice",  "Apples",  8.0),\
+			("Alice",  "Oranges", 8.0),\
+			("Alice",  "Apples",  7.0),\
+			("Bob",	"Apples",  1.0),\
+			("Bob",	"Oranges", 9.0),\
+			("Bob",	"Oranges", 3.0),\
+			("Alice",  "Oranges", 4.0),\
+			("Alice",  "Apples",  9.0)	
+	cellrange.setDataArray(vals)
+	# --- Get cell range address. ---
+	rangeaddress = cellrange.getRangeAddress()
+	print("Address of this range:  Sheet={}".format(rangeaddress.Sheet))
+	print("Start column={};  Start row={}".format(rangeaddress.StartColumn, rangeaddress.StartRow))
+	print("End column={};  End row={}".format(rangeaddress.EndColumn, rangeaddress.EndRow))
+	# --- Sheet operation. ---
+	# uses the range filled with XCellRangeData
+	result = cellrange.computeFunction(GeneralFunction.AVERAGE)
+	print("Average value of the data table A10:C30: {}".format(result))
+	# --- Fill series ---
+	
+	
+	
 
 
 def	doCellRangesSamples():
