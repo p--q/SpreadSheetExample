@@ -4,13 +4,19 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.table import BorderLine
 from com.sun.star.table import TableBorder
 from com.sun.star.awt import FontWeight
+from com.sun.star.text import ControlCharacter
 def macro():
+	
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 # 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
+# 	global tcu
+#  	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+#  	tcu.wtree(doc)
 
-	doCellSamples(doc)
-	doCellRangeSamples()
+	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
+	sheets = doc.getSheets()
+	doCellSamples(sheets)
+	doCellRangeSamples(sheets)
 	doCellRangesSamples()
 	doCellCursorSamples()
 	doFormattingSamples()
@@ -21,33 +27,82 @@ def macro():
 	doFunctionAccessSamples()
 	doApplicationSettingsSamples()
 
-def	doCellSamples(doc):
-	sheets = doc.getSheets()
+def	doCellSamples(sheets):
 	sheet = sheets[0]	
 	prepareRange(sheet, "A1:C7", "Cells and Cell Ranges")
-	
-	
+	# --- Get cell B3 by position - (row, column) ---
+	cell = sheet[2, 1]
+	# --- Insert two text paragraphs into the cell. ---
+	textcursor = cell.createTextCursor()
+	cell.insertString(textcursor, "Text in first line.", False)
+	cell.insertControlCharacter(textcursor, ControlCharacter.PARAGRAPH_BREAK, False)
+	cell.insertString(textcursor, "And a ", False)
+	# create a hyperlink
+	hyperlink = doc.createInstance("com.sun.star.text.TextField.URL")
+	hyperlink.setPropertyValues(("URL", "Representation"), ("https://p--q.blogspot.jp/", "hyperlink"))
+	# ... and insert
+	cell.insertTextContent(textcursor, hyperlink, False)
+	# --- Query the separate paragraphs. ---
+	paraenum = cell.createEnumeration()
+	# Go through the paragraphs
+	for portion in paraenum:
+		portionenum = portion.createEnumeration()
+		txt = ""
+		# Go through all text portions of a paragraph and construct string.
+		for rng in portionenum:
+			txt += rng.getString()
+		print("Paragraph text: {}".format(txt))
+	# --- Change cell properties. ---
+	# from styles.CharacterProperties
+	cell.setPropertyValues(("CharColor", "CharHeight"), (0x003399, 20.0))
+	# from styles.ParagraphProperties
+	cell.setPropertyValue("ParaLeftMargin", 500)
+	# from table.CellProperties
+	cell.setPropertyValues(("IsCellBackgroundTransparent", "CellBackColor"), (False, 0x99CCFF))
+	# --- Get cell address. ---
+	address = cell.getCellAddress()
+	txt = "Address of this cell:  Column={}".format(address.Column)
+	txt += ";  Row={}".format(address.Row)
+	txt += ";  Sheet={}".formant(address.Sheet)
+	print(txt)
+	# --- Insert an annotation ---
+	annotations = sheet.getAnnotations()
+	annotations.insertNew(address, "This is an annotation")
+	annotation = cell.getAnnotation()
+	annotation.setIsVisible(True)
+# ** All samples regarding the service com.sun.star.sheet.SheetCellRange. *
+def	doCellRangeSamples(sheets):
+	sheet = sheets[0]	
+	# Preparation
+	sheet["B5"].setFormula("First cell")
+	sheet["B6"].setFormula("Second cell")
+	# Get cell range B5:B6 by position - (column, row, column, row)
+	rng = sheet[4:6, 1]
+	# --- Change cell range properties. ---
+	# from com.sun.star.styles.CharacterProperties
+	rng.setPropertyValues(("CharColor", "CharHeight"), (0x003399, 20.0))
+	# from com.sun.star.styles.ParagraphProperties
+	rng.setPropertyValue("ParaLeftMargin", 500)
+	# from com.sun.star.table.CellProperties
+	rng.setPropertyValues(("IsCellBackgroundTransparent", "CellBackColor"), (False, 0x99CCFF))
+	# --- Replace text in all cells. ---
+	replacedesc = rng.createReplaceDescriptor()
+	replacedesc.setSearchString("cell") 
+	replacedesc.setReplaceString("text")
+	# property SearchWords searches for whole cells!
+	replacedesc.setPropertyValue("SearchWords", False)
+	c = rng.replaceAll(replacedesc)
+	print("Search text replaced {} times.".format(c))
+	# --- Merge cells. ---
+	rng = sheet["F3:G6"]
+	prepareRange(sheet, "E1:H7", "XMergeable")
+	rng.merge(True)
 
-# ** Draws a colored border around the range and writes the headline in the first cell.
-def prepareRange(sheet, rng, headline):
-	# draw border
-	cellrange = sheet[rng]
-	borderline = BorderLine(Color=0x99CCFF, InnerLineWidth=0, LineDistance=0, OuterLineWidth=100)
-	tableborder = TableBorder(TopLine=borderline, BottomLine=borderline, LeftLine=borderline, RightLine=borderline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=True, IsRightLineValid=True)
-	cellrange.setPropertyValue("TableBorder", tableborder)
-	# draw headline
-	cellrange.setPropertyValue("CellBackColor", 0x99CCFF)
-	# write headline
-	cell = cellrange[0, 0]
-	cell.setFormula(headline)
-	cell.setPropertyValues(("CharColor", "CharWeight"), (0x003399, FontWeight.BOLD))
-	
-	
-	
-	
-	
-def	doCellRangeSamples():
-	pass
+
+
+
+
+
 def	doCellRangesSamples():
 	pass
 def	doCellCursorSamples():
@@ -66,7 +121,20 @@ def	doFunctionAccessSamples():
 	pass
 def	doApplicationSettingsSamples():
 	pass
-
+# ** Draws a colored border around the range and writes the headline in the first cell.
+def prepareRange(sheet, rng, headline):
+	# draw border
+	cellrange = sheet[rng]
+	borderline = BorderLine(Color=0x99CCFF, InnerLineWidth=0, LineDistance=0, OuterLineWidth=100)
+	tableborder = TableBorder(TopLine=borderline, BottomLine=borderline, LeftLine=borderline, RightLine=borderline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=True, IsRightLineValid=True)
+	cellrange.setPropertyValue("TableBorder", tableborder)  # Pythonのオートメーションで実行すると、以後LibreOfficeを終了してJavaの例を実行しないと2列目以降のすべてのセルに上下の枠線が表示されてしまう。
+	# draw headline
+	addr = cellrange.getRangeAddress()
+	sheet[addr.StartRow, addr.StartColumn:addr.EndColumn+1].setPropertyValue("CellBackColor", 0x99CCFF)
+	# write headline
+	cell = cellrange[0, 0]
+	cell.setFormula(headline)
+	cell.setPropertyValues(("CharColor", "CharWeight"), (0x003399, FontWeight.BOLD))
 
 
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
