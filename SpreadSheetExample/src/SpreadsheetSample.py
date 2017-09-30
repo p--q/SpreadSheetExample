@@ -5,7 +5,9 @@ from com.sun.star.table import BorderLine
 from com.sun.star.table import TableBorder
 from com.sun.star.awt import FontWeight
 from com.sun.star.text import ControlCharacter
-from com.sun.star.sheet import GeneralFunction
+from com.sun.star.sheet.GeneralFunction import AVERAGE
+from com.sun.star.lang import Locale
+from com.sun.star.util import NumberFormat
 def macro():
 	
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -40,7 +42,8 @@ def	doCellSamples(sheets):
 	cell.insertString(textcursor, "And a ", False)
 	# create a hyperlink
 	hyperlink = doc.createInstance("com.sun.star.text.TextField.URL")
-	hyperlink.setPropertyValues(("URL", "Representation"), ("https://p--q.blogspot.jp/", "hyperlink"))
+	hyperlink.setPropertyValue("URL", "https://p--q.blogspot.jp/")  # setPropertyValuesは使えない。
+	hyperlink.setPropertyValue("Representation", "hyperlink")
 	# ... and insert
 	cell.insertTextContent(textcursor, hyperlink, False)
 	# --- Query the separate paragraphs. ---
@@ -64,7 +67,7 @@ def	doCellSamples(sheets):
 	address = cell.getCellAddress()
 	txt = "Address of this cell:  Column={}".format(address.Column)
 	txt += ";  Row={}".format(address.Row)
-	txt += ";  Sheet={}".formant(address.Sheet)
+	txt += ";  Sheet={}".format(address.Sheet)
 	print(txt)
 	# --- Insert an annotation ---
 	annotations = sheet.getAnnotations()
@@ -113,7 +116,7 @@ def	doCellRangeSamples(sheets):
 	columns = cellrange.getColumns()
 	column = columns[0]
 	column.setPropertyValue("Width", 6000)
-	print("The name of the wide column is {}.".forget(column.getName()))
+	print("The name of the wide column is {}.".format(column.getName()))
 	# --- Cell range data ---
 	prepareRange(sheet, "A9:C30", "XCellRangeData")
 	cellrange = sheet["A10:C30"]
@@ -146,9 +149,20 @@ def	doCellRangeSamples(sheets):
 	print("End column={};  End row={}".format(rangeaddress.EndColumn, rangeaddress.EndRow))
 	# --- Sheet operation. ---
 	# uses the range filled with XCellRangeData
-	result = cellrange.computeFunction(GeneralFunction.AVERAGE)
+	result = cellrange.computeFunction(AVERAGE)
 	print("Average value of the data table A10:C30: {}".format(result))
 	# --- Fill series ---
+	# Prepare the example
+	formattypes = doc.getNumberFormats()
+	dateformat = formattypes.getStandardFormat(NumberFormat.DATE, Locale())
+	sheet["E10"].setValue(1)
+	sheet["E11"].setValue(4)
+	sheet["E12"].setFormula("1/30/2002")
+	sheet["E12"].setPropertyValue("NumberFormat", dateformat)
+	
+	
+	
+	
 	
 	
 	
