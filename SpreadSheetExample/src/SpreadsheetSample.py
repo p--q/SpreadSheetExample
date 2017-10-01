@@ -8,19 +8,24 @@ from com.sun.star.text import ControlCharacter
 from com.sun.star.sheet.GeneralFunction import AVERAGE
 from com.sun.star.lang import Locale
 from com.sun.star.util import NumberFormat
+from com.sun.star.sheet.FillDirection import TO_RIGHT, TO_LEFT, TO_TOP, TO_BOTTOM
+from com.sun.star.sheet.FillMode import LINEAR, DATE, AUTO, GROWTH
+from com.sun.star.sheet.FillDateMode import FILL_DATE_DAY, FILL_DATE_MONTH
+from com.sun.star.sheet.TableOperationMode import BOTH, COLUMN
+from com.sun.star.sheet import CellFlags
+from com.sun.star.table import CellRangeAddress
 def macro():
 	
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-# 	global tcu
-#  	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
+	global tcu
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 #  	tcu.wtree(doc)
 
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
-	sheets = doc.getSheets()
-	doCellSamples(sheets)
-	doCellRangeSamples(sheets)
-	doCellRangesSamples()
+	doCellSamples(doc)
+	doCellRangeSamples(doc)
+	doCellRangesSamples(doc)
 	doCellCursorSamples()
 	doFormattingSamples()
 	doDocumentSamples()
@@ -30,7 +35,9 @@ def macro():
 	doFunctionAccessSamples()
 	doApplicationSettingsSamples()
 
-def	doCellSamples(sheets):
+def	doCellSamples(doc):
+	print("\n*** Samples for service sheet.SheetCell ***\n")
+	sheets = doc.getSheets()
 	sheet = sheets[0]	
 	prepareRange(sheet, "A1:C7", "Cells and Cell Ranges")
 	# --- Get cell B3 by position - (row, column) ---
@@ -75,7 +82,9 @@ def	doCellSamples(sheets):
 	annotation = cell.getAnnotation()
 	annotation.setIsVisible(True)
 # ** All samples regarding the service com.sun.star.sheet.SheetCellRange. *
-def	doCellRangeSamples(sheets):
+def	doCellRangeSamples(doc):
+	print("\n*** Samples for service sheet.SheetCellRange ***\n")
+	sheets = doc.getSheets()
 	sheet = sheets[0]	
 	# Preparation
 	sheet["B5"].setFormula("First cell")
@@ -157,19 +166,93 @@ def	doCellRangeSamples(sheets):
 	dateformat = formattypes.getStandardFormat(NumberFormat.DATE, Locale())
 	sheet["E10"].setValue(1)
 	sheet["E11"].setValue(4)
-	sheet["E12"].setFormula("1/30/2002")
+	sheet["E12"].setFormula("2002-1-30")  # 年-月-日 または 月/日/年 にしないといけないらしい。
 	sheet["E12"].setPropertyValue("NumberFormat", dateformat)
+	sheet["I13"].setFormula("Text 10")
+	sheet["E14"].setFormula("Jan")
+	sheet["K14"].setValue(10)
+	sheet["E16"].setValue(1)
+	sheet["F16"].setValue(2)
+	sheet["E17"].setFormula("2002-2-28") 
+	sheet["E17"].setPropertyValue("NumberFormat", dateformat)
+	sheet["F17"].setFormula("2002-1-28") 
+	sheet["F17"].setPropertyValue("NumberFormat", dateformat)
+	sheet["E18"].setValue(6)
+	sheet["F18"].setValue(4)
+	# Fill 2 rows linear with end value -> 2nd series is not filled completely
+	sheet["E10:I11"].fillSeries(TO_RIGHT, LINEAR, FILL_DATE_DAY, 2, 9)
+	# Add months to a date
+	sheet["E12:I12"].fillSeries(TO_RIGHT, DATE, FILL_DATE_MONTH, 1, 0x7FFFFFFF)
+	# Fill right to left with a text containing a value
+	sheet["E13:I13"].fillSeries(TO_LEFT, LINEAR, FILL_DATE_DAY, 10, 0x7FFFFFFF)
+	# Fill with an user defined list]
+	sheet["E14:I14"].fillSeries(TO_RIGHT, AUTO, FILL_DATE_DAY, 10, 0x7FFFFFFF)
+	# Fill bottom to top with a geometric series
+	sheet["K10:K14"].fillSeries(TO_TOP, GROWTH, FILL_DATE_DAY, 2, 0x7FFFFFFF)
+	# Auto fill
+	sheet["E16:K18"].fillAuto(TO_RIGHT, 2)
+	# Fill series copies cell formats -> draw border here
+	prepareRange(sheet, "E9:K18", "XCellSeries")
+	# --- Array formulas ---
+	prepareRange(sheet, "E20:G23", "XArrayFormulaRange")
+	# Insert a 3x3 unit matrix.
+	arrayformula = sheet["E21:G23"]
+	arrayformula.setArrayFormula("=A10:C12")
+	print("Array formula is: {}".format(arrayformula.getArrayFormula()))
+	#  --- Multiple operations ---
+	sheet["E26"].setFormula("=E27^F26")
+	sheet["E27"].setValue(1)
+	sheet["F26"].setValue(1)
+	sheet["E27:E31"].fillAuto(TO_BOTTOM, 1)
+	sheet["F26:J26"].fillAuto(TO_RIGHT, 1)
+	sheet["F33"].setFormula("=SIN(E33)")
+	sheet["G33"].setFormula("=COS(E33)")
+	sheet["H33"].setFormula("=TAN(E33)")
+	sheet["E34"].setValue(0)
+	sheet["E35"].setValue(0.2)
+	sheet["E34:E38"].fillAuto(TO_BOTTOM, 2)
+	prepareRange(sheet, "E25:J38", "XMultipleOperation")
+	formularange = sheet["E26"].getRangeAddress()
+	colcell = sheet["E27"].getCellAddress()
+	rowcell = sheet["F26"].getCellAddress()
+	sheet["E26:J31"].setTableOperation(formularange, BOTH, colcell, rowcell)
+	formularange = sheet["F33:H33"].getRangeAddress()
+	colcell = sheet["E33"].getCellAddress()
+	# Row cell not needed
+	sheet["E34:H38"].setTableOperation(formularange, COLUMN, colcell, rowcell)
+	# --- Cell Ranges Query ---
+	cellranges = sheet["A10:C30"].queryContentCells(CellFlags.STRING)
+	print("Cells in A10:C30 containing text: {}".format(cellranges.getRangeAddressesAsString()))
+def	doCellRangesSamples(doc):
+	print("\n*** Samples for cell range collections ***\n")
+	# Create a new cell range container
+	rangecont = doc.createInstance("com.sun.star.sheet.SheetCellRanges")
+	# --- Insert ranges ---
+	address = CellRangeAddress(Sheet=0, StartColumn=0, StartRow=0, EndColumn=0, EndRow=0)
+	rangecont.addRangeAddress(address, False)
+# 	print("Inserting {} {} merge,{} resulting list: {}".format())
 	
+	conv = doc.createInstance("com.sun.star.table.CellAddressConversion")
+	tcu.wtree(doc.createInstance("com.sun.star.table.CellAddressConversion"))
 	
-	
-	
-	
-	
+# 		insertRange( xRangeCont, 0, 0, 0, 0, 0, false );	// A1:A1
+# 		insertRange( xRangeCont, 0, 0, 1, 0, 2, true );	 // A2:A3
+# 		insertRange( xRangeCont, 0, 1, 0, 1, 2, false );	// B1:B3	
 	
 
 
-def	doCellRangesSamples():
-	pass
+def getCellRangeAddressString():
+	
+	
+	return "{}:{}".format()
+
+def getCellAddressString(column, row):
+	txt = ""
+	if column>25:
+		txt += "A{}".format(column/26-1)
+	txt += "A{}".format(column%26)
+	txt += row + 1
+	return txt
 def	doCellCursorSamples():
 	pass
 def	doFormattingSamples():
