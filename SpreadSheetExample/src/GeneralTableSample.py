@@ -55,7 +55,7 @@ def macro():
 	column.setPropertyValue("Width", 5000)
 	# Get the name of the column.
 	txt = "The name of this column is {}.".format(column.getName())
-	sheet[2,2].setFormula(txt)
+	sheet[2, 2].setFormula(txt)
 	# Get column D by name (interface XNameAccess).
 	column = columns["D"]
 	column.setPropertyValue("IsVisible", False)
@@ -73,7 +73,7 @@ def macro():
 	charts = sheet.getCharts()
 	# The chart will base on the last cell series, initializing all values.
 	chartname = "newChart"
-	rectangle = Rectangle(X=10000, Y=3000, Width=5000, Height = 5000)
+	rectangle = Rectangle(X=10000, Y=3000, Width=5000, Height=5000)
 	rng = sheet["A9:A14"].getRangeAddress()
 	# Create the chart.
 	charts.addNewByName(chartname, rectangle, (rng,), False, False)
