@@ -15,13 +15,6 @@ from com.sun.star.sheet.TableOperationMode import BOTH, COLUMN
 from com.sun.star.sheet import CellFlags
 from com.sun.star.table import CellRangeAddress
 def macro():
-	
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	global tcu
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-#  	tcu.wtree(doc)
-
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
 	doCellSamples(doc)
 	doCellRangeSamples(doc)
@@ -34,7 +27,7 @@ def macro():
 	doNamedRangesSamples()
 	doFunctionAccessSamples()
 	doApplicationSettingsSamples()
-
+	
 def	doCellSamples(doc):
 	print("\n*** Samples for service sheet.SheetCell ***\n")
 	sheets = doc.getSheets()
