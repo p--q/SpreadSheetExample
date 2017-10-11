@@ -7,12 +7,18 @@ def macro():
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-	sheets = doc.getSheets()  # シートの採集。
+	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
-	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
-	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
-	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
-	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
+# 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
+# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
+# 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
+# 	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
+# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
+# 	row = rows[0]  # 1行目。
+# 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
+# 	column = columns[0]  # 1行目。
+	charts = sheet.getCharts()  # チャートコレクション
+
 
 	# 各1行しか実行できない。
 # 	tcu.wtree(doc)  # Calcドキュメント。
@@ -21,10 +27,12 @@ def macro():
 # 	tcu.wtree(cell)  # A1セル。
 # 	tcu.wtree(cells)  # D3:F5のセル範囲。
 # 	tcu.wtree(textcursor)  # A1セル内のテキストカーサー。
-	tcu.wtree(cellcursor)  # 最初のシートすべてのセルカーサー。
-	
-
-
+# 	tcu.wtree(cellcursor)  # 最初のシートすべてのセルカーサー。
+# 	tcu.wtree(rows)  # 行アクセスオブジェクト。
+# 	tcu.wtree(row)  # 行
+# 	tcu.wtree(columns)  # 列アクセスオブジェクト
+# 	tcu.wtree(column)  # 列
+	tcu.wtree(charts)  # チャートコレクション
 
 
 

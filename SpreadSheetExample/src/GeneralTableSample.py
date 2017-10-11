@@ -4,26 +4,25 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.awt import Rectangle
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
-	sheets = doc.getSheets()
-	sheet = sheets[0]	
+	sheets = doc.getSheets()  # シートコレクションを取得。
+	sheet = sheets[0]  # インデックス0のシートを取得。
 	# *** Access and modify a VALUE CELL ***
-	cell = sheet[0, 0]
+	cell = sheet[0, 0]  # A1セルを取得。
 	# Set cell value.
-	cell.setValue(1234)
+	cell.setValue(1234)  # セルに数値を代入。
 	# Get cell value.
-	val = cell.getValue()*2
-	sheet[1, 0].setValue(val)
+	val = cell.getValue()  # セルの数値を取得。
+	sheet[1, 0].setValue(val*2)  # A2セルに代入。
 	# *** Create a FORMULA CELL and query error type ***
-	cell = sheet[2, 0]
+	cell = sheet[2, 0]  # A3セルを取得。
 	# Set formula string.
-	cell.setFormula("=1/0")
+	cell.setFormula("=1/0")  # エラーになる式を代入。式がエラーだとgetError()で0以外が返る。
 	# Get error type.
-	flag = (cell.getError()==0)  # cell.getError() return 532
+	flag = (cell.getError()==0)  # cell.getError() return 532。
 	# Get formula string.
-	txt = "The formula {} is ".format(cell.getFormula())
-	txt += "valid." if flag else "erroneous."
+	txt = "The formula {} is {}.".format(cell.getFormula(), "valid" if flag else "erroneous")
 	# *** Insert a TEXT CELL using the XText interface ***
-	cell = sheet[3,0]
+	cell = sheet[3, 0]  # A4セルを取得。
 	textcursor = cell.createTextCursor()
 	cell.insertString(textcursor, txt, False)
 	# *** Change cell properties ***
@@ -78,7 +77,7 @@ def macro():
 	# Create the chart.
 	charts.addNewByName(chartname, rectangle, (rng,), False, False)
 	# Get the chart by name.
-	chart = charts.getByName(chartname)
+	chart = charts[chartname]
 	# Query the state of row and column headers.
 	txt = "Chart has column headers: "
 	txt += "yes" if chart.getHasColumnHeaders() else "no"
