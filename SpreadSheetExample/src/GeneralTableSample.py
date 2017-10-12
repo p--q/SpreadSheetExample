@@ -23,14 +23,14 @@ def macro():
 	txt = "The formula {} is {}.".format(cell.getFormula(), "valid" if flag else "erroneous")
 	# *** Insert a TEXT CELL using the XText interface ***
 	cell = sheet[3, 0]  # A4セルを取得。
-	textcursor = cell.createTextCursor()
+	textcursor = cell.createTextCursor()  # 
 	cell.insertString(textcursor, txt, False)
 	# *** Change cell properties ***
 	color = 0x00FF00 if flag else 0xFF4040
 	cell.setPropertyValue("CellBackColor", color)
 	# *** Accessing a CELL RANGE ***
 	# Accessing a cell range over its position.
-	cellrange = sheet[:2,2:4]
+	cellrange = sheet[:2, 2:4]
 	# Change properties of the range.
 	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
 	# Accessing a cell range over its name.
