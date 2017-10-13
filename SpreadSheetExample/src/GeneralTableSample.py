@@ -30,7 +30,7 @@ def macro():
 	cell.setPropertyValue("CellBackColor", color)
 	# *** Accessing a CELL RANGE ***
 	# Accessing a cell range over its position.
-	cellrange = sheet[:2,2:4]
+	cellrange = sheet[:2, 2:4]
 	# Change properties of the range.
 	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
 	# Accessing a cell range over its name.
@@ -39,7 +39,7 @@ def macro():
 	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
 	# *** Using the CELL CURSOR to add some data below of the filled area ***
 	cell = sheet["A1"]
-	cursor = sheet.createCursorByRange(cell)  
+	cursor = sheet.createCursorByRange(cell)
 	# Move to the last filled cell.
 	cursor.gotoEnd()
 	# Move one row down.

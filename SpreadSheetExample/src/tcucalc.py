@@ -7,6 +7,7 @@ def macro():
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+<<<<<<< HEAD
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
@@ -18,10 +19,23 @@ def macro():
 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
 	column = columns[0]  # 1行目。
 	charts = sheet.getCharts()  # チャートコレクション
+=======
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
+# 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
+# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
+# 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
+# 	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
+# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
+# 	row = rows[0]  # 1行目。
+# 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
+# 	column = columns[0]  # 1行目。
+# 	charts = sheet.getCharts()  # チャートコレクション
+>>>>>>> branch 'feature/201709260959' of https://github.com/p--q/SpreadSheetExample.git
 
 
 	# 各1行しか実行できない。
-# 	tcu.wtree(doc)  # Calcドキュメント。
+	tcu.wtree(doc)  # Calcドキュメント。
 # 	tcu.wtree(sheets)  # シートのコレクション。
 # 	tcu.wtree(sheet)  # シート。
 # 	tcu.wtree(cell)  # A1セル。
