@@ -9,14 +9,14 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
-# 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
-# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
-# 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
-# 	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
-# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
-# 	row = rows[0]  # 1行目。
-# 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
-# 	column = columns[0]  # 1行目。
+	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
+	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
+	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
+	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
+	rows = sheet.getRows()  # 行アクセスオブジェクト。
+	row = rows[0]  # 1行目。
+	columns = sheet.getColumns()  # 行アクセスオブジェクト。
+	column = columns[0]  # 1行目。
 	charts = sheet.getCharts()  # チャートコレクション
 
 
@@ -32,12 +32,18 @@ def macro():
 # 	tcu.wtree(row)  # 行
 # 	tcu.wtree(columns)  # 列アクセスオブジェクト
 # 	tcu.wtree(column)  # 列
-	tcu.wtree(charts)  # チャートコレクション
+# 	tcu.wtree(charts)  # チャートコレクション
 
-
-
-
-
+# 	prop = PropertyValue(Name="Hidden",Value=True)
+# 	wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))
+# 	tcu.wcompare(doc, wdoc)
+# 	tcu.wcompare(cell, cells)
+# 	tcu.wcompare(cell, sheet)
+# 	tcu.wcompare(cells, cellcursor)
+# 	tcu.wcompare(cellcursor, textcursor)
+# 	tcu.wcompare(row, column)
+# 	tcu.wcompare(cells, row)
+	tcu.wcompare(doc, sheet)
 
 
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。

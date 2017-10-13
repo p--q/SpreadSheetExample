@@ -23,8 +23,8 @@ def macro():
 	txt = "The formula {} is {}.".format(cell.getFormula(), "valid" if flag else "erroneous")
 	# *** Insert a TEXT CELL using the XText interface ***
 	cell = sheet[3, 0]  # A4セルを取得。
-	textcursor = cell.createTextCursor()
-	cell.insertString(textcursor, txt, False)
+	textcursor = cell.createTextCursor()  # A1セルのテキストカーサーを取得。
+	cell.insertString(textcursor, txt, True)  # Falseで追記。Trueで置換。
 	# *** Change cell properties ***
 	color = 0x00FF00 if flag else 0xFF4040
 	cell.setPropertyValue("CellBackColor", color)
@@ -39,7 +39,7 @@ def macro():
 	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
 	# *** Using the CELL CURSOR to add some data below of the filled area ***
 	cell = sheet["A1"]
-	cursor = sheet.createCursorByRange(cell)
+	cursor = sheet.createCursorByRange(cell)  
 	# Move to the last filled cell.
 	cursor.gotoEnd()
 	# Move one row down.
