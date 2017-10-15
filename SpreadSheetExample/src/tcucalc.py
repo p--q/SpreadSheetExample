@@ -18,8 +18,10 @@ def macro():
 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
 	column = columns[0]  # 1行目。
 	charts = sheet.getCharts()  # チャートコレクション
-
-
+	controller = doc.getCurrentController()  # コントローラーの取得。
+	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
+	celladdressconversion = doc.createInstance("com.sun.star.table.CellAddressConversion")
+	cellrangeaddressconversion = doc.createInstance("com.sun.star.table.CellRangeAddressConversion")
 
 	# 各1行しか実行できない。
 # 	tcu.wtree(doc)  # Calcドキュメント。
@@ -34,6 +36,12 @@ def macro():
 # 	tcu.wtree(columns)  # 列アクセスオブジェクト
 # 	tcu.wtree(column)  # 列
 # 	tcu.wtree(charts)  # チャートコレクション
+# 	tcu.wtree(controller)  # コントローラー
+# 	tcu.wtree(celladdressconversion)
+	tcu.wtree(cellrangeaddressconversion)
+
+
+
 
 # 	prop = PropertyValue(Name="Hidden",Value=True)
 # 	wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))
@@ -44,7 +52,14 @@ def macro():
 # 	tcu.wcompare(cellcursor, textcursor)
 # 	tcu.wcompare(row, column)
 # 	tcu.wcompare(cells, row)
-	tcu.wcompare(doc, sheet)
+# 	tcu.wcompare(doc, sheet)
+# 	wcontroller = wdoc.getCurrentController()  # Writerドキュメントのコントローラーを取得。
+# 	tcu.wcompare(controller, wcontroller)
+# 	tcu.wcompare(cells, cellrangeaddress)
+
+
+
+
 
 
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
