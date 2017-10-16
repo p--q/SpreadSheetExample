@@ -6,18 +6,36 @@ def macro():
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
 	sheet.clearContents(511)  # シートのすべてを削除。
-	cursor = sheet.createCursorByRange(sheet["B5:D4"]) 
-	cursor.setPropertyValue("CellBackColor", 0x8080FF) 
-	sheet[0, 0].setString("Start: {}".format(getRangeAddressesAsString(cursor)))
+	cursor = sheet.createCursorByRange(sheet["C5:E4"])  # セル範囲を指定してセルカーサーを取得。
+	cursor.setPropertyValue("CellBackColor", 0x8080FF)  # セルカーサーの範囲に色をつける。
+	sheet[0, 0].setString("Initial range: {}".format(getRangeAddressesAsString(cursor)))
+	cursor.gotoOffset(*(-2, -1)[::-1])  # セル範囲を相対的に移動させる。
+# 	cursor.gotoOffset(*(5, 4)[::-1])  # セル範囲を相対的に移動させる。
+	cursor.setPropertyValue("CellBackColor", 0xFFFF80)  # セルカーサーの範囲に色をつける。
+	sheet[1, 0].setString("gotoOffset(*(-2, -1)[::-1]): {}".format(getRangeAddressesAsString(cursor)))
+	cursor.gotoEnd()
+	sheet[3, 0].setString("gotoEnd(): {}".format(getRangeAddressesAsString(cursor)))
+	cursor.gotoStartOfUsedArea(False)
+	sheet[5, 0].setString("gotoStartOfUsedArea(False): {}".format(getRangeAddressesAsString(cursor)))	
+	sheet[6, 2].setString("C Last Row")
+	sheet[8, 3].setString("D Last Row")
+	cursor.gotoEndOfUsedArea(False)
+	sheet[7, 0].setString("gotoEndOfUsedArea(False): {}".format(getRangeAddressesAsString(cursor)))	
+	
+	
+	
+	
+	
+	
 # 	methods = "gotoNext", "gotoEnd", "gotoPrevious", "gotoStart", "gotoEnd"
 # 	for i, method in enumerate(methods, start=1):
 # 		getattr(cursor, method)()
 # 		sheet[i, 0].setString("{}: {}".format(method, getRangeAddressesAsString(cursor)))
 # 	cursor = sheet.createCursorByRange(sheet["B5:D4"]) 
-	methods = "gotoNext", "gotoEnd", "gotoStart", "gotoEnd", "gotoPrevious"
-	for i, method in enumerate(methods, start=1):
-		getattr(cursor, method)()
-		sheet[i, 0].setString("{}: {}".format(method, getRangeAddressesAsString(cursor)))	
+# 	methods = "gotoNext", "gotoEnd", "gotoStart", "gotoEnd", "gotoPrevious"
+# 	for i, method in enumerate(methods, start=1):
+# 		getattr(cursor, method)()
+# 		sheet[i, 0].setString("{}: {}".format(method, getRangeAddressesAsString(cursor)))	
 	
 # 	i = 0
 # 	sheet[i, 0].setString("Start: {}".format(getRangeAddressesAsString(cursor)))
