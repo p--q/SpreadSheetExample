@@ -24,17 +24,17 @@ def macro():
 	# *** Insert a TEXT CELL using the XText interface ***
 	cell = sheet[3, 0]  # A4セルを取得。
 	textcursor = cell.createTextCursor()  # A1セルのテキストカーサーを取得。
-	cell.insertString(textcursor, txt, True)  # Falseで追記。Trueで置換。
+	cell.insertString(textcursor, txt, False)  # Falseで追記。Trueで置換。
 	# *** Change cell properties ***
 	color = 0x00FF00 if flag else 0xFF4040
-	cell.setPropertyValue("CellBackColor", color)
+	cell.setPropertyValue("CellBackColor", color)  # セルの背景色の変更。
 	# *** Accessing a CELL RANGE ***
 	# Accessing a cell range over its position.
-	cellrange = sheet[:2, 2:4]
+	cellrange = sheet[:2, 2:4]  # 行インデックス0以上2未満、列インデックス2以上4未満のセル範囲。
 	# Change properties of the range.
-	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
+	cellrange.setPropertyValue("CellBackColor", 0x8080FF)  # セルの背景色の変更。
 	# Accessing a cell range over its name.
-	cellrange = sheet["C4:D5"] 
+	cellrange = sheet["C4:D5"]  # C4を左上端、D5を右下端とするセル範囲。
 	# Change properties of the range.
 	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
 	# *** Using the CELL CURSOR to add some data below of the filled area ***
