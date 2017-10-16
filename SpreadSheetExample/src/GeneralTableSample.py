@@ -36,12 +36,12 @@ def macro():
 	# Accessing a cell range over its name.
 	cellrange = sheet["C4:D5"]  # C4を左上端、D5を右下端とするセル範囲。
 	# Change properties of the range.
-	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
+	cellrange.setPropertyValue("CellBackColor", 0xFFFF80) # セルの背景色の変更。
 	# *** Using the CELL CURSOR to add some data below of the filled area ***
-	cell = sheet["A1"]
-	cursor = sheet.createCursorByRange(cell)
+	cell = sheet["A1"]  # A1セル。
+	cursor = sheet.createCursorByRange(cell)  # A1セルをセル範囲としるセルカーサーを取得。
 	# Move to the last filled cell.
-	cursor.gotoEnd()
+	cursor.gotoEnd()  # セルカーサーを
 	# Move one row down.
 # 	cursor.gotoOffset(*reversed([1, 0])) # gotoOffset(ColumnOffset, RowOffset)
 	cursor.gotoOffset(*(1, 0)[::-1])
