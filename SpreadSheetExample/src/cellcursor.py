@@ -6,7 +6,8 @@ def macro():
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
 	sheet.clearContents(511)  # シートのすべてを削除。
-	cursor = sheet.createCursorByRange(sheet["C5:E4"])  # セル範囲を指定してセルカーサーを取得。
+# 	cursor = sheet.createCursorByRange(sheet["C5:E4"])  # セル範囲を指定してセルカーサーを取得。-2,-1オフセット後gotoEndとするとA2になる。
+	cursor = sheet.createCursorByRange(sheet["D5:F4"])  # セル範囲を指定してセルカーサーを取得。
 	cursor.setPropertyValue("CellBackColor", 0x8080FF)  # セルカーサーの範囲に色をつける。
 	sheet[0, 0].setString("Initial range: {}".format(getRangeAddressesAsString(cursor)))
 	cursor.gotoOffset(*(-2, -1)[::-1])  # セル範囲を相対的に移動させる。
@@ -22,7 +23,29 @@ def macro():
 	cursor.gotoEndOfUsedArea(False)
 	sheet[7, 0].setString("gotoEndOfUsedArea(False): {}".format(getRangeAddressesAsString(cursor)))	
 	
+	# C列の最終使用行を求める。
+	cursor = sheet.createCursor()
+	cursor.gotoEndOfUsedArea(False)
+	usedrowindex = cursor.getRangeAddress().EndRow  # シート全体の使用最終行インデックスを取得。
+	columnrange = sheet["{0}1:{0}{1}".format("C", usedrowindex+1)]  # C列のセル範囲を取得。
+	columndata = columnrange.getDataArray()
+	for i in range(usedrowindex, -2, -1):
+		if columndata[i][0]:
+			break
+	sheet[8, 0].setString("Last used row index in column C: {}".format(i))  # ないときは-1を返す。
 	
+	# 行インデックス6の最終使用列を求める。
+	cursor = sheet.createCursor()
+	cursor.gotoEndOfUsedArea(False)
+	usedcolumnindex = cursor.getRangeAddress().EndColumn  # シート全体の使用最終行インデックスを取得。
+	rowrange = sheet[6, :usedcolumnindex+1]  # C列のセル範囲を取得。
+	rowdata = rowrange.getDataArray()[0]
+	for i in range(usedcolumnindex, -2, -1):
+		if rowdata[i]:
+			break
+	sheet[9, 0].setString("Last used columns index in row 7: {}".format(i))  # ないときは-1を返す。
+	
+
 	
 	
 	
