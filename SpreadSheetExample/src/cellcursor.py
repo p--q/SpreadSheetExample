@@ -5,87 +5,59 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
-	sheet.clearContents(511)  # シートのすべてを削除。
-# 	cursor = sheet.createCursorByRange(sheet["C5:E4"])  # セル範囲を指定してセルカーサーを取得。-2,-1オフセット後gotoEndとするとA2になる。
-	cursor = sheet.createCursorByRange(sheet["D5:F4"])  # セル範囲を指定してセルカーサーを取得。
-	cursor.setPropertyValue("CellBackColor", 0x8080FF)  # セルカーサーの範囲に色をつける。
+	sheet.clearContents(511)  # シートのセルの内容をすべてを削除。
+	cursor = sheet.createCursorByRange(sheet["D4:F5"])  # セル範囲を指定してセルカーサーを取得。-2,-1オフセット後gotoEndとするとA2になる。
+# 	cursor = sheet.createCursorByRange(sheet["D4:F5"])  # セル範囲を指定してセルカーサーを取得。
+	cursor.setPropertyValue("CellBackColor", 0x8080FF)  # セルカーサーの範囲に紫色をつける。
 	sheet[0, 0].setString("Initial range: {}".format(getRangeAddressesAsString(cursor)))
 	cursor.gotoOffset(*(-2, -1)[::-1])  # セル範囲を相対的に移動させる。
 # 	cursor.gotoOffset(*(5, 4)[::-1])  # セル範囲を相対的に移動させる。
-	cursor.setPropertyValue("CellBackColor", 0xFFFF80)  # セルカーサーの範囲に色をつける。
+	cursor.setPropertyValue("CellBackColor", 0xFFFF80)  # セルカーサーの範囲に黄色をつける。
 	sheet[1, 0].setString("gotoOffset(*(-2, -1)[::-1]): {}".format(getRangeAddressesAsString(cursor)))
-	cursor.gotoEnd()
+	cursor.gotoEnd()  # セルカーサーの範囲の右下のセルをセル範囲にする。
 	sheet[3, 0].setString("gotoEnd(): {}".format(getRangeAddressesAsString(cursor)))
-	cursor.gotoStartOfUsedArea(False)
+	cursor.gotoStartOfUsedArea(False)  # 使用範囲の左上のセルにセル範囲を変更する。
 	sheet[5, 0].setString("gotoStartOfUsedArea(False): {}".format(getRangeAddressesAsString(cursor)))	
-	sheet[6, 2].setString("C Last Row")
-	sheet[8, 3].setString("D Last Row")
-	cursor.gotoEndOfUsedArea(False)
+	sheet[6, 2].setString("C Last Row")  # C7に文字列を入れる。
+	sheet[8, 3].setString("D Last Row")  # D9に文字列を入れる。
+	cursor.gotoEndOfUsedArea(False)  # 使用範囲の右下のセルにセル範囲を変更する。
 	sheet[7, 0].setString("gotoEndOfUsedArea(False): {}".format(getRangeAddressesAsString(cursor)))	
 	
 	# C列の最終使用行を求める。
-	cursor = sheet.createCursor()
-	cursor.gotoEndOfUsedArea(False)
+# 	cursor = sheet.createCursor()  # セルカーサーの取得。
+# 	cursor.gotoEndOfUsedArea(False)  # シート上の使用範囲の右下のセルを取得。
 	usedrowindex = cursor.getRangeAddress().EndRow  # シート全体の使用最終行インデックスを取得。
 	columnrange = sheet["{0}1:{0}{1}".format("C", usedrowindex+1)]  # C列のセル範囲を取得。
-	columndata = columnrange.getDataArray()
-	for i in range(usedrowindex, -2, -1):
+	columndata = columnrange.getDataArray()  # C列の最大使用範囲のデータを取得。
+	for i in range(usedrowindex, -2, -1):  # 最大使用範囲の行から上にデータの有無をみる。
 		if columndata[i][0]:
-			break
+			break  # データがあるセルにたどりついたらfor文を出る。
 	sheet[8, 0].setString("Last used row index in column C: {}".format(i))  # ないときは-1を返す。
 	
-	# 行インデックス6の最終使用列を求める。
-	cursor = sheet.createCursor()
-	cursor.gotoEndOfUsedArea(False)
+	# 行インデックス6(行7)の最終使用列を求める。
+# 	cursor = sheet.createCursor()  # セルカーサーの取得。
+# 	cursor.gotoEndOfUsedArea(False)  # シート上の使用範囲の右下のセルを取得。
 	usedcolumnindex = cursor.getRangeAddress().EndColumn  # シート全体の使用最終行インデックスを取得。
-	rowrange = sheet[6, :usedcolumnindex+1]  # C列のセル範囲を取得。
+	rowrange = sheet[6, :usedcolumnindex+1]  # 行7のセル範囲を取得。
 	rowdata = rowrange.getDataArray()[0]
-	for i in range(usedcolumnindex, -2, -1):
+	for i in range(usedcolumnindex, -2, -1):  # 最大使用範囲の列から左にデータの有無をみる。
 		if rowdata[i]:
-			break
+			break  # データがあるセルにたどりついたらfor文を出る。
 	sheet[9, 0].setString("Last used columns index in row 7: {}".format(i))  # ないときは-1を返す。
 	
-
 	
-	
-	
-	
-# 	methods = "gotoNext", "gotoEnd", "gotoPrevious", "gotoStart", "gotoEnd"
-# 	for i, method in enumerate(methods, start=1):
-# 		getattr(cursor, method)()
-# 		sheet[i, 0].setString("{}: {}".format(method, getRangeAddressesAsString(cursor)))
-# 	cursor = sheet.createCursorByRange(sheet["B5:D4"]) 
-# 	methods = "gotoNext", "gotoEnd", "gotoStart", "gotoEnd", "gotoPrevious"
-# 	for i, method in enumerate(methods, start=1):
-# 		getattr(cursor, method)()
-# 		sheet[i, 0].setString("{}: {}".format(method, getRangeAddressesAsString(cursor)))	
-	
-# 	i = 0
-# 	sheet[i, 0].setString("Start: {}".format(getRangeAddressesAsString(cursor)))
-# 	
-# 	i += 1
-# 	cursor.gotoEnd()
-# 	sheet[i, 0].setString("gotoEnd: {}".format(getRangeAddressesAsString(cursor)))
-# 						
-# 	i += 1
-# 	cursor.gotoPrevious()	
-# 	sheet[i, 0].setString("gotoPrevious: {}".format(getRangeAddressesAsString(cursor)))
-# 	
-# 	i += 1
-# 	cursor.gotoNext()	
-# 	sheet[i, 0].setString("gotoPrevious: {}".format(getRangeAddressesAsString(cursor)))	
-	
-	
+	controller = doc.getCurrentController()  # ドキュメントのコントローラ。
+	controller.select(sheet[1:3, :2])  # A2:B3を選択する。
 	
 	
 	sheet[:, 0].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
-def getRangeAddressesAsString(rng):  # 文字列アドレスを返す。
-	absolutename = rng.getPropertyValue("AbsoluteName") # セル範囲コレックションは$Sheet1.$A$4:$A$6,$Sheet1.$B$4という形式で返る。
+def getRangeAddressesAsString(rng):  # セルまたはセル範囲、セル範囲コレクションから文字列アドレスを返す。
+	absolutename = rng.getPropertyValue("AbsoluteName") # セル範囲コレクションは$Sheet1.$A$4:$A$6,$Sheet1.$B$4という形式で返る。
 	names = absolutename.replace("$", "").split(",")  # $を削除してセル範囲のリストにする。
-	addresses = []
-	for name in names:
+	addresses = []  # 出力するアドレスを入れるリスト。
+	for name in names:  # 各セル範囲について
 		addresses.append(name.split(".")[-1])  # シート名を削除する。
-	return ", ".join(addresses)
+	return ", ".join(addresses)  # コンマでつなげて出力。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
