@@ -2,11 +2,23 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro(arg):
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
-	sheets = doc.getSheets()  # シートコレクション。
-	sheet = sheets[0]  # 最初のシート。
-	sheet[0, 0].setString(getRangeAddressesAsString(arg))
+# 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
+	arg.setString(getRangeAddressesAsString(arg))
 	
+# 	controller = doc.getCurrentController()  # ドキュメントのコントローラ。
+# 	controller.select(arg)  # A2:B3を選択する。
+	
+	
+	
+# 	frame = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()
+# 	dispatcher = ctx.getServiceManager().createInstanceWithContext("com.sun.star.frame.DispatchHelper",ctx)
+# 	dispatcher.executeDispatch(frame, ".uno:Cancel", "", 0, ())
+# 
+# 	
+# 	dispatcher.executeDispatch(frame, ".uno:SetInputMode", "", 0, ())
 	
 # 	sheet = sheets[0]  # 最初のシート。
 # 	sheet.clearContents(511)  # シートのセルの内容をすべてを削除。
@@ -50,9 +62,9 @@ def macro(arg):
 # 	sheet[9, 0].setString("Last used columns index in row 7: {}".format(i))  # ないときは-1を返す。
 # 	
 # 	
-	controller = doc.getCurrentController()  # ドキュメントのコントローラ。
+# 	controller = doc.getCurrentController()  # ドキュメントのコントローラ。
 # 	controller.select(sheet[1:3, :2])  # A2:B3を選択する。
-	controller.select(arg)  # A2:B3を選択する。
+# 	controller.select(arg)  # A2:B3を選択する。
 
 # 	sheet[:, 0].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 def getRangeAddressesAsString(rng):  # セルまたはセル範囲、セル範囲コレクションから文字列アドレスを返す。
