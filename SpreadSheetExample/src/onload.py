@@ -39,6 +39,12 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 # 	@enableRemoteDebugging  # ダブルクリックで有効にするとLibreOfficeがクラッシュする。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
 		target = enhancedmouseevent.Target  # ターゲットを取得。
+# 		doc = XSCRIPTCONTEXT.getDocument()
+# 		sheets = doc.getSheets()  # シートコレクション。
+# 		sheet = sheets[0]  # 最初のシート。
+# 		sheet[0, 0].setString(str(target))
+		
+		
 		if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 			if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 				c = enhancedmouseevent.ClickCount  # クリック数を取得。
@@ -51,8 +57,9 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					else:  # returnしていないので3クリック以上できる。
 						target.setPropertyValue("CellBackColor", 0xFFFF80)  # 背景を黄色にする。
 		return True  # Falseを返すと右クリックメニューがでてこなくなる。
+# 	@enableRemoteDebugging
 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
-		return True
+		return True  # Trueでイベントを次のハンドラに渡す。
 	def disposing(self, eventobject):
 		pass
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		

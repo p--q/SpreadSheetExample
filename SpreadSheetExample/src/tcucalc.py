@@ -7,6 +7,10 @@ def macro():
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+	
+	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+	
+	
 	sheets = doc.getSheets()  # シートコレクション。
 	sheet = sheets[0]  # 最初のシート。
 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
@@ -38,8 +42,8 @@ def macro():
 # 	tcu.wtree(charts)  # チャートコレクション
 # 	tcu.wtree(controller)  # コントローラー
 # 	tcu.wtree(celladdressconversion)
-	tcu.wtree(cellrangeaddressconversion)
-
+# 	tcu.wtree(cellrangeaddressconversion)
+	tcu.wtree(docframe)
 
 
 

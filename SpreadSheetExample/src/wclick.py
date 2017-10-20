@@ -1,12 +1,9 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-def macro(arg):
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	tcu.wtree(arg)
-	arg.setString(getRangeAddressesAsString(arg))
+def macro(cell):
+	cell.setString(getRangeAddressesAsString(cell))
+	return True  # セル編集モードにしない。
 def getRangeAddressesAsString(rng):  # セルまたはセル範囲、セル範囲コレクションから文字列アドレスを返す。
 	absolutename = rng.getPropertyValue("AbsoluteName") # セル範囲コレクションは$Sheet1.$A$4:$A$6,$Sheet1.$B$4という形式で返る。
 	names = absolutename.replace("$", "").split(",")  # $を削除してセル範囲のリストにする。
