@@ -1,9 +1,9 @@
-#!/opt/libreoffice5.2/program/python
+#!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.ui import XContextMenuInterceptor
-from com.sun.star.ui import ActionTriggerSeparatorType
-from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED, IGNORED
+from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
+from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED  # enum
 def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
 	def wrapper(*args, **kwargs):
 		frame = None
@@ -31,43 +31,30 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 		except:
 			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
 	return wrapper
-def macro():  # マクロで実行するとinput()待ちでフリーズする。
-	
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-# 	global tcu
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	
-	
+def macro():  
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	contextmenuinterceptor = ContextMenuInterceptor()
 	controller.registerContextMenuInterceptor(contextmenuinterceptor)
-	print("\n ... all context menus of the created document frame contains now a 'Help' entry with the\n	 submenus 'Content', 'Help Agent' and 'Tips'.\n\nPress 'Return' to remove the context menu interceptor and finish the example!")
-	input()
-	controller.releaseContextMenuInterceptor(contextmenuinterceptor)
-	print(" ... context menu interceptor removed!")
-	if hasattr(doc, "close"):
-		doc.close(False)
-	else:
-		doc.dispose()
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 # 	@enableRemoteDebugging
-	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # com.sun.star.ui.ActionTriggerにsetPropertyValuesでは設定できない。エラーも出ない。
+	def notifyContextMenuExecute(self, contextmenuexecuteevent): 
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		addMenuentry = menuentryCreator(contextmenu)
-		submenucontainer = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer") 
-		addMenuentry(submenucontainer, "ActionTrigger", 0, {"Text": "Content", "CommandURL": ".uno:HelpIndex", "HelpURL": "5401"})
-		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Tips", "CommandURL": ".uno:HelpTip", "HelpURL": "5404"})
-		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "Help", "CommandURL": "slot:5410", "HelpURL": "5410", "SubContainer": submenucontainer})
+		submenucontainer2 = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer") 
+		addMenuentry(submenucontainer2, "ActionTrigger", 0, {"Text": "Content2", "CommandURL": ".uno:HelpIndex", "HelpURL": "5401"})
+		scriptingurl = "vnd.sun.star.script:SpreadSheetExample|SpreadSheetExample|src|etc|calcmacro.py$macro?language=Python&location=user"
+		addMenuentry(submenucontainer2, "ActionTrigger", 1, {"Text": "getStringAddress", "CommandURL": scriptingurl})
+		submenucontainer1 = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer") 
+		addMenuentry(submenucontainer1, "ActionTrigger", 0, {"Text": "Menu2", "SubContainer": submenucontainer2})		
+		addMenuentry(submenucontainer1, "ActionTrigger", 1, {"Text": "Content1", "CommandURL": ".uno:HelpIndex", "HelpURL": "5401"})
+		addMenuentry(submenucontainer1, "ActionTrigger", 2, {"Text": "Tips1", "CommandURL": ".uno:HelpTip", "HelpURL": "5404"})		
+		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "Menu1", "SubContainer": submenucontainer1})
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
 		return EXECUTE_MODIFIED
-def menuentryCreator(contextmenu):
-	def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書。
-		menuentry = contextmenu.createInstance("com.sun.star.ui.{}".format(menutype))
-		[menuentry.setPropertyValue(key, val) for key, val in props.items()]  #setPropertyValuesでは設定できない。エラーも出ない。
-		menucontainer.insertByIndex(i, menuentry)  # submenucontainer[i]やsubmenucontainer[i:i]は不可。
-	return addMenuentry
+def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書。menutypeはActionTriggerかActionTriggerSeparator。
+	menuentry = menucontainer.createInstance("com.sun.star.ui.{}".format(menutype))  # ActionTriggerContainerからインスタンス化する。
+	[menuentry.setPropertyValue(key, val) for key, val in props.items()]  #setPropertyValuesでは設定できない。エラーも出ない。
+	menucontainer.insertByIndex(i, menuentry)  # submenucontainer[i]やsubmenucontainer[i:i]は不可。挿入以降のメニューコンテナの項目のインデックスは1増える。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
