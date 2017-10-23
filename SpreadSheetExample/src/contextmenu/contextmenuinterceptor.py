@@ -46,19 +46,19 @@ def macro():
 	
 	controller.registerContextMenuInterceptor(contextmenuinterceptor)
 	controller.registerContextMenuInterceptor(contextmenuinterceptor2)
-# 	print("\n ... all context menus of the created document frame contains now a 'Help' entry with the\n	 submenus 'Content', 'Help Agent' and 'Tips'.\n\nPress 'Return' to remove the context menu interceptor and finish the example!")
-# 	input()
-# 	controller.releaseContextMenuInterceptor(contextmenuinterceptor)
-# 	controller.releaseContextMenuInterceptor(contextmenuinterceptor2)
-# 	print(" ... context menu interceptor removed!")
-# 	if hasattr(doc, "close"):
-# 		doc.close(False)
-# 	else:
-# 		doc.dispose()
+	print("\n ... all context menus of the created document frame contains now a 'Help' entry with the\n	 submenus 'Content', 'Help Agent' and 'Tips'.\n\nPress 'Return' to remove the context menu interceptor and finish the example!")
+	input()
+	controller.releaseContextMenuInterceptor(contextmenuinterceptor)
+	controller.releaseContextMenuInterceptor(contextmenuinterceptor2)
+	print(" ... context menu interceptor removed!")
+	if hasattr(doc, "close"):
+		doc.close(False)
+	else:
+		doc.dispose()
 # 		
 		
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
-# 	@enableRemoteDebugging
+	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
 		submenucontainer = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer") 
