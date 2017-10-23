@@ -19,6 +19,7 @@ def macro(documentevent):  # 引数はcom.sun.star.document.DocumentEvent Struct
 	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。
 	formatstring = "YYYY-MM-DD"  # フォーマット。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。
+	global formatkey
 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。
 
 
