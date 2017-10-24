@@ -46,10 +46,13 @@ def setDate(day):  # セルに日付を入力する。
 def formatkeyCreator(doc):
 	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
 # 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。	
-# 	locale = Locale(Language="de", Country="DE")  # フォーマット一覧をくくる言語と国を設定。	
-
+	locale = Locale(Language="de", Country="DE")  # フォーマット一覧をくくる言語と国を設定。	
+# 	locale = Locale(Language="en", Country="US")  # フォーマット一覧をくくる言語と国を設定。
 	def getFormatKey(formatstring):  # formatstringからFormatKeyを返す。
-		return numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。	
+		formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。	
+		if formatkey == -1:  # デフォルトのフォーマットにformatstringがないとき。
+			formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと。
+		return formatkey
 	return getFormatKey
 def getFirtstCell(rng):  # セル範囲の左上のセルを返す。引数はセルまたはセル範囲またはセル範囲コレクション。
 	if rng.supportsService("com.sun.star.sheet.SheetCellRanges"):  # セル範囲コレクションのとき
