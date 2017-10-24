@@ -3,7 +3,7 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import datetime
 import os
-from functools import partial
+from functools import wraps
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
@@ -22,6 +22,16 @@ def macro(documentevent):  # 引数はcom.sun.star.document.DocumentEvent Struct
 # 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。
 # 	global formatkey
 # 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。
+	formatNumber(formatkey)
+
+def formatNumber(formatkey):
+	def decorate(func):
+		@wraps(func)
+		def wrapper():
+			
+			return func()
+		return wrapper
+	return decorate
 
 
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
@@ -37,6 +47,7 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コン
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # アクショントリガーコンテナのインデックス1にセパレーターを挿入。
 		return EXECUTE_MODIFIED  # このContextMenuInterceptorでコンテクストメニューのカスタマイズを終わらす。
 
+@formatNumber(formatkey)
 def getToday():
 	doc = XSCRIPTCONTEXT.getDocument()
 	selection = doc.getCurrentSelection()	
