@@ -8,6 +8,7 @@ from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
 from com.sun.star.lang import Locale
+global XSCRIPTCONTEXT
 def macro(documentevent):  # 引数はcom.sun.star.document.DocumentEvent Struct。
 	doc = documentevent.Source  # ドキュメントの取得。
 	sheets = doc.getSheets()  # シートコレクションの取得。
@@ -16,11 +17,11 @@ def macro(documentevent):  # 引数はcom.sun.star.document.DocumentEvent Struct
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.registerContextMenuInterceptor(ContextMenuInterceptor())  # コントローラにContextMenuInterceptorを登録する。
 
-	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。
-	formatstring = "YYYY-MM-DD"  # フォーマット。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
-	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。
-	global formatkey
-	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。
+# 	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。
+# 	formatstring = "YYYY-MM-DD"  # フォーマット。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
+# 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。
+# 	global formatkey
+# 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。
 
 
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
@@ -49,6 +50,11 @@ def getToday():
 # 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。
 
 	firstcell.setPropertyValue("NumberFormat", formatkey)  # セルの書式を設定。
+	
+def getFormatKey(formatstring):  # formatstringからFormatKeyを返す。
+	numberformats = XSCRIPTCONTEXT.getDocument().getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
+	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。
+	return numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。	
 def getFirtstCell(rng):  # セル範囲の左上のセルを返す。引数はセルまたはセル範囲またはセル範囲コレクション。
 	if rng.supportsService("com.sun.star.sheet.SheetCellRanges"):  # セル範囲コレクションのとき
 		rng = rng[0]  # 最初のセル範囲のみ取得。
