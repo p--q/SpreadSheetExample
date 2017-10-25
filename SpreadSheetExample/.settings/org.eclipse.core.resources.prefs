@@ -9,6 +9,7 @@ encoding//src/contextmenu/nestedcontextmenuinterceptor.py=utf-8
 encoding//src/contextmenu/nondispatchcommand.py=utf-8
 encoding//src/etc/calcmacro.py=utf-8
 encoding//src/etc/cellcursor.py=utf-8
+encoding//src/etc/celldate.py=utf-8
 encoding//src/etc/endcell.py=utf-8
 encoding//src/etc/getcelladdress.py=utf-8
 encoding//src/etc/onload.py=utf-8
