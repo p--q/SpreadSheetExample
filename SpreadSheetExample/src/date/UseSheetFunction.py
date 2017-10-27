@@ -17,6 +17,10 @@ def macro():
 	sheet["B1"].setValue(today)
 	sheet["B1"].setPropertyValue("NumberFormat", createFormatKey("YYYY-MM-DD"))  # セルの書式を設定。	
 	year = functionaccess.callFunction("Year", (sheet["B1"],))  # タプルの入れ子で返ってくる。
+
+# 	year = functionaccess.callFunction("Year", sheet["B1"])
+	
+	
 	sheet["B2"].setString(str(year))
 	sheet["B3"].setValue(year[0][0])
 	sheet["A1"].setString("Today()")
