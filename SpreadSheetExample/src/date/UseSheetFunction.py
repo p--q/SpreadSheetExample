@@ -13,25 +13,45 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。		
 	functionaccess = smgr.createInstanceWithContext("com.sun.star.sheet.FunctionAccess", ctx)
-	sheet["A1"].setString("Sheet Function")
-	sheet["B1"].setString("Return Value")
-	sheet["C1"].setString("Format or Formula")
-	sheet["D1"].setString("Formatted")
-	today = functionaccess.callFunction("Today", ())  # 引数のない関数の例。
-	sheet["A2"].setString("Today()")
-	sheet["B2"].setValue(today)
-	sheet["C2"].setString("YYYY-MM-DD")
-	sheet["D2"].setValue(today)
-	sheet["D2"].setPropertyValue("NumberFormat", createFormatKey("YYYY-MM-DD"))  # セルの書式を設定。	
-	year = functionaccess.callFunction("Year", (sheet["B2"],))  # タプルの入れ子で返ってくる。
-	sheet["A3"].setString('year = Year("B2")')
-	sheet["B3"].setString(str(year))
-	sheet["C3"].setString("year[0][0]")
-	sheet["D3"].setValue(year[0][0])
+	headers = "Sheet Function", "Return Type", "Return Value", "Format or Formula", "Formatted Value"
+	for i, header in enumerate(headers):
+		sheet[0, i].setString(header)
+	today = functionaccess.callFunction("TODAY", ())  # 引数のないスプレッドシート関数。
+	txts = "TODAY()", type(today).__name__, str(today), "YYYY-MM-DD"
+	for i, t in enumerate(txts):
+		sheet[1, i].setString(t)
+	cell = sheet[1, i+1]
+	cell.setValue(today)
+	cell.setPropertyValue("NumberFormat", createFormatKey(t))  # セルの書式を設定。
+	
+# 	cell = sheet[1, i+1]	
+	cell2 = sheet["E2"]	
+	year = functionaccess.callFunction("YEAR", (cell2,))  # 引数のあるスプレッドシート関数。タプルの入れ子で返ってくる。
+	
+	print(cell)
+# 	corereflection = smgr.createInstanceWithContext("com.sun.star.reflection.CoreReflection", ctx)
+# 	print(corereflection.getType(cell).getTypeClass())
+	
+	
+	sheet["A3"].setString('year = YEAR("C2")')
+	sheet["B3"].setString(type(year).__name__)
+	sheet["C3"].setString(str(year))
+	sheet["D3"].setString("year[0][0]")
+	sheet["E3"].setValue(year[0][0])
+	now = functionaccess.callFunction("NOW", ())  # 引数のない関数の例。
+	sheet["A4"].setString("NOW()")
+	sheet["B4"].setString(type(now).__name__)
+	sheet["C4"].setString(str(now))
+	sheet["D4"].setString("YYYY/M/D H:MM:SS")
+	sheet["E4"].setValue(now)
+	sheet["E4"].setPropertyValue("NumberFormat", createFormatKey("YYYY/M/D H:MM:SS"))  # セルの書式を設定。	
+	
+	
+	
 # 	sheet["A1"].setString("Today()")
 # 	sheet["A2"].setString("year=Year(B1)")
 # 	sheet["A3"].setString("year[0][0]")
-	sheet["A:D"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
+	sheet["A:E"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 def formatkeyCreator(doc):  # ドキュメントを引数にする。
 	def createFormatKey(formatstring):  # formatstringの書式はLocalによって異なる。	
 		numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。

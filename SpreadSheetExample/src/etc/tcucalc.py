@@ -43,8 +43,11 @@ def macro():
 # 	tcu.wtree(controller)  # コントローラー
 # 	tcu.wtree(celladdressconversion)
 # 	tcu.wtree(cellrangeaddressconversion)
-	tcu.wtree(docframe)
+# 	tcu.wtree(docframe)
 
+
+	tcu.wtree(sheet["A1"])
+	print(sheet["A1"])
 
 
 # 	prop = PropertyValue(Name="Hidden",Value=True)
