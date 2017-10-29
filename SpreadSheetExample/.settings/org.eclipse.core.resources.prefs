@@ -1,12 +1,15 @@
 eclipse.preferences.version=1
 encoding//src/GeneralTableSample.py=utf-8
 encoding//src/SpreadsheetSample.py=utf-8
+encoding//src/contextmenu/ExtractContexMenuItems.py=utf-8
 encoding//src/contextmenu/contextmenuinterceptor.py=utf-8
 encoding//src/contextmenu/cotextmenuembedded.py=utf-8
 encoding//src/contextmenu/cotextmenuembedded2.py=utf-8
 encoding//src/contextmenu/cotextmenuembedded3.py=utf-8
 encoding//src/contextmenu/nestedcontextmenuinterceptor.py=utf-8
 encoding//src/contextmenu/nondispatchcommand.py=utf-8
+encoding//src/date/CellToDateObject.py=utf-8
+encoding//src/date/CellToDateObject2.py=utf-8
 encoding//src/date/GetDateFromCell.py=utf-8
 encoding//src/date/InputDateToCell.py=utf-8
 encoding//src/date/UseSheetFunction.py=utf-8

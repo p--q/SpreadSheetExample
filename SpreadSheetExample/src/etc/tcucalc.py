@@ -46,8 +46,8 @@ def macro():
 # 	tcu.wtree(docframe)
 
 
-	tcu.wtree(sheet["A1"])
-	print(sheet["A1"])
+# 	tcu.wtree(sheet["A1"])
+# 	print(sheet["A1"])
 
 
 # 	prop = PropertyValue(Name="Hidden",Value=True)
@@ -64,8 +64,13 @@ def macro():
 # 	tcu.wcompare(controller, wcontroller)
 # 	tcu.wcompare(cells, cellrangeaddress)
 
+# 	tcu.wcompare(sheet["A1"], sheet[0, 0])  # どちらもセル。
+# 	tcu.wcompare(sheet["A1"], sheet[0:1, 0])  # セルとセル範囲
+# 	tcu.wcompare(sheet[0, 0], sheet[0:1, 0])  # セルとセル範囲
 
-
+	print(sheet["A1"])
+	print(sheet[0, 0])
+	print(sheet[0:1, 0])
 
 
 

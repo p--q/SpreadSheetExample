@@ -3,7 +3,6 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.lang import Locale  # Struct
 from com.sun.star.sheet import CellFlags  # 定数
-global XSCRIPTCONTEXT
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	createFormatKey = formatkeyCreator(doc)
@@ -20,37 +19,20 @@ def macro():
 	txts = "TODAY()", type(today).__name__, str(today), "YYYY-MM-DD"
 	for i, t in enumerate(txts):
 		sheet[1, i].setString(t)
-	cell = sheet[1, i+1]
+	cell = castToXCellRange(sheet[1, i+1])	 # 次にcallFunction()の引数にいれるために、com.sun.star.table.XCellRange型でセルを取得する。
 	cell.setValue(today)
 	cell.setPropertyValue("NumberFormat", createFormatKey(t))  # セルの書式を設定。
-	
-# 	cell = sheet[1, i+1]	
-	cell2 = sheet["E2"]	
-	year = functionaccess.callFunction("YEAR", (cell2,))  # 引数のあるスプレッドシート関数。タプルの入れ子で返ってくる。
-	
-	print(cell)
-# 	corereflection = smgr.createInstanceWithContext("com.sun.star.reflection.CoreReflection", ctx)
-# 	print(corereflection.getType(cell).getTypeClass())
-	
-	
-	sheet["A3"].setString('year = YEAR("C2")')
-	sheet["B3"].setString(type(year).__name__)
-	sheet["C3"].setString(str(year))
-	sheet["D3"].setString("year[0][0]")
-	sheet["E3"].setValue(year[0][0])
+	year = functionaccess.callFunction("YEAR", (cell,))  # 引数のあるスプレッドシート関数。タプルの入れ子で返ってくる。
+	txts = 'year = YEAR("C2")', type(year).__name__, str(year), "year[0][0]"
+	for i, t in enumerate(txts):
+		sheet[2, i].setString(t)	
+	sheet[2, i+1].setValue(year[0][0])
 	now = functionaccess.callFunction("NOW", ())  # 引数のない関数の例。
-	sheet["A4"].setString("NOW()")
-	sheet["B4"].setString(type(now).__name__)
-	sheet["C4"].setString(str(now))
-	sheet["D4"].setString("YYYY/M/D H:MM:SS")
-	sheet["E4"].setValue(now)
-	sheet["E4"].setPropertyValue("NumberFormat", createFormatKey("YYYY/M/D H:MM:SS"))  # セルの書式を設定。	
-	
-	
-	
-# 	sheet["A1"].setString("Today()")
-# 	sheet["A2"].setString("year=Year(B1)")
-# 	sheet["A3"].setString("year[0][0]")
+	txts = "NOW()", type(now).__name__, str(now), "YYYY/M/D H:MM:SS"
+	for i, t in enumerate(txts):
+		sheet[3, i].setString(t)	
+	sheet[3, i+1].setValue(now)	
+	sheet[3, i+1].setPropertyValue("NumberFormat", createFormatKey(t))  # セルの書式を設定。
 	sheet["A:E"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 def formatkeyCreator(doc):  # ドキュメントを引数にする。
 	def createFormatKey(formatstring):  # formatstringの書式はLocalによって異なる。	
@@ -61,6 +43,14 @@ def formatkeyCreator(doc):  # ドキュメントを引数にする。
 			formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと。	
 		return formatkey
 	return createFormatKey
+def castToXCellRange(cell):  # セルをcom.sun.star.table.XCell型からcom.sun.star.table.XCellRange型に変換する。
+	if cell.supportsService("com.sun.star.sheet.SheetCell"):  # 引数がセルのとき
+		absolutename = cell.getPropertyValue("AbsoluteName")  # AbsoluteNameを取得。
+		stringaddress = absolutename.split(".")[-1].replace("$", "")  # シート名を削除後$も削除して、セルの文字列アドレスを取得。
+		sheet = cell.getSpreadsheet()  # セルのシートを取得。
+		return sheet[stringaddress]  # com.sun.star.table.XCellRange型のセルを返す。
+	else:
+		raise RuntimeError("The argument of castToXCellRange() must be a cell.")
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。

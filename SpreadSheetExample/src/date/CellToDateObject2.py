@@ -1,48 +1,56 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
+from datetime import datetime
 from com.sun.star.lang import Locale  # Struct
 from com.sun.star.sheet import CellFlags  # 定数
-from com.sun.star.util import NumberFormat  # 定数
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	createFormatKey = formatkeyCreator(doc)
 	sheets = doc.getSheets()  # ドキュメントのシートコレクションを取得。。
 	sheet = sheets[0]  # シートコレクションのインデックス0のシートを取得。
 	sheet.clearContents(CellFlags.VALUE+CellFlags.DATETIME+CellFlags.STRING+CellFlags.ANNOTATION+CellFlags.FORMULA+CellFlags.HARDATTR+CellFlags.STYLES)  # セルの内容を削除。
-	methods = "getFormula", "getValue", "getString", "getType"  # セルから取得するためのメソッド。
-	sheet[0, 1].setString("Formatted")
-	for i, method in enumerate(methods, start=2):  # 列Cから各methodについて。
-		sheet[0, i].setString("{}()".format(method))	
-	datestring = "2017-10-25"  # 2017-10-25 or 10/25/2017
-	sheet["A2"].setString('sheet["B1"].setFormula("{}")'.format(datestring))
-	cell = sheet["B2"]
-	cell.setFormula(datestring)  # 式で日付を入力する。
-	for i, method in enumerate(methods, start=2):  # 列Cから各methodについて。
-		sheet[1, i].setString(str(getattr(cell, method)()))
-	formatstring = "YYYY-MM-DD"
-	sheet["A3"].setString(formatstring)
-	cell = sheet["B3"]
-	cell.setPropertyValue("NumberFormat", createFormatKey(formatstring))  # セルの書式を設定。	
-	cell.setFormula(datestring)  # 式で日付を入力する。
-	for i, method in enumerate(methods, start=2):  # 列Cから各methodについて。
-		sheet[2, i].setString(str(getattr(cell, method)()))	
-	formatstring = "GE.MM.DD"
-	sheet["A4"].setString(formatstring)
-	cell = sheet["B4"]
-	cell.setFormula(datestring)  # 式で日付を入力する。
-	cell.setPropertyValue("NumberFormat", createFormatKey(formatstring))  # セルの書式を設定。	
-	for i, method in enumerate(methods, start=2):  # 列Cから各methodについて。
-		sheet[3, i].setString(str(getattr(cell, method)()))		
-	sheet["A5"].setString("Standard Date Format")
-	cell = sheet["B5"]
-	cell.setFormula(datestring)  # 式で日付を入力する。
-	numberformats = doc.getNumberFormats()
-	formatkey =numberformats.getStandardFormat(NumberFormat.DATE, Locale())
-	cell.setPropertyValue("NumberFormat", formatkey)  # セルの書式を設定。	
-	for i, method in enumerate(methods, start=2):  # 列Cから各methodについて。
-		sheet[4, i].setString(str(getattr(cell, method)()))	
-	sheet["A:F"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。		
+	functionaccess = smgr.createInstanceWithContext("com.sun.star.sheet.FunctionAccess", ctx)
+	nowvalue = functionaccess.callFunction("NOW", ())  # スプレッドシート関数で今日の日付のシリアル値を取得。
+	sheet["A1"].setValue(nowvalue)  # セルに日付時間シリアル値を入力。
+	sheet["A1"].setPropertyValue("NumberFormat", createFormatKey("GE.MM.DD H:MM:SS"))  # セルの書式を設定。
+	datetimevalue = sheet["A1"].getValue()  # セルから日付-時間シリアル値を取得。
+	year = int(functionaccess.callFunction("YEAR", (datetimevalue,)))  # シリアル値から年を取得。floatで返ってくるので整数にする。
+	month = int(functionaccess.callFunction("MONTH", (datetimevalue,)))  # シリアル値から月を取得。floatで返ってくるので整数にする。
+	day = int(functionaccess.callFunction("DAY", (datetimevalue,)))  # シリアル値から日を取得。floatで返ってくるので整数にする。
+	hour = int(functionaccess.callFunction("HOUR", (datetimevalue,)))  # シリアル値から時を取得。
+	minute = int(functionaccess.callFunction("MINUTE", (datetimevalue,)))  # シリアル値から時を取得。
+	second = int(functionaccess.callFunction("SECOND", (datetimevalue,)))  # シリアル値から時を取得。
+	celldate = datetime(year, month, day, hour, minute, second)  # Pythonのdateオブジェクトにする。
+	sheet["A2"].setString(celldate.isoformat())  # 文字列でセルに書き出す。
+	sheet["A:A"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
+
+	
+	
+# 	headers = "Sheet Function", "Return Type", "Return Value", "Format or Formula", "Formatted Value"
+# 	for i, header in enumerate(headers):
+# 		sheet[0, i].setString(header)
+# 	today = functionaccess.callFunction("TODAY", ())  # 引数のないスプレッドシート関数。
+# 	txts = "TODAY()", type(today).__name__, str(today), "YYYY-MM-DD"
+# 	for i, t in enumerate(txts):
+# 		sheet[1, i].setString(t)
+# 	cell = castToXCellRange(sheet[1, i+1])	 # 次にcallFunction()の引数にいれるために、com.sun.star.table.XCellRange型でセルを取得する。
+# 	cell.setValue(today)
+# 	cell.setPropertyValue("NumberFormat", createFormatKey(t))  # セルの書式を設定。
+# 	year = functionaccess.callFunction("YEAR", (cell,))  # 引数のあるスプレッドシート関数。タプルの入れ子で返ってくる。
+# 	txts = 'year = YEAR("C2")', type(year).__name__, str(year), "year[0][0]"
+# 	for i, t in enumerate(txts):
+# 		sheet[2, i].setString(t)	
+# 	sheet[2, i+1].setValue(year[0][0])
+# 	now = functionaccess.callFunction("NOW", ())  # 引数のない関数の例。
+# 	txts = "NOW()", type(now).__name__, str(now), "YYYY/M/D H:MM:SS"
+# 	for i, t in enumerate(txts):
+# 		sheet[3, i].setString(t)	
+# 	sheet[3, i+1].setValue(now)	
+# 	sheet[3, i+1].setPropertyValue("NumberFormat", createFormatKey(t))  # セルの書式を設定。
+# 	sheet["A:E"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 def formatkeyCreator(doc):  # ドキュメントを引数にする。
 	def createFormatKey(formatstring):  # formatstringの書式はLocalによって異なる。	
 		numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
@@ -52,6 +60,14 @@ def formatkeyCreator(doc):  # ドキュメントを引数にする。
 			formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと。	
 		return formatkey
 	return createFormatKey
+# def castToXCellRange(cell):  # セルをcom.sun.star.table.XCell型からcom.sun.star.table.XCellRange型に変換する。
+# 	if cell.supportsService("com.sun.star.sheet.SheetCell"):  # 引数がセルのとき
+# 		absolutename = cell.getPropertyValue("AbsoluteName")  # AbsoluteNameを取得。
+# 		stringaddress = absolutename.split(".")[-1].replace("$", "")  # シート名を削除後$も削除して、セルの文字列アドレスを取得。
+# 		sheet = cell.getSpreadsheet()  # セルのシートを取得。
+# 		return sheet[stringaddress]  # com.sun.star.table.XCellRange型のセルを返す。
+# 	else:
+# 		raise RuntimeError("The argument of castToXCellRange() must be a cell.")
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
