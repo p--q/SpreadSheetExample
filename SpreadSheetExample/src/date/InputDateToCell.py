@@ -7,10 +7,10 @@ from com.sun.star.sheet import CellFlags  # 定数
 from com.sun.star.util import NumberFormat  # 定数
 global XSCRIPTCONTEXT
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	global tcu
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+# 	global tcu
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 
 	
 	
@@ -24,7 +24,10 @@ def macro():
 	createFormatKey = formatkeyCreator(doc)
 	formatstring = "YYYY-MM-DD"
 	sheet["A2"].setString(formatstring)
+	
 	sheet["B2"].setFormula(datestring)
+# 	sheet["B2"].setString(datestring)
+	
 	sheet["B2"].setPropertyValue("NumberFormat", createFormatKey(formatstring))  # セルの書式を設定。	
 	formatstring = "GE.MM.DD"
 	sheet["A3"].setString(formatstring)
@@ -34,7 +37,7 @@ def macro():
 	sheet["B4"].setFormula(datestring)
 	numberformats = doc.getNumberFormats()
 	
-	tcu.wtree(numberformats)
+# 	tcu.wtree(numberformats)
 	
 	formatkey =numberformats.getStandardFormat(NumberFormat.DATE, Locale())
 	sheet["B4"].setPropertyValue("NumberFormat", formatkey)  # セルの書式を設定。	

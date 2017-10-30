@@ -1,7 +1,7 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-from datetime import date, timedelta 
+# from datetime import date, timedelta 
 import os
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
@@ -17,6 +17,11 @@ def macro(documentevent):  # 引数はcom.sun.star.document.DocumentEvent Struct
 	controller.registerContextMenuInterceptor(ContextMenuInterceptor())  # コントローラにContextMenuInterceptorを登録する。
 	global getFormatKey  # ScriptingURLで呼び出されたマクロで使うためにグローバル変数にする。
 	getFormatKey = formatkeyCreator(doc)  # ドキュメントのformatkeyを返す関数を取得。
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。		
+	functionaccess = smgr.createInstanceWithContext("com.sun.star.sheet.FunctionAccess", ctx)
+	global todayvalue
+	todayvalue = functionaccess.callFunction("TODAY", ())  # スプレッドシート関数で今日の日付のシリアル値を取得。
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
 	def __init__(self):
 		filename = os.path.basename(__file__)  # このファイル名を取得。フルパスは"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
@@ -32,22 +37,20 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コン
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # アクショントリガーコンテナのインデックス1にセパレーターを挿入。
 		return EXECUTE_MODIFIED  # このContextMenuInterceptorでコンテクストメニューのカスタマイズを終わらす。
 def getToday():
-	setDate(date.today())  # 今日の日付を取得。
+	setDate(todayvalue)  # 今日の日付を取得。
 def getYesterday():
-	setDate(date.today()-timedelta(days=1))  # 昨日の日付を取得。
+	setDate(todayvalue-1)  # 昨日の日付を取得。
 def getTomorrow():
-	setDate(date.today()+timedelta(days=1))  # 明日の日付を取得。
-def setDate(day):  # セルに日付を入力する。
+	setDate(todayvalue+1)  # 明日の日付を取得。
+def setDate(datetimevalue):  # セルに日付を入力する。
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	selection = doc.getCurrentSelection()  # セル範囲を取得。
 	firstcell = getFirtstCell(selection)  # セル範囲の左上のセルを取得。
-	firstcell.setFormula(day.isoformat())  # 日付の入力は年-月-日 または 月/日/年 にしないといけないらしい。
+	firstcell.setFormula(datetimevalue)  # 日付の入力は年-月-日 または 月/日/年 にしないといけないらしい。
 	firstcell.setPropertyValue("NumberFormat", getFormatKey("YYYY-MM-DD"))  # セルの書式を設定。	
 def formatkeyCreator(doc):
 	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
-# 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。	
-	locale = Locale(Language="de", Country="DE")  # フォーマット一覧をくくる言語と国を設定。	
-# 	locale = Locale(Language="en", Country="US")  # フォーマット一覧をくくる言語と国を設定。
+	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。	
 	def getFormatKey(formatstring):  # formatstringからFormatKeyを返す。
 		formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。	
 		if formatkey == -1:  # デフォルトのフォーマットにformatstringがないとき。
