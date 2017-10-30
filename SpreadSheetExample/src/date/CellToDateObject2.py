@@ -7,7 +7,7 @@ from com.sun.star.sheet import CellFlags  # 定数
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 	createFormatKey = formatkeyCreator(doc)
-	sheets = doc.getSheets()  # ドキュメントのシートコレクションを取得。。
+	sheets = doc.getSheets()  # ドキュメントのシートコレクションを取得。
 	sheet = sheets[0]  # シートコレクションのインデックス0のシートを取得。
 	sheet.clearContents(CellFlags.VALUE+CellFlags.DATETIME+CellFlags.STRING+CellFlags.ANNOTATION+CellFlags.FORMULA+CellFlags.HARDATTR+CellFlags.STYLES)  # セルの内容を削除。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -23,6 +23,9 @@ def macro():
 	hour = int(functionaccess.callFunction("HOUR", (datetimevalue,)))  # シリアル値から時を取得。
 	minute = int(functionaccess.callFunction("MINUTE", (datetimevalue,)))  # シリアル値から時を取得。
 	second = int(functionaccess.callFunction("SECOND", (datetimevalue,)))  # シリアル値から時を取得。
+	
+# 	print(functionaccess.callFunction("SECOND", (datetimevalue,)))
+	
 	celldate = datetime(year, month, day, hour, minute, second)  # Pythonのdateオブジェクトにする。
 	sheet["A2"].setString(celldate.isoformat())  # 文字列でセルに書き出す。
 	sheet["A:A"].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
