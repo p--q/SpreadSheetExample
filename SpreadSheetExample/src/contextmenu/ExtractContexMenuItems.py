@@ -1,6 +1,7 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
+import os
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
@@ -40,38 +41,74 @@ def macro():
 # 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
-	controller = doc.getCurrentController(doc)  # コントローラーを取得。
+	controller = doc.getCurrentController()  # コントローラーを取得。
 	contextmenuinterceptor = ContextMenuInterceptor()
 	controller.registerContextMenuInterceptor(contextmenuinterceptor)
 	if __name__ == "__main__":  # オートメーションで実行するときのみ。
+		print("Press 'Return' to remove the context menu interceptor.")
 		input()  # 入力待ちにしないとスクリプトが終了してしまう。逆にマクロでinput()はフリーズする。
 		controller.releaseContextMenuInterceptor(contextmenuinterceptor)
-		if hasattr(doc, "close"):
-			doc.close(False)
-		else:
-			doc.dispose()
-
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
-	def __init__(self, doc):
-		self.doc = doc
+	def __init__(self):
+# 		filename = os.path.basename(__file__)  # このファイル名を取得。埋め込みマクロのフルパスは"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
+		if __file__.startswith("vnd.sun.star.tdoc:"):  # このスクリプトをドキュメントに埋め込んでいる時__file__は"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
+			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")
+			macropath = ""
+			flg = False
+			for p in fullpath.split("/"):
+				if p=="Scripts":
+					flg = True
+				if flg:
+					if p=="python":
+						
+				
+				
+				
+			
+			self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=document".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
+		else:
+				
+			
+		# このスクリプトをマイマクロフォルダに入れている時
+# 		vnd.sun.star.script:SpreadSheetExample|SpreadSheetExample|src|etc|calcmacro.py$macro?language=Python&location=user
+		self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=user".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
 # 	@enableRemoteDebugging
-	def notifyContextMenuExecute(self, contextmenuexecuteevent): 
+	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
+		global contextmenu
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		sheets = self.doc.getSheets()  # ドキュメントのシートコレクションを取得。
-		sheet = sheets[0]  # シートコレクションのインデックス0のシートを取得。
-		sheet.clearContents(CellFlags.VALUE+CellFlags.DATETIME+CellFlags.STRING+CellFlags.ANNOTATION+CellFlags.FORMULA+CellFlags.HARDATTR+CellFlags.STYLES)  # セルの内容を削除。
-		for 
-		
-		
-# 		submenucontainer = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer") 
-# 		addMenuentry(submenucontainer, "ActionTrigger", 0, {"Text": "Content", "CommandURL": ".uno:HelpIndex", "HelpURL": "5401"})
-# 		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Tips", "CommandURL": ".uno:HelpTip", "HelpURL": "5404"})
-# 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "Help", "CommandURL": ".uno:HelpMenu", "HelpURL": "5410", "SubContainer": submenucontainer})
-# 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
-		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED
+		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
+		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
+		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
+		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED	
+# @enableRemoteDebugging
+def outputMenuEntries():
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
+	sheets = doc.getSheets()  # ドキュメントのシートコレクションを取得。
+	sheet = sheets[0]  # シートコレクションのインデックス0のシートを取得。	
+	sheet.clearContents(CellFlags.VALUE+CellFlags.DATETIME+CellFlags.STRING+CellFlags.ANNOTATION+CellFlags.FORMULA+CellFlags.HARDATTR+CellFlags.STYLES)  # セルの内容を削除。
+	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"
+	headers = ["MenuType"].extend(propnames)
+	sheet[0, :len(headers)].setDataArray((headers,))
+	actiontriggerseparatortypes = {0:"ActionTriggerSeparatorType.LINE", 1:"ActionTriggerSeparatorType.SPACE", 2:"ActionTriggerSeparatorType.LINEBREAK"}
+	for i, menuentry in enumerate(contextmenu, start=1):
+		if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
+			props = menuentry.getPropertyValues(propnames)
+			image = False if props[3] is None else True
+			subcontainer = False if props[4] is None else True
+			cols = props[:3] + (image, subcontainer)
+			sheet[i, :len(cols)].setDataArray((cols,))
+		elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
+			separatortype = menuentry.getPropertyValue("SeparatorType")
+			sheet[i, 1:len(headers)].merge(True)
+			cols = "ActionTriggerSeparator", actiontriggerseparatortypes[separatortype]
+			sheet[i, :len(cols)].setDataArray((cols,))
+	sheet[0, :len(headers)].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 	
+		
+		
 
-	
+
+
 
 def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書。menutypeはActionTriggerかActionTriggerSeparator。
 	menuentry = menucontainer.createInstance("com.sun.star.ui.{}".format(menutype))  # ActionTriggerContainerからインスタンス化する。
