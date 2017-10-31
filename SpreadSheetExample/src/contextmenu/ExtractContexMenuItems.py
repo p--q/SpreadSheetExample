@@ -51,27 +51,41 @@ def macro():
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 	def __init__(self):
 # 		filename = os.path.basename(__file__)  # このファイル名を取得。埋め込みマクロのフルパスは"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
-		if __file__.startswith("vnd.sun.star.tdoc:"):  # このスクリプトをドキュメントに埋め込んでいる時__file__は"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
-			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")
-			macropath = ""
-			flg = False
-			for p in fullpath.split("/"):
-				if p=="Scripts":
-					flg = True
-				if flg:
-					if p=="python":
+		if __file__.startswith("vnd"):  # 埋め込みマクロの時。__file__は"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(そのときの開いた順?)が入ってる。
+			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")  #  このマクロファイルへの埋め込みマクロフォルダ内のパス。
+			ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+			smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
+			doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
+			transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
+			transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
+			contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()
+			embeddedmacrofolder = "{}/Scripts/python/".format(contentidentifierstring.replace("vnd.sun.star.tdoc:", ""))  #埋め込みマクロフォルダへのパス。
+			
+			print(fullpath)
+			print(embeddedmacrofolder)
+			
+			
+			
+# 			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")
+# 			macropath = ""
+# 			flg = False
+# 			for p in fullpath.split("/"):
+# 				if p=="Scripts":
+# 					flg = True
+# 				if flg:
+# 					if p=="python":
 						
 				
 				
 				
 			
-			self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=document".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
-		else:
-				
-			
-		# このスクリプトをマイマクロフォルダに入れている時
-# 		vnd.sun.star.script:SpreadSheetExample|SpreadSheetExample|src|etc|calcmacro.py$macro?language=Python&location=user
-		self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=user".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
+# 			self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=document".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
+# 		else:
+# 				
+# 			
+# 		# このスクリプトをマイマクロフォルダに入れている時
+# # 		vnd.sun.star.script:SpreadSheetExample|SpreadSheetExample|src|etc|calcmacro.py$macro?language=Python&location=user
+# 		self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=user".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
 # 	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
 		global contextmenu
