@@ -49,7 +49,7 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 		self.baseurl = getBaseURL(ctx, smgr, doc)
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
-		global contextmenu
+		global contextmenu  # ScriptingURLで呼び出す関数に渡す。
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
