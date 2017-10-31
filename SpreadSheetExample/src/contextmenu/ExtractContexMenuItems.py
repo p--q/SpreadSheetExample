@@ -5,7 +5,7 @@ import os
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
-from com.sun.star.sheet import CellFlags  # 定数
+from com.sun.star.sheet import CellFlags as cf # 定数
 def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
 	def wrapper(*args, **kwargs):
 		frame = None
@@ -34,12 +34,6 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
 	return wrapper
 def macro():  
-	
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-# 	global tcu
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	contextmenuinterceptor = ContextMenuInterceptor()
@@ -50,43 +44,10 @@ def macro():
 		controller.releaseContextMenuInterceptor(contextmenuinterceptor)
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 	def __init__(self):
-# 		filename = os.path.basename(__file__)  # このファイル名を取得。埋め込みマクロのフルパスは"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(LibreOfficeバージョン番号?)が入ってしまう。
-		if __file__.startswith("vnd"):  # 埋め込みマクロの時。__file__は"vnd.sun.star.tdoc:/4/Scripts/python/filename.py"というように番号(そのときの開いた順?)が入ってる。
-			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")  #  このマクロファイルへの埋め込みマクロフォルダ内のパス。
-			ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-			smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-			doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
-			transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
-			transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
-			contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()
-			embeddedmacrofolder = "{}/Scripts/python/".format(contentidentifierstring.replace("vnd.sun.star.tdoc:", ""))  #埋め込みマクロフォルダへのパス。
-			
-			print(fullpath)
-			print(embeddedmacrofolder)
-			
-			
-			
-# 			fullpath = __file__.replace("vnd.sun.star.tdoc:", "")
-# 			macropath = ""
-# 			flg = False
-# 			for p in fullpath.split("/"):
-# 				if p=="Scripts":
-# 					flg = True
-# 				if flg:
-# 					if p=="python":
-						
-				
-				
-				
-			
-# 			self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=document".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
-# 		else:
-# 				
-# 			
-# 		# このスクリプトをマイマクロフォルダに入れている時
-# # 		vnd.sun.star.script:SpreadSheetExample|SpreadSheetExample|src|etc|calcmacro.py$macro?language=Python&location=user
-# 		self.baseurl = "vnd.sun.star.script:{}${}?language=Python&location=user".format(filename, "{}")  # ScriptingURLのbaseurlを取得。
-# 	@enableRemoteDebugging
+		doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
+		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+		self.baseurl = getBaseURL(ctx, smgr, doc)
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
 		global contextmenu
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
@@ -99,9 +60,11 @@ def outputMenuEntries():
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
 	sheets = doc.getSheets()  # ドキュメントのシートコレクションを取得。
 	sheet = sheets[0]  # シートコレクションのインデックス0のシートを取得。	
-	sheet.clearContents(CellFlags.VALUE+CellFlags.DATETIME+CellFlags.STRING+CellFlags.ANNOTATION+CellFlags.FORMULA+CellFlags.HARDATTR+CellFlags.STYLES)  # セルの内容を削除。
+	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。
+	
+	
 	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"
-	headers = ["MenuType"].extend(propnames)
+	headers = ["MenuType"].extend(propnames).copy()
 	sheet[0, :len(headers)].setDataArray((headers,))
 	actiontriggerseparatortypes = {0:"ActionTriggerSeparatorType.LINE", 1:"ActionTriggerSeparatorType.SPACE", 2:"ActionTriggerSeparatorType.LINEBREAK"}
 	for i, menuentry in enumerate(contextmenu, start=1):
@@ -117,13 +80,27 @@ def outputMenuEntries():
 			cols = "ActionTriggerSeparator", actiontriggerseparatortypes[separatortype]
 			sheet[i, :len(cols)].setDataArray((cols,))
 	sheet[0, :len(headers)].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
+
+
 	
 		
-		
-
-
-
-
+def getBaseURL(ctx, smgr, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。	
+	ucp = "vnd.sun.star.tdoc:"  # 埋め込みマクロのucp。
+	if __file__.startswith(ucp):  # 埋め込みマクロの時。__file__はvnd.sun.star.tdoc:/4/Scripts/python/filename.pyというように返ってくる。
+		filepath = __file__.replace(ucp, "")  #  ucpを除去。
+		transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
+		transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
+		contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # __file__の数値部分に該当。
+		macrofolder = "{}/Scripts/python".format(contentidentifierstring.replace(ucp, ""))  #埋め込みマクロフォルダへのパス。	
+		location = "document"	
+	else:
+		filepath = __file__ if __name__ == "__main__" else unohelper.fileUrlToSystemPath(__file__)  # オートメーションの時__file__はシステムパスだが、マクロセレクターから実行するとfileurlが返ってくる。
+		pathsubstservice = smgr.createInstanceWithContext("com.sun.star.comp.framework.PathSubstitution", ctx)
+		fileurl = pathsubstservice.substituteVariables("$(user)/Scripts/python", True)  # $(user)を変換する。fileurlが返ってくる。
+		macrofolder =  unohelper.fileUrlToSystemPath(fileurl)  # fileurlをシステムパスに変換する。マイマクロフォルダへのパス。	
+		location = "user"
+	relpath = os.path.relpath(filepath, start=macrofolder)  # パス区切りがOS依存で返ってくる。
+	return "vnd.sun.star.script:{}${}?language=Python&location={}".format(relpath.replace(os.sep, "|"), "{}", location)  # ScriptingURLのbaseurlを取得。Windowsのためにパス区切りを置換。
 def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書。menutypeはActionTriggerかActionTriggerSeparator。
 	menuentry = menucontainer.createInstance("com.sun.star.ui.{}".format(menutype))  # ActionTriggerContainerからインスタンス化する。
 	[menuentry.setPropertyValue(key, val) for key, val in props.items()]  #setPropertyValuesでは設定できない。エラーも出ない。
