@@ -2,6 +2,7 @@ eclipse.preferences.version=1
 encoding//src/GeneralTableSample.py=utf-8
 encoding//src/SpreadsheetSample.py=utf-8
 encoding//src/contextmenu/ExtractContexMenuItems.py=utf-8
+encoding//src/contextmenu/GenerateScriptingURL.py=utf-8
 encoding//src/contextmenu/contextmenuinterceptor.py=utf-8
 encoding//src/contextmenu/cotextmenuembedded.py=utf-8
 encoding//src/contextmenu/cotextmenuembedded2.py=utf-8
