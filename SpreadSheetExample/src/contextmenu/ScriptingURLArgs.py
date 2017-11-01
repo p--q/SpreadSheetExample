@@ -5,86 +5,65 @@ import os
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
-from com.sun.star.sheet import CellFlags as cf # 定数
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
-	def wrapper(*args, **kwargs):
-		frame = None
-		doc = XSCRIPTCONTEXT.getDocument()
-		if doc:  # ドキュメントが取得できた時
-			frame = doc.getCurrentController().getFrame()  # ドキュメントのフレームを取得。
-		else:
-			currentframe = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()  # モードレスダイアログのときはドキュメントが取得できないので、モードレスダイアログのフレームからCreatorのフレームを取得する。
-			frame = currentframe.getCreator()
-		if frame:   
-			import time
-			indicator = frame.createStatusIndicator()  # フレームからステータスバーを取得する。
-			maxrange = 2  # ステータスバーに表示するプログレスバーの目盛りの最大値。2秒ロスするが他に適当な告知手段が思いつかない。
-			indicator.start("Trying to connect to the PyDev Debug Server for about 20 seconds.", maxrange)  # ステータスバーに表示する文字列とプログレスバーの目盛りを設定。
-			t = 1  # プレグレスバーの初期値。
-			while t<=maxrange:  # プログレスバーの最大値以下の間。
-				indicator.setValue(t)  # プレグレスバーの位置を設定。
-				time.sleep(1)  # 1秒待つ。
-				t += 1  # プログレスバーの目盛りを増やす。
-			indicator.end()  # reset()の前にend()しておかないと元に戻らない。
-			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
-		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
-		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。
-		except:
-			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
-	return wrapper
-def macro():  
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
-	controller = doc.getCurrentController()  # コントローラーを取得。
-	contextmenuinterceptor = ContextMenuInterceptor()
-	controller.registerContextMenuInterceptor(contextmenuinterceptor)
-	if __name__ == "__main__":  # オートメーションで実行するときのみ。ScriptingURLにグローバル変数は渡せない。
+from com.sun.star.lang import Locale
+def macro():  # 引数はcom.sun.star.document.DocumentEvent Struct。
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+	sheets = doc.getSheets()  # シートコレクションの取得。
+	sheet = sheets[0]  # インデックス0のシートを取得。
+	sheet.clearContents(511)  # シートのセルの内容をすべてを削除。
+	controller = doc.getCurrentController()  # コントローラの取得。
+	baseurl = getBaseURL(ctx, smgr, doc)
+	contextmenuinterceptor = ContextMenuInterceptor(baseurl)
+	controller.registerContextMenuInterceptor(contextmenuinterceptor)  # コントローラにContextMenuInterceptorを登録する。
+	global getFormatKey  # ScriptingURLで呼び出されたマクロで使うためにグローバル変数にする。
+	getFormatKey = formatkeyCreator(doc)  # ドキュメントのformatkeyを返す関数を取得。
+	functionaccess = smgr.createInstanceWithContext("com.sun.star.sheet.FunctionAccess", ctx)
+	global todayvalue
+	todayvalue = functionaccess.callFunction("TODAY", ())  # スプレッドシート関数で今日の日付のシリアル値を取得。
+	if __name__ == "__main__":  # オートメーションで実行するときのみ。
 		print("Press 'Return' to remove the context menu interceptor.")
 		input()  # 入力待ちにしないとスクリプトが終了してしまう。逆にマクロでinput()はフリーズする。
 		controller.releaseContextMenuInterceptor(contextmenuinterceptor)
-class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
-	def __init__(self):
-		doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
-		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-		self.baseurl = getBaseURL(ctx, smgr, doc)
-	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
-		global contextmenu # ScriptingURLで呼び出す関数に渡す。
-		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		self.args.append(contextmenu)
+class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
+	def __init__(self, baseurl):
+		self.baseurl = baseurl
+	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # 引数はContextMenuExecuteEvent Struct。
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
-		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
-		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
-		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED	
-# @enableRemoteDebugging
-def outputMenuEntries():
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
-	sheet = doc.getSheets()[0]  # シートコレクションのインデックス0のシートを取得。	
-	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
-	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"
-	headers = ["MenuType"]
-	headers.extend(propnames)
-	sheet[0, :len(headers)].setDataArray((headers,))
-	actiontriggerseparatortypes = {0:"ActionTriggerSeparatorType.LINE", 1:"ActionTriggerSeparatorType.SPACE", 2:"ActionTriggerSeparatorType.LINEBREAK"}
-	for i, menuentry in enumerate(contextmenu, start=1):
-		if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
-			props = menuentry.getPropertyValues(propnames)
-			image = False if props[3] is None else True
-			
-			subcontainer = False if props[4] is None else True
-			cols = list(props[:3])
-			cols.extend((image, subcontainer))
-			sheet[i, :len(cols)].setDataArray((cols,))
-		elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
-			separatortype = menuentry.getPropertyValue("SeparatorType")
-			sheet[i, 1:len(propnames)].merge(True)
-			cols = "ActionTriggerSeparator", actiontriggerseparatortypes[separatortype]
-			sheet[i, :len(cols)].setDataArray((cols,))
-	sheet[0, :len(headers)].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
-
-
-	
-		
+		contextmenu = contextmenuexecuteevent.ActionTriggerContainer  # すでにあるコンテクストメニュー(アクショントリガーコンテナ)を取得。
+		submenucontainer = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer")  # サブメニューにするアクショントリガーコンテナをインスタンス化。
+		addMenuentry(submenucontainer, "ActionTrigger", 0, {"Text": "Set ~Today", "CommandURL": baseurl.format(getToday.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Set ~Yesterday", "CommandURL": baseurl.format(getYesterday.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(submenucontainer, "ActionTrigger", 2, {"Text": "Set T~omorrow", "CommandURL": baseurl.format(getTomorrow.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "Customized Menu", "SubContainer": submenucontainer})  # サブメニューを一番上に挿入。
+		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # アクショントリガーコンテナのインデックス1にセパレーターを挿入。
+		return EXECUTE_MODIFIED  # このContextMenuInterceptorでコンテクストメニューのカスタマイズを終わらす。
+def getToday():
+	setDate(todayvalue)  # 今日の日付を取得。
+def getYesterday():
+	setDate(todayvalue-1)  # 昨日の日付を取得。
+def getTomorrow():
+	setDate(todayvalue+1)  # 明日の日付を取得。
+def setDate(datetimevalue):  # セルに日付を入力する。
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
+	selection = doc.getCurrentSelection()  # セル範囲を取得。
+	firstcell = getFirtstCell(selection)  # セル範囲の左上のセルを取得。
+	firstcell.setFormula(datetimevalue)  # 日付の入力は年-月-日 または 月/日/年 にしないといけないらしい。
+	firstcell.setPropertyValue("NumberFormat", getFormatKey("YYYY-MM-DD"))  # セルの書式を設定。	
+def formatkeyCreator(doc):
+	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
+	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。	
+	def getFormatKey(formatstring):  # formatstringからFormatKeyを返す。
+		formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。	
+		if formatkey == -1:  # デフォルトのフォーマットにformatstringがないとき。
+			formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと。
+		return formatkey
+	return getFormatKey
+def getFirtstCell(rng):  # セル範囲の左上のセルを返す。引数はセルまたはセル範囲またはセル範囲コレクション。
+	if rng.supportsService("com.sun.star.sheet.SheetCellRanges"):  # セル範囲コレクションのとき
+		rng = rng[0]  # 最初のセル範囲のみ取得。
+	return rng[0, 0]  # セル範囲の最初のセルを返す。
 def getBaseURL(ctx, smgr, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
 	ucp = "vnd.sun.star.tdoc:"  # 埋め込みマクロのucp。
@@ -107,7 +86,7 @@ def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書
 	menuentry = menucontainer.createInstance("com.sun.star.ui.{}".format(menutype))  # ActionTriggerContainerからインスタンス化する。
 	[menuentry.setPropertyValue(key, val) for key, val in props.items()]  #setPropertyValuesでは設定できない。エラーも出ない。
 	menucontainer.insertByIndex(i, menuentry)  # submenucontainer[i]やsubmenucontainer[i:i]は不可。挿入以降のメニューコンテナの項目のインデックスは1増える。
-g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
+g_exportedScripts = macro, #マクロセレクター(ScriptingURLで呼び出すための設定は不要)に限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper
