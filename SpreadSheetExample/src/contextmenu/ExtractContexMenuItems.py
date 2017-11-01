@@ -48,10 +48,17 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 		self.baseurl = getBaseURL(ctx, smgr, doc)
+		
+
+		self.tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+		
+	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
 		global contextmenu # ScriptingURLで呼び出す関数に渡す。
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		self.args.append(contextmenu)
+		
+		self.tcu.wtree(contextmenu)
+		
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
@@ -69,7 +76,7 @@ def outputMenuEntries():
 	for i, menuentry in enumerate(contextmenu, start=1):
 		if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
 			props = menuentry.getPropertyValues(propnames)
-			image = False if props[3] is None else True
+			image = False if props[3] else True
 			
 			subcontainer = False if props[4] is None else True
 			cols = list(props[:3])
@@ -102,7 +109,7 @@ def getBaseURL(ctx, smgr, doc):	 # 埋め込みマクロ、オートメーショ
 		macrofolder =  unohelper.fileUrlToSystemPath(fileurl)  # fileurlをシステムパスに変換する。マイマクロフォルダへのパス。	
 		location = "user"
 	relpath = os.path.relpath(filepath, start=macrofolder)  # パス区切りがOS依存で返ってくる。
-	return "vnd.sun.star.script:{}${}?language=Python&location={}".format(relpath.replace(os.sep, "|"), "{}", location)  # ScriptingURLのbaseurlを取得。Windowsのためにパス区切りを置換。
+	return "vnd.sun.star.script:{}${}?language=Python&location={}".format(relpath.replace(os.sep, "|"), "{}", location)  # ScriptingURLのbaseurlを取得。Windowsのためにos.sepでパス区切りを置換。
 def addMenuentry(menucontainer, menutype, i, props):  # i: index, propsは辞書。menutypeはActionTriggerかActionTriggerSeparator。
 	menuentry = menucontainer.createInstance("com.sun.star.ui.{}".format(menutype))  # ActionTriggerContainerからインスタンス化する。
 	[menuentry.setPropertyValue(key, val) for key, val in props.items()]  #setPropertyValuesでは設定できない。エラーも出ない。
