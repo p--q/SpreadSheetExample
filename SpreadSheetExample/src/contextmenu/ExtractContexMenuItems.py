@@ -48,46 +48,43 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 		self.baseurl = getBaseURL(ctx, smgr, doc)
-		
-
-		self.tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-		
-	@enableRemoteDebugging
+# 	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
-		global contextmenu # ScriptingURLで呼び出す関数に渡す。
+		global contextmenu  # ScriptingURLで呼び出す関数に渡す。オートメーションやAPSOは不可。
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		
-		self.tcu.wtree(contextmenu)
-		
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
 		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED	
-# @enableRemoteDebugging
-def outputMenuEntries():
+def outputMenuEntries():  # デコレーターは付けれない。
+	
+# 	import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True) 
+	
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
 	sheet = doc.getSheets()[0]  # シートコレクションのインデックス0のシートを取得。	
 	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
-	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"
-	headers = ["MenuType"]
-	headers.extend(propnames)
-	sheet[0, :len(headers)].setDataArray((headers,))
-	actiontriggerseparatortypes = {0:"ActionTriggerSeparatorType.LINE", 1:"ActionTriggerSeparatorType.SPACE", 2:"ActionTriggerSeparatorType.LINEBREAK"}
-	for i, menuentry in enumerate(contextmenu, start=1):
+	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
+	separatortypes = {0:"LINE", 1:"SPACE", 2:"LINEBREAK"}
+	datarows = (contextmenu.getName(),),\
+				(", ".join(propnames),)
+	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)
+	j = 0  # 列インデックスを初期化。
+	
+	
+	for i, menuentry in enumerate(contextmenu[2:], start=2):
 		if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
-			props = menuentry.getPropertyValues(propnames)
-			image = False if props[3] else True
-			
-			subcontainer = False if props[4] is None else True
-			cols = list(props[:3])
-			cols.extend((image, subcontainer))
-			sheet[i, :len(cols)].setDataArray((cols,))
+			props = []
+			for propname in propnames:
+				props.append(menuentry.getPropertyValue(propname))  # getPropertyValues()は実装されていない。
+			image = "icon" if props[3] else str(props[3])
+			submenu = "submenu" if props[4] else str(props[4])
+			sheet[i, j].setString(", ".join((*props[:3], image, submenu)))  # sheet[i, j].setString(", ".join((props[0], props[1], props[2], image, submenu)))
 		elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
 			separatortype = menuentry.getPropertyValue("SeparatorType")
-			sheet[i, 1:len(propnames)].merge(True)
-			cols = "ActionTriggerSeparator", actiontriggerseparatortypes[separatortype]
-			sheet[i, :len(cols)].setDataArray((cols,))
-	sheet[0, :len(headers)].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
+			sheet[i, j].setString(separatortypes[separatortype])
+				
+				
+	sheet[0, :2].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
 
 
 	
