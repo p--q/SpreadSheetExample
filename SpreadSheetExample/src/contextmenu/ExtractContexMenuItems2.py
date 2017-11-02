@@ -36,68 +36,55 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 def macro():  
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	controller = doc.getCurrentController()  # コントローラーを取得。
-# 	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
-# 	separatortypes = {0:"LINE", 1:"SPACE", 2:"LINEBREAK"}	
-	
-	
-	contextmenuinterceptor = ContextMenuInterceptor()
+	contextmenuinterceptor = ContextMenuInterceptor(doc, controller)
 	controller.registerContextMenuInterceptor(contextmenuinterceptor)
-	
-	
-	
 	if __name__ == "__main__":  # オートメーションで実行するときのみ。ScriptingURLにグローバル変数は渡せない。
 		print("Press 'Return' to remove the context menu interceptor.")
 		input()  # 入力待ちにしないとスクリプトが終了してしまう。逆にマクロでinput()はフリーズする。
 		controller.releaseContextMenuInterceptor(contextmenuinterceptor)
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
-	def __init__(self):
-		doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
+	def __init__(self, doc, controller):
+		propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
+		separatortypes = {0:"LINE", 1:"SPACE", 2:"LINEBREAK"}			
 		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-		self.baseurl = getBaseURL(ctx, smgr, doc)
+		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
+		self.args = controller, propnames, separatortypes, getBaseURL(ctx, smgr, doc)
 # 	@enableRemoteDebugging
-	def notifyContextMenuExecute(self, contextmenuexecuteevent): 		
-		global contextmenu  # ScriptingURLで呼び出す関数に渡す。オートメーションやAPSOは不可。
+	def notifyContextMenuExecute(self, contextmenuexecuteevent):
+		controller, propnames, separatortypes, baseurl = self.args
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
-		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(outputMenuEntries.__name__)})
+		global enumerateMenuEntries  # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
+		enumerateMenuEntries = createEnumerator(controller, propnames, separatortypes, contextmenu)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
+		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(enumerateMenuEntries.__name__)})
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})
 		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED	
-def outputMenuEntries():  # デコレーターは付けれない。
-# 	import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True) 
-
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。
-	controller = doc.getCurrentController()  # コントローラーを取得。
-	
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
-	
-	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
-	separatortypes = {0:"LINE", 1:"SPACE", 2:"LINEBREAK"}
-	
-	
-	datarows = (contextmenu.getName(),),\
+def createEnumerator(controller, propnames, separatortypes, contextmenu):
+	def enumerateMenuEntries():  # ScriptingURLで渡すので引数は受け取れない。
+		sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+		def _enumarateEntries(container, k, c):
+			r = k - 1
+			for menuentry in container:
+				r += 1
+				if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
+					*props, image, subcontainer = [menuentry.getPropertyValue(propname) for propname in propnames]  # getPropertyValues()は実装されていない。
+					props.append("icon" if image else str(image)) 
+					props.append("submenu" if subcontainer else str(subcontainer)) 
+					sheet[r, c].setString(", ".join(props))
+					if subcontainer:
+						r = _enumarateEntries(subcontainer, r, c+1)
+				elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
+					separatortype = menuentry.getPropertyValue("SeparatorType")
+					sheet[r, c].setString(separatortypes[separatortype])	
+			return r		
+		sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。		
+		datarows = (contextmenu.getName(),),\
 				(", ".join(propnames),)
-	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)
-	r = 2  # 行インデックスを初期化。
-	c = 0  # 列インデックスを初期化。
-	enumarateEntries(contextmenu[2:], r, c, propnames, separatortypes, sheet)
-	sheet[0, :2].getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。
-def enumarateEntries(container, k, c, propnames, separatortypes, sheet):
-	r = k - 1
-	for menuentry in container:
-		r += 1
-		if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
-			*props, image, subcontainer = [menuentry.getPropertyValue(propname) for propname in propnames]  # getPropertyValues()は実装されていない。
-			props.append("icon" if image else str(image)) 
-			props.append("submenu" if subcontainer else str(subcontainer)) 
-			sheet[r, c].setString(", ".join(props))
-			if subcontainer:
-				r = enumarateEntries(subcontainer, r, c+1, propnames, separatortypes, sheet)
-		elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
-			separatortype = menuentry.getPropertyValue("SeparatorType")
-			sheet[r, c].setString(separatortypes[separatortype])	
-	return r
+		sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)
+		_enumarateEntries(contextmenu[2:], 2, 0)  # このマクロで追加した項目と線は出力しない。つまり項目インデックス2から出力。第2引数は出力先の開始行。第3引数は出力先の開始列。
+		cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
+		cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
+		cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。
+	return enumerateMenuEntries
 def getBaseURL(ctx, smgr, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
 	ucp = "vnd.sun.star.tdoc:"  # 埋め込みマクロのucp。
