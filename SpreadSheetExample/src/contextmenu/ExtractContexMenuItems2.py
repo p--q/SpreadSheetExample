@@ -36,21 +36,22 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 def macro(documentevent=None):  
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	controller = doc.getCurrentController()  # コントローラーを取得。
-	contextmenuinterceptor = ContextMenuInterceptor(doc, controller)
+	contextmenuinterceptor = ContextMenuInterceptor(doc)
 	controller.registerContextMenuInterceptor(contextmenuinterceptor)
 	if __name__ == "__main__":  # オートメーションで実行するときのみ。ScriptingURLにグローバル変数は渡せない。
 		print("Press 'Return' to remove the context menu interceptor.")
 		input()  # 入力待ちにしないとスクリプトが終了してしまう。逆にマクロでinput()はフリーズする。
 		controller.releaseContextMenuInterceptor(contextmenuinterceptor)
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
-	def __init__(self, doc, controller):		
+	def __init__(self, doc):		
 		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-		self.args = controller, getBaseURL(ctx, smgr, doc)
+		self.args = getBaseURL(ctx, smgr, doc)
 # 	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # 右クリックで呼ばれる関数。
-		controller, baseurl = self.args
+		baseurl = self.args
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
+		controller = contextmenuexecuteevent.Selection
 		global enumerateMenuEntries  # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
 		enumerateMenuEntries = createEnumerator(controller, contextmenu)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(enumerateMenuEntries.__name__)})  # CommandURLで渡す関数にデコレーターは不可。
