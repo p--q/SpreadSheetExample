@@ -6,7 +6,10 @@ from com.sun.star.sheet import CellFlags as cf # 定数
 def macro(documentevent=None):  # 引数はイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	filepath = "/opt/libreoffice5.2/share/registry/res/registry_ja.xcd"  # xmlファイルへのパス。
-	xpath = './/node[@oor:name=".uno:FormatCellDialog"]'  # XPath。1つのノードだけ選択する条件にしないといけない。
+# 	filepath = "/opt/libreoffice5.2/share/registry/main.xcd"
+# 	xpath = './/node[@oor:name=".uno:FormatCellDialog"]'  # XPath。1つのノードだけ選択する条件にしないといけない。
+# 	xpath = './/node[@oor:name=".uno:Cut"]'
+	xpath = './/node[@oor:name=".uno:PasteOnly"]'
 	namespaces = {"oor": "{http://openoffice.org/2001/registry}",\
 				"xs": "{http://www.w3.org/2001/XMLSchema}",\
 				"xsi": "{http://www.w3.org/2001/XMLSchema-instance}"}  # 名前空間の辞書。replace()で置換するのに使う。
@@ -39,14 +42,16 @@ def traceToRoot(filepath, xpath, namespaces, doc):  # xpathは子ノードを取
 						outputs.append(replaceWithKey(formatNode(parentnode)))  # 親ノードを出力。
 						childnode = parentnode  # 親ノードを子ノードにする。
 						break  # この階層を抜ける。
-	datarows = [(i,) for i in outputs]  # Calcに出力するために行のリストにする。
-	controller = doc.getCurrentController()  # コントローラーを取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
-	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)  # シートに結果を出力する。
-	cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
-	cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
-	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。
+			outputs.append("")  # 空行を入れる。
+	if outputs:
+		datarows = [(i,) for i in outputs]  # Calcに出力するために行のリストにする。
+		controller = doc.getCurrentController()  # コントローラーを取得。
+		sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+		sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
+		sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)  # シートに結果を出力する。
+		cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
+		cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
+		cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。
 def formatNode(node):  # 引数はElement オブジェクト。タグ名と属性を出力する。属性の順番は保障されない。
 	tag = node.tag  # タグ名を取得。
 	attribs = []  # 属性をいれるリスト。

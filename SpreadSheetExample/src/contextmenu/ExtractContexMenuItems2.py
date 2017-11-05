@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import os
+from com.sun.star.uno import RuntimeException
+from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
@@ -46,19 +48,19 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):
 	def __init__(self, doc):		
 		ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 		smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-		self.args = getBaseURL(ctx, smgr, doc)
+		self.args = getBaseURL(ctx, smgr, doc), createDispatchCommandLabelReader(ctx, smgr)
 # 	@enableRemoteDebugging
 	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # 右クリックで呼ばれる関数。
-		baseurl = self.args
-		contextmenu = contextmenuexecuteevent.ActionTriggerContainer
-		controller = contextmenuexecuteevent.Selection
+		baseurl, getDiapatchCommandLabel = self.args
+		contextmenu = contextmenuexecuteevent.ActionTriggerContainer  # コンテクストメニューコンテナの取得。
+		controller = contextmenuexecuteevent.Selection  # ドキュメントのコントローラの取得。
 		global enumerateMenuEntries  # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
-		enumerateMenuEntries = createEnumerator(controller, contextmenu)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
+		enumerateMenuEntries = createEnumerator(controller, contextmenu, getDiapatchCommandLabel)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "MenuEntries", "CommandURL": baseurl.format(enumerateMenuEntries.__name__)})  # CommandURLで渡す関数にデコレーターは不可。
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # 区切り線の挿入。
 		return EXECUTE_MODIFIED # EXECUTE_MODIFIED, IGNORED, CANCELLED, CONTINUE_MODIFIED	
-def createEnumerator(controller, contextmenu):
-	propnames = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
+def createEnumerator(controller, contextmenu, getDiapatchCommandLabel):
+	props = "Text", "CommandURL", "HelpURL", "Image", "SubContainer"  # ActionTriggerのプロパティ。
 	separatortypes = {0:"LINE", 1:"SPACE", 2:"LINEBREAK"}  # 定数ActionTriggerSeparatorTypeを文字列に変換。		
 	def enumerateMenuEntries():  # ScriptingURLで渡すので引数は受け取れない。
 		sheet = controller.getActiveSheet()  # アクティブなシートを取得。
@@ -67,25 +69,55 @@ def createEnumerator(controller, contextmenu):
 			for menuentry in container:
 				r += 1
 				if menuentry.supportsService("com.sun.star.ui.ActionTrigger"):
-					*props, image, subcontainer = [menuentry.getPropertyValue(propname) for propname in propnames]  # getPropertyValues()は実装されていない。
-					props.append("icon" if image else str(image)) 
-					props.append("submenu" if subcontainer else str(subcontainer)) 
-					sheet[r, c].setString(", ".join(props))
+					text, commandurl, helpurl, image, subcontainer = [menuentry.getPropertyValue(prop) for prop in props]  # getPropertyValues()は実装されていない。
+					propvalues = [text, commandurl, helpurl]
+					propvalues.append("icon" if image else str(image)) 
+					propvalues.append("submenu" if subcontainer else str(subcontainer)) 
+					if commandurl.startswith(".uno:"):
+						label = getDiapatchCommandLabel(commandurl)
+						if label:
+							propvalues.append(label)
+					sheet[r, c].setString(", ".join(propvalues))
 					if subcontainer:
-						r = _enumarateEntries(subcontainer, r, c+1)
+						r = _enumarateEntries(subcontainer, r, c+1)  # 再帰呼出し。
 				elif menuentry.supportsService("com.sun.star.ui.ActionTriggerSeparator"):
 					separatortype = menuentry.getPropertyValue("SeparatorType")
 					sheet[r, c].setString(separatortypes[separatortype])	
 			return r		
 		sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。		
 		datarows = (contextmenu.getName(),),\
-				(", ".join(propnames),)
+				(", ".join(props),)
 		sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)
 		_enumarateEntries(contextmenu[2:], 2, 0)  # このマクロで追加した項目と線は出力しない。つまり項目インデックス2から出力。第2引数は出力先の開始行。第3引数は出力先の開始列。
 		cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
 		cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
 		cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。
 	return enumerateMenuEntries
+def createDispatchCommandLabelReader(ctx, smgr):	
+	rootpaths = "/org.openoffice.Office.UI.CalcCommands/UserInterface/Commands/{}", \
+				"/org.openoffice.Office.UI.CalcCommands/UserInterface/Popups/{}", \
+				"/org.openoffice.Office.UI.GenericCommands/UserInterface/Commands/{}"  # ルートパスのCalc用のタプル。
+	props = "PopupLabel", "Label"  # , "ContextLabel"  # 取得するプロパティのタプル。存在すれば使用したいラベル順に並べる。PopupLabelはコンテクストメニュー用、ContextLabelはツールバー用。
+	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
+	def getDiapatchCommandLabel(dispatchcommand):
+		if dispatchcommand.startswith(".uno:"):
+			for rootpath in rootpaths:
+				rootpath = rootpath.format(dispatchcommand)
+				try:
+					root = configreader(rootpath)
+					propvalues = root.getPropertyValues(props)  # 設定されていないプロパティはNoneが入る
+					for label in propvalues:
+						if label is not None:
+							return label
+				except RuntimeException:
+					continue
+	return getDiapatchCommandLabel
+def createConfigReader(ctx, smgr):  # ConfigurationProviderサービスのインスタンスを受け取る高階関数。
+	configurationprovider = smgr.createInstanceWithContext("com.sun.star.configuration.ConfigurationProvider", ctx)  # ConfigurationProviderの取得。
+	def configReader(path):  # ConfigurationAccessサービスのインスタンスを返す関数。
+		node = PropertyValue(Name="nodepath", Value=path)
+		return configurationprovider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (node,))
+	return configReader
 def getBaseURL(ctx, smgr, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
 	ucp = "vnd.sun.star.tdoc:"  # 埋め込みマクロのucp。

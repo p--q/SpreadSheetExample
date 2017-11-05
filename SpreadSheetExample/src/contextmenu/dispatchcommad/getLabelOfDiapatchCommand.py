@@ -1,50 +1,41 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-from com.sun.star.sheet import CellFlags as cf # 定数
-from xml.etree import ElementTree
+
+from com.sun.star.beans import PropertyValue
+from com.sun.star.uno import RuntimeException
 def macro(documentevent=None):  # 引数はイベント駆動用。
-	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
-	filepath = "/opt/libreoffice5.2/share/registry/res/registry_ja.xcd"  # xmlファイルへのパス。
-# 	xpath = './/node[@oor:name=".uno:FormatCellDialog"]'  # XPath。1つのノードだけ選択する条件にしないといけない。
-# 	xpath = './/node[@oor:name=".uno:Cut"]'
-	xpath = './/node[@oor:name=".uno:PasteOnly"]'
-	
-	namespaces = {"oor": "{http://openoffice.org/2001/registry}",\
-				"xs": "{http://www.w3.org/2001/XMLSchema}",\
-				"xsi": "{http://www.w3.org/2001/XMLSchema-instance}"}  # 名前空間の辞書。replace()で置換するのに使う。
-	queryNodesWithXPath(filepath, xpath, namespaces, doc)
-def queryNodesWithXPath(filepath, xpath, namespaces, doc):	
-	replaceWithValue, replaceWithKey = createReplaceFunc(namespaces)  # 名前空間を置換する関数を取得。
-	xpath = replaceWithValue(xpath)  # 名前空間の辞書のキーを値に変換。
-	tree = ElementTree.parse(filepath)
-	nodes = tree.findall(xpath)  # XPathで抽出されるノードのリストを取得する。
-	datarows = [(replaceWithKey(formatNode(node)),) for node in nodes]  # Calcに出力するために行のリストにする。
-	controller = doc.getCurrentController()  # コントローラーを取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet.clearContents(cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES)  # セルの内容を削除。cf.HARDATTR+cf.STYLESでセル結合も解除。
-	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)  # シートに結果を出力する。
-	cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
-	cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
-	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。
-def formatNode(node):  # 引数はElement オブジェクト。タグ名と属性を出力する。属性の順番は保障されない。
-	tag = node.tag  # タグ名を取得。
-	attribs = []  # 属性をいれるリスト。
-	for key, val in node.items():  # ノードの各属性について。
-		attribs.append('{}="{}"'.format(key, val))  # =で結合。
-	attrib = " ".join(attribs)  # すべての属性を結合。
-	n = "{} {}".format(tag, attrib) if attrib else tag  # タグ名と属性を結合する。
-	return "<{}>".format(n)	 
-def createReplaceFunc(namespaces):  # 引数はキー名前空間名、値は名前空間を波括弧がくくった文字列、の辞書。
-	def replaceWithValue(txt):  # 名前空間の辞書のキーを値に置換する。
-		for key, val in namespaces.items():
-			txt = txt.replace("{}:".format(key), val)
-		return txt
-	def replaceWithKey(txt):  # 名前空間の辞書の値をキーに置換する。
-		for key, val in namespaces.items():
-			txt = txt.replace(val, "{}:".format(key))
-		return txt
-	return replaceWithValue, replaceWithKey
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+	getDiapatchCommandLabel = createDispatchCommandLabelReader(ctx, smgr)
+# 	dispatchcommand = ".uno:Cut"
+	dispatchcommand = ".uno:FormatCellDialog"
+	print(getDiapatchCommandLabel(dispatchcommand))
+def createDispatchCommandLabelReader(ctx, smgr):	
+	rootpaths = "/org.openoffice.Office.UI.CalcCommands/UserInterface/Commands/{}", \
+				"/org.openoffice.Office.UI.CalcCommands/UserInterface/Popups/{}", \
+				"/org.openoffice.Office.UI.GenericCommands/UserInterface/Commands/{}"  # ルートパスのCalc用のタプル。
+	props = "PopupLabel", "Label"  # , "ContextLabel"  # 取得するプロパティのタプル。存在すれば使用したいラベル順に並べる。PopupLabelはコンテクストメニュー用、ContextLabelはツールバー用。
+	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
+	def getDiapatchCommandLabel(dispatchcommand):
+		if dispatchcommand.startswith(".uno:"):
+			for rootpath in rootpaths:
+				rootpath = rootpath.format(dispatchcommand)
+				try:
+					root = configreader(rootpath)
+					propvalues = root.getPropertyValues(props)  # 設定されていないプロパティはNoneが入る
+					for label in propvalues:
+						if label is not None:
+							return label
+				except RuntimeException:
+					continue
+	return getDiapatchCommandLabel
+def createConfigReader(ctx, smgr):  # ConfigurationProviderサービスのインスタンスを受け取る高階関数。
+	configurationprovider = smgr.createInstanceWithContext("com.sun.star.configuration.ConfigurationProvider", ctx)  # ConfigurationProviderの取得。
+	def configReader(path):  # ConfigurationAccessサービスのインスタンスを返す関数。
+		node = PropertyValue(Name="nodepath", Value=path)
+		return configurationprovider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (node,))
+	return configReader
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
