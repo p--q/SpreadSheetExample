@@ -30,4 +30,5 @@ encoding//src/etc/onload.py=utf-8
 encoding//src/etc/tcucalc.py=utf-8
 encoding//src/etc/wclick.py=utf-8
 encoding//src/moveSheet/getUIComponents.py=utf-8
+encoding//src/moveSheet/showUIComponents.py=utf-8
 encoding//src/moveSheet/toAnotherDoc.py=utf-8
