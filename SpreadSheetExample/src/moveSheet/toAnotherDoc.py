@@ -34,9 +34,9 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 	return wrapper
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。  
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
-	controller = doc.getCurrentController()  # コントローラーを取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet.setName("SheetInDoc1")
+# 	controller = doc.getCurrentController()  # コントローラーを取得。
+# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+# 	sheet.setName("SheetInDoc1")
 
 
 # 	newdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/scalc", "_blank", 0, ())  
@@ -44,34 +44,42 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 # 	newsheets.importSheet(doc, sheet.getName(), 0)
 	
 	
-	fileurl = doc.getURL()
+# 	fileurl = doc.getURL()
 # 	print(doc.getURL())
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	typedetection = smgr.createInstanceWithContext("com.sun.star.document.TypeDetection", ctx)
-	print(typedetection.queryTypeByURL(fileurl))
-	
-	print("\n".join(typedetection.getElementNames()))
-	
-	
-	
-	modulemanager = smgr.createInstanceWithContext("com.sun.star.frame.ModuleManager", ctx)
-	print(modulemanager.identify(doc))	
-	
-	
+# 	typedetection = smgr.createInstanceWithContext("com.sun.star.document.TypeDetection", ctx)
+# 	print(typedetection.queryTypeByURL(fileurl))
+# 	
+# 	print("\n".join(typedetection.getElementNames()))
+# 	
+# 	
+# 	
+# 	modulemanager = smgr.createInstanceWithContext("com.sun.star.frame.ModuleManager", ctx)
+# 	print(modulemanager.identify(doc))	
+# 	
+# 	
 	filterfactory = smgr.createInstanceWithContext("com.sun.star.document.FilterFactory", ctx)
-# 	props = filterfactory.getByName("draw_png_Export")
+	props = filterfactory.getByName("draw_png_Export")
 # 	props = filterfactory.getByName("calc8")
-	props = filterfactory.getByName("calc_pdf_Export")
-	for prop in props:
-		if prop.Name=="UIComponent":
-			print(prop.Value)
-			break
+# 	props = filterfactory.getByName("calc_pdf_Export")
+# 	for prop in props:
+# 		if prop.Name=="UIComponent":
+# 			print(prop.Value)
+# 			break
 	
-# 	filteroptiondialog = smgr.createInstanceWithContext("com.sun.star.svtools.SvFilterOptionsDialog", ctx)
-# 	propertyvalue = PropertyValue(Name="FilterName", Value="draw_png_Export")
-# 	filteroptiondialog.setPropertyValues((propertyvalue,))
-# 	filteroptiondialog.setSourceDocument(doc)
+	
+	
+	filteroptiondialog = smgr.createInstanceWithContext("com.sun.star.svtools.SvFilterOptionsDialog", ctx)
+	propertyvalue = PropertyValue(Name="FilterName", Value="draw_png_Export")
+	filteroptiondialog.setPropertyValues((propertyvalue,))
+	filteroptiondialog.setSourceDocument(doc)
+	
+	
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)
+	tcu.wtree(filteroptiondialog)
+	
+	
 # 	if filteroptiondialog.execute()==1:
 # 		options = filteroptiondialog.getPropertyValues()
 # 		print(options)

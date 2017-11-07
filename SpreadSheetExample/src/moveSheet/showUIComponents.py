@@ -37,11 +37,11 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
-	root = configreader("/org.openoffice.TypeDetection.Filter/Filters")  # org.openoffice.TypeDetectionパンケージのTypesコンポーネントのTypesノードを根ノードにする。
+	root = configreader("/org.openoffice.TypeDetection.Filter/Filters")  # コンフィギュレーションのルートを取得。
 	props = "UIName", "UIComponent", "DocumentService"  # 取得するプロパティ名のタプル。
 	outputs = []
 	for childname in root.getElementNames():  # 子ノードの名前のタプルを取得。ノードオブジェクトの直接取得はできない模様。
-		uiname, uicomponent, documentservice = root.getByName(childname).getPropertyValues(props)
+		uiname, uicomponent, documentservice = root[childname].getPropertyValues(props)
 		if uicomponent:
 			datarow = uiname, childname, uicomponent, documentservice
 			outputs.append(datarow)
@@ -54,19 +54,41 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	rowsToSheet(sheet, datarows)		
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler())  # マウスハンドラをコントローラに設定。
+	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(ctx, smgr, doc, configreader))  # マウスハンドラをコントローラに設定。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
+	def __init__(self, ctx, smgr, doc, configreader):
+		self.args = ctx, smgr, doc, configreader
 # 	@enableRemoteDebugging
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
+		ctx, smgr, doc, configreader = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 			if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 				if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
 					sheet = target.getSpreadsheet()
 					celladdress = target.getCellAddress()
-					if sheet[0, celladdress.Column].getString()=="UIComponent":	
-					
-					
+					if celladdress.Row>0 and sheet[0, celladdress.Column].getString()=="FilterName":	
+						filtername = target.getString()
+						uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")
+						filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)
+						if uicomponent=="com.sun.star.svtools.SvFilterOptionsDialog":
+							propertyvalue = PropertyValue(Name="FilterName", Value=filtername)
+							filteroptiondialog.setPropertyValues((propertyvalue,))
+							filteroptiondialog.setSourceDocument(doc)
+						elif uicomponent in ("com.sun.star.comp.PDF.PDFDialog", "com.sun.star.comp.Calc.FilterOptionsDialog", "com.sun.star.comp.GraphicExportDialog"):
+							filteroptiondialog.setSourceDocument(doc)
+
+# com.sun.star.Impress.FlashExportDialog
+# com.sun.star.comp.Writer.FilterOptionsDialog
+# com.sun.star.comp.draw.SdHtmlOptionsDialog
+
+						
+# 						filteroptiondialog.setSourceDocument(doc)
+						
+						
+						if filteroptiondialog.execute()==1:
+							options = filteroptiondialog.getPropertyValues()
+							
 					
 					
 						return False  # セル編集モードにしない。
