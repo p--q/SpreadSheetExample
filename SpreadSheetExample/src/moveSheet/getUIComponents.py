@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from itertools import compress
+from itertools import zip_longest
 from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.sheet import CellFlags as cf # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。  
@@ -38,12 +39,13 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	rowsToSheet(sheet, datarows)		
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
-def rowsToSheet(sheet, datarows):  # datarowsはタプルのタプル。１次元のタブルの長さは同一でなければならない。
-	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)
+def rowsToSheet(sheet, datarows):  # シートに一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
+	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
+	sheet[:len(datarows), :len(datarows[0])].setDataArray(datarows)  # 数値(double)か文字列のみ。
 	cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
 	cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
 	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。	
-def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
+def getNewSheet(doc, sheetname):  # docの名前sheetnameの未使用シートを返す。sheetnameがすでにあれば連番名を使う。
 	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
 	sheets = doc.getSheets()  # シートコレクションを取得。
 	c = 1  # 連番名の最初の番号。
