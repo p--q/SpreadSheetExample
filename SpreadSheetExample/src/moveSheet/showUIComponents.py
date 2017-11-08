@@ -104,14 +104,16 @@ def expandPropertyValueStructs(outputs, structs, h):
 		if isinstance(v, tuple):
 			expandPropertyValueStructs(outputs, v, h+1)
 		else:
-			v = str(v)
-# 			if not isinstance(v, int):
-# 				v = str(v)
+			# これはなぜかpdfではエラーになる。
+			if not isinstance(v, int):
+				v = str(v) 
+				
 			# すべてを文字列にするとエラーがでない。
-			try:
-				v = int(v)
-			except:
-				pass
+# 			v = str(v)
+# 			try:
+# 				v = int(v)
+# 			except:
+# 				pass
 			
 			
 			ind = [""]*h
