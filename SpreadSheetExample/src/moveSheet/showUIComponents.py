@@ -29,7 +29,7 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。
+			func(*args, **kwargs)  # Step Intoして中に入る。	
 		except:
 			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
 	return wrapper
@@ -59,7 +59,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 	def __init__(self, ctx, smgr, doc, configreader):
 		self.args = ctx, smgr, doc, configreader
-	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
+# 	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
 		ctx, smgr, doc, configreader = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
@@ -76,10 +76,7 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 						if filteroptiondialog.execute()==1:
 							propertyvalues = filteroptiondialog.getPropertyValues()
 							outputs = []
-							
 							expandPropertyValueStructs(outputs, propertyvalues, 0)
-							
-							
 							headers = filtername,
 							datarows = [headers]
 							datarows.extend(outputs)
@@ -93,27 +90,34 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 		return True  # Trueでイベントを次のハンドラに渡す。
 	def disposing(self, eventobject):
 		pass	
-	
 def expandPropertyValueStructs(outputs, structs, h):
 	flg = True
 	for struct in structs:
+		ind = [""]*h
 		if flg and h>0:
-			ind = [""]*(h-1)
-			name = ind.extend("Value", "Name", struct.Name)
-		else:
-			ind = [""]*h
-			name = ind.extend("Name", struct.Name)
-		outputs.append(name)
+			ind[-1] = "Value"
+			flg = False
+		name = "Name", struct.Name
+		ind.extend(name)
+		outputs.append(ind)
 		v = struct.Value
 		if isinstance(v, tuple):
 			expandPropertyValueStructs(outputs, v, h+1)
 		else:
+			v = str(v)
+# 			if not isinstance(v, int):
+# 				v = str(v)
+			# すべてを文字列にするとエラーがでない。
+			try:
+				v = int(v)
+			except:
+				pass
+			
+			
 			ind = [""]*h
-			value = ind.extend(("Value", v))
-			outputs.append(value)
-			
-		
-			
+			value = "Value", v
+			ind.extend(value)
+			outputs.append(ind)
 def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にして一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
 	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
 	sheet = cellrange.getSpreadsheet()  # セル範囲のあるシートを取得。
