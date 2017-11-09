@@ -6,7 +6,7 @@ from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.sheet import CellFlags as cf # 定数
 from com.sun.star.awt import XEnhancedMouseClickHandler
 from com.sun.star.awt import MouseButton  # 定数
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
+def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。ただしマウスハンドラはフリーズするので直接pydevを書き込んだほうがよい。
 	def wrapper(*args, **kwargs):
 		frame = None
 		doc = XSCRIPTCONTEXT.getDocument()
@@ -40,7 +40,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
 	root = configreader("/org.openoffice.TypeDetection.Filter/Filters")  # コンフィギュレーションのルートを取得。
 	props = "UIName", "UIComponent", "DocumentService"  # 取得するプロパティ名のタプル。
-	outputs = []
+	outputs = []  # 出力行のリスト。
 	for childname in root.getElementNames():  # 子ノードの名前のタプルを取得。ノードオブジェクトの直接取得はできない模様。
 		uiname, uicomponent, documentservice = root[childname].getPropertyValues(props)  # フィルターのプロパティを取得。
 		if uicomponent and documentservice=="com.sun.star.sheet.SpreadsheetDocument":  # スプレッドシートを処理するダイアログがあるもののみ抽出。
@@ -55,13 +55,15 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	rowsToSheet(sheet, datarows)  # シートに書き出し。		
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(ctx, smgr, doc, configreader))  # マウスハンドラをコントローラに設定。
-class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
-	def __init__(self, ctx, smgr, doc, configreader):
-		self.args = ctx, smgr, doc, configreader
+	r = len(datarows) + 1  # ダブルクリック後に挿入するデータ開始行を取得。
+	args = ctx, smgr, doc, configreader, r
+	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(args))  # マウスハンドラをコントローラに設定。
+class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # マウスハンドラ
+	def __init__(self, args):
+		self.args = args
 # 	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
-		ctx, smgr, doc, configreader = self.args
+		ctx, smgr, doc, configreader, r = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 			if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
@@ -73,16 +75,14 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 						uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")  # フィルター名からUIComponent名を取得。
 						filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
 						filteroptiondialog.setSourceDocument(doc)  # 変換元のドキュメントを設定。
-						if filteroptiondialog.execute()==1:
-							propertyvalues = filteroptiondialog.getPropertyValues()
-							outputs = []
-							expandPropertyValueStructs(outputs, propertyvalues, 0)
+						if filteroptiondialog.execute()==1:  # フィルターのオプションダイアログを表示。
+							propertyvalues = filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。
+							outputs = []  # 出力行のリスト。
+							expandPropertyValueStructs(outputs, propertyvalues, 0)  # PropertyValue Structを展開する。
 							headers = filtername,
 							datarows = [headers]
 							datarows.extend(outputs)
-							cellcursor = sheet.createCursor()  # シート全体のセルカーサーを取得。
-							cellcursor.gotoEndOfUsedArea(False)  # 使用範囲の右下のセルにセルカーサーのセル範囲を変更する。
-							r = cellcursor.getRangeAddress().StartRow + 2
+							sheet.getRows().insertByIndex(r, len(datarows)+1)  # 行インデックスrに挿入する。
 							rowsToSheet(sheet[r, 0], datarows)
 						return False  # セル編集モードにしない。
 		return True  # Falseを返すと右クリックメニューがでてこなくなる。
@@ -90,42 +90,32 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 		return True  # Trueでイベントを次のハンドラに渡す。
 	def disposing(self, eventobject):
 		pass	
-def expandPropertyValueStructs(outputs, structs, h):
-	flg = True
+def expandPropertyValueStructs(outputs, structs, h):  # outputs: 出力行のリスト、structs: PropertyValuesのタプル、h: 出力階層。
+	flg = True  # 先頭行のフラグ。
 	for struct in structs:
 		ind = [""]*h
-		if flg and h>0:
+		if flg and h>0:  # 出力階層1以上で先頭行のとき。
 			ind[-1] = "Value"
 			flg = False
 		name = "Name", struct.Name
-		ind.extend(name)
+		ind.extend(name)  # 戻り値はない。
 		outputs.append(ind)
 		v = struct.Value
-		if isinstance(v, tuple):
+		if isinstance(v, tuple):  # Valueがタプルの時は入れ子になっているので再帰呼出し。
 			expandPropertyValueStructs(outputs, v, h+1)
 		else:
-			# これはなぜかpdfではエラーになる。→ブーリアンはintだから。
-			if not isinstance(v, int):
-				v = str(v) 
-				
-			# すべてを文字列にするとエラーがでない。
-# 			v = str(v)
-# 			try:
-# 				v = int(v)
-# 			except:
-# 				pass
-			
-			
+			if isinstance(v, bool) or not isinstance(v, int):  # vがint以外の時。bool型はintに含まれるので注意。
+				v = str(v)  # setDataArrayではint以外はStringしか代入できないのでStringに変換する。
 			ind = [""]*h
 			value = "Value", v
-			ind.extend(value)
+			ind.extend(value)  # 戻り値はない。
 			outputs.append(ind)
 def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にして一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
 	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
 	sheet = cellrange.getSpreadsheet()  # セル範囲のあるシートを取得。
 	cellcursor = sheet.createCursorByRange(cellrange)  # セル範囲のセルカーサーを取得。
 	cellcursor.collapseToSize(len(datarows[0]), len(datarows))  # (列、行)で指定。セルカーサーの範囲をdatarowsに合せる。
-	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは数値(double)か文字列のみ。
+	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは整数(int、ただしboolを除く)か文字列のみ。
 	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。		
 def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
 	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
