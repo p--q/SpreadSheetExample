@@ -104,7 +104,7 @@ def expandPropertyValueStructs(outputs, structs, h):
 		if isinstance(v, tuple):
 			expandPropertyValueStructs(outputs, v, h+1)
 		else:
-			# これはなぜかpdfではエラーになる。
+			# これはなぜかpdfではエラーになる。→ブーリアンはintだから。
 			if not isinstance(v, int):
 				v = str(v) 
 				
