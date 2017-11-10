@@ -61,7 +61,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	annotations.insertNew(sheet["B1"].getCellAddress(), txt)  # セル注釈を挿入。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
-	r = len(datarows) + 1  # データの最終行の2つ下の行のインデックス。
+	r = len(datarows)  # データの最終行の1つ下の行のインデックス。
 	args = ctx, smgr, doc, configreader, r
 	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(args))  # マウスハンドラをコントローラに設定。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # マウスハンドラ
@@ -91,8 +91,8 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 							header = filtername,
 							datarows = [header]
 							datarows.extend(outputs)
-							sheet.getRows().insertByIndex(r, len(datarows)+1)  # 行インデックスrに挿入するデータの行数の行を挿入する。
-							rowsToSheet(sheet[r, 0], datarows)
+							sheet.getRows().insertByIndex(r+1, len(datarows)+1)  # 行インデックスrに挿入するデータの行数の行を挿入する。
+							rowsToSheet(sheet[r+1, 0], datarows)
 						return False  # セル編集モードにしない。
 		return True  # Falseを返すと右クリックメニューがでてこなくなる。
 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
