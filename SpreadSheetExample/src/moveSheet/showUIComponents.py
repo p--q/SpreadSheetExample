@@ -53,15 +53,15 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	outputs.sort(key=lambda r: r[2])  # 行の列インデックス2。つまりUIComponentでソートする。
 	datarows.extend(outputs)  # データ行を追加。	
 	sheet = getNewSheet(doc, sheetname)  # 新規シートの取得。
-	
-	
-	
-	
-	
 	rowsToSheet(sheet, datarows)  # datarowsをシートに書き出し。		
+	annotations = sheet.getAnnotations()  # シートのセル注釈コレクションを取得。
+	txt = "Export the sheet in the UIName format to the home directory."
+	annotations.insertNew(sheet["A1"].getCellAddress(), txt)  # セル注釈を挿入。
+	txt = "Expand the return value of the FilterOptionsDialog."
+	annotations.insertNew(sheet["B1"].getCellAddress(), txt)  # セル注釈を挿入。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
-	r = len(datarows) + 1  # ダブルクリック後に挿入するデータ開始行を取得。
+	r = len(datarows) + 1  # データの最終行の2つ下の行のインデックス。
 	args = ctx, smgr, doc, configreader, r
 	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(args))  # マウスハンドラをコントローラに設定。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # マウスハンドラ
@@ -71,12 +71,13 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
 		ctx, smgr, doc, configreader, r = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
-		if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
-			if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
-				if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
+		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
+			if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
+		# 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  
+				if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 					sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
 					celladdress = target.getCellAddress()  # ターゲットのセルアドレスを取得。
-					if celladdress.Row>0 and sheet[0, celladdress.Column].getString()=="FilterName":  # 行ヘッダーがFilterNameの列のとき。
+					if 0<celladdress.Row<r and sheet[0, celladdress.Column].getString()=="FilterName":  # 行ヘッダーがFilterNameの列のとき。
 						filtername = target.getString()  # ターゲットセルの文字列を取得。
 						uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")  # フィルター名からUIComponent名を取得。
 						filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
@@ -90,7 +91,7 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 							header = filtername,
 							datarows = [header]
 							datarows.extend(outputs)
-							sheet.getRows().insertByIndex(r, len(datarows)+1)  # 行インデックスrに挿入する。
+							sheet.getRows().insertByIndex(r, len(datarows)+1)  # 行インデックスrに挿入するデータの行数の行を挿入する。
 							rowsToSheet(sheet[r, 0], datarows)
 						return False  # セル編集モードにしない。
 		return True  # Falseを返すと右クリックメニューがでてこなくなる。
