@@ -7,25 +7,59 @@ def macro():
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+	controller = doc.getCurrentController()  # コントローラの取得。
+	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+	cell = sheet["C1"]
+	address = cell.getCellAddress()
+	annotations = sheet.getAnnotations()
+	annotations.insertNew(address, "This is an annotation")
 	
-	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+	
+	annotation = cell.getAnnotation()
+# 	annotation.setString("セル注釈")
+# 	annotation.setIsVisible(False)
+	
+# 	tcu.wtree(annotation.getParent())
 	
 	
-	sheets = doc.getSheets()  # シートコレクション。
-	sheet = sheets[0]  # 最初のシート。
-	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
-	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
-	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
-	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
-	rows = sheet.getRows()  # 行アクセスオブジェクト。
-	row = rows[0]  # 1行目。
-	columns = sheet.getColumns()  # 行アクセスオブジェクト。
-	column = columns[0]  # 1行目。
-	charts = sheet.getCharts()  # チャートコレクション
-	controller = doc.getCurrentController()  # コントローラーの取得。
-	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
-	celladdressconversion = doc.createInstance("com.sun.star.table.CellAddressConversion")
-	cellrangeaddressconversion = doc.createInstance("com.sun.star.table.CellRangeAddressConversion")
+# 	annotations = sheet.getAnnotations()
+# 	tcu.wtree(annotations)
+	
+	shape = annotation.getAnnotationShape()
+	tcu.wtree(shape)
+	
+	
+# 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+# 	
+# 	
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
+# 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
+# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
+# 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
+# 	cellcursor = sheet.createCursor()  # 最初のシートすべてのセルカーサー。
+# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
+# 	row = rows[0]  # 1行目。
+# 	columns = sheet.getColumns()  # 行アクセスオブジェクト。
+# 	column = columns[0]  # 1行目。
+# 	charts = sheet.getCharts()  # チャートコレクション
+# 	controller = doc.getCurrentController()  # コントローラーの取得。
+	
+	
+	
+	
+	
+	
+	
+# 	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
+# 	celladdressconversion = doc.createInstance("com.sun.star.table.CellAddressConversion")
+# 	cellrangeaddressconversion = doc.createInstance("com.sun.star.table.CellRangeAddressConversion")
+
+# 	filteroptiondialog = smgr.createInstanceWithContext("com.sun.star.comp.GraphicExportDialog", ctx)  # UIコンポーネントをインスタンス化。
+# 	filteroptiondialog = smgr.createInstanceWithContext("com.sun.star.comp.Calc.FilterOptionsDialog", ctx)  # UIコンポーネントをインスタンス化。
+# 	filteroptiondialog = smgr.createInstanceWithContext("com.sun.star.comp.PDF.PDFDialog", ctx)  # UIコンポーネントをインスタンス化。
+# 	tcu.wtree(filteroptiondialog)
+
 
 	# 各1行しか実行できない。
 # 	tcu.wtree(doc)  # Calcドキュメント。
@@ -68,9 +102,9 @@ def macro():
 # 	tcu.wcompare(sheet["A1"], sheet[0:1, 0])  # セルとセル範囲
 # 	tcu.wcompare(sheet[0, 0], sheet[0:1, 0])  # セルとセル範囲
 
-	print(sheet["A1"])
-	print(sheet[0, 0])
-	print(sheet[0:1, 0])
+# 	print(sheet["A1"])
+# 	print(sheet[0, 0])
+# 	print(sheet[0:1, 0])
 
 
 

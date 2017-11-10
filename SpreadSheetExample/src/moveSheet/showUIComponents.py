@@ -46,13 +46,19 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 		if uicomponent and documentservice=="com.sun.star.sheet.SpreadsheetDocument":  # スプレッドシートを処理するダイアログがあるもののみ抽出。
 			datarow = uiname, childname, uicomponent, documentservice
 			outputs.append(datarow)
-	header = props[0], "FilterName", *props[1:]  # ヘッダー行。右辺のタプルのアンパックはPython3.5以上でのみ可能。
+	datarows = []  # シートに書き込む行のリスト。
+	datarow = props[0], "FilterName", *props[1:]  # ヘッダー行。右辺のタプルのアンパックはPython3.5以上でのみ可能。
+	datarows.append(datarow)
 	sheetname = "UIComponents"  # UIComponentsプロパティがあるノードのみそれでソートして出力する。
 	outputs.sort(key=lambda r: r[2])  # 行の列インデックス2。つまりUIComponentでソートする。
-	datarows = [header]  # ヘッダー行の挿入。 
 	datarows.extend(outputs)  # データ行を追加。	
 	sheet = getNewSheet(doc, sheetname)  # 新規シートの取得。
-	rowsToSheet(sheet, datarows)  # シートに書き出し。		
+	
+	
+	
+	
+	
+	rowsToSheet(sheet, datarows)  # datarowsをシートに書き出し。		
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
 	r = len(datarows) + 1  # ダブルクリック後に挿入するデータ開始行を取得。
@@ -75,12 +81,14 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 						uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")  # フィルター名からUIComponent名を取得。
 						filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
 						filteroptiondialog.setSourceDocument(doc)  # 変換元のドキュメントを設定。
+						propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
+						filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
 						if filteroptiondialog.execute()==1:  # フィルターのオプションダイアログを表示。
-							propertyvalues = filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。
+							propertyvalues = filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。XPropertyAccessインターフェイスのメソッド。
 							outputs = []  # 出力行のリスト。
 							expandPropertyValueStructs(outputs, propertyvalues, 0)  # PropertyValue Structを展開する。
-							headers = filtername,
-							datarows = [headers]
+							header = filtername,
+							datarows = [header]
 							datarows.extend(outputs)
 							sheet.getRows().insertByIndex(r, len(datarows)+1)  # 行インデックスrに挿入する。
 							rowsToSheet(sheet[r, 0], datarows)
