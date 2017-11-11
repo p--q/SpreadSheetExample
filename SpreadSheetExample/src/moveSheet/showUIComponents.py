@@ -59,6 +59,11 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	annotations.insertNew(sheet["A1"].getCellAddress(), txt)  # セル注釈を挿入。
 	txt = "Expand the return value of the FilterOptionsDialog."
 	annotations.insertNew(sheet["B1"].getCellAddress(), txt)  # セル注釈を挿入。
+	[i.getAnnotationShape().setPropertyValue("Visible", False) for i in annotations]  # これをしないとmousePressed()のTargetにAnnotationShapeが入ってしまう。
+# 	for annotation in annotations:
+# 		annotation.getAnnotationShape().setPropertyValue("Visible", False)
+	
+	
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
 	r = len(datarows)  # データの最終行の1つ下の行のインデックス。
@@ -73,7 +78,9 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
-		# 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  
+				
+# 				import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  
+				
 				if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 					sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
 					celladdress = target.getCellAddress()  # ターゲットのセルアドレスを取得。
