@@ -60,10 +60,6 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	txt = "Expand the return value of the FilterOptionsDialog."
 	annotations.insertNew(sheet["B1"].getCellAddress(), txt)  # セル注釈を挿入。
 	[i.getAnnotationShape().setPropertyValue("Visible", False) for i in annotations]  # これをしないとmousePressed()のTargetにAnnotationShapeが入ってしまう。
-# 	for annotation in annotations:
-# 		annotation.getAnnotationShape().setPropertyValue("Visible", False)
-	
-	
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
 	r = len(datarows)  # データの最終行の1つ下の行のインデックス。
