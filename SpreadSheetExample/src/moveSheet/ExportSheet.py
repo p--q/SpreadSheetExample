@@ -36,10 +36,10 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 			pathsubstservice = smgr.createInstanceWithContext("com.sun.star.comp.framework.PathSubstitution", ctx)
 			fileurl = pathsubstservice.getSubstituteVariableValue("$(home)")
 		filepicker.setDisplayDirectory(fileurl)  # デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
-		self.args = ctx, smgr, filepicker, configreader, props, doc, fileurl
+		self.args = ctx, smgr, filepicker, configreader, props, doc
 # 	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
-		ctx, smgr, filepicker, configreader, props, doc, fileurl = self.args
+		ctx, smgr, filepicker, configreader, props, doc = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
@@ -67,18 +67,33 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 						displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # Windowsの場合は拡張子を含めない。
 						filepicker.appendFilter(displayfilter, exportextension)
 						filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)
+										
+										# フィルターを編集しないという選択肢はない。デフォルト値を得るためにはfilteroptiondialog.execute()の必要がある。
+						
+						
+						
+						
 						if filepicker.execute()==ExecutableDialogResults.OK:
+# 							import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 							filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)	
 							if filteroption:
 								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
 								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
 								propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
 								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
-								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
-									propertyvalues = filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。XPropertyAccessインターフェイスのメソッド。	
+								
+								
+# 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。execute()するだけでデフォルト値が入る。
 									
-									
-									newdoc.storeAsURL("{}/{}".format(fileurl, newfilename), propertyvalues)		
+								filteroptiondialog.execute()  # フィルターのオプションダイアログを表示。execute()するだけでデフォルト値が入る。ダイアログでOKすると変更値が書き込まれるのでifで戻り値を受ける必要はない。
+								if filtername=="Text - txt - csv (StarCalc)":
+									propertyvalues = list(propertyvalues)
+									propertyvalues.extend(filteroptiondialog.getPropertyValues())  # 戻り値はPropertyValue Structのタプル。CSVだけfilternameが入ってこないのでextendする必要がある。
+								else:
+									propertyvalues = filteroptiondialog.getPropertyValues()
+								
+								
+								newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)		
 						
 												
 					
