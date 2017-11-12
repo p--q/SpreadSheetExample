@@ -6,16 +6,21 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
-	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-	controller = doc.getCurrentController()  # コントローラの取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	cell = sheet["C1"]
-	address = cell.getCellAddress()
-	annotations = sheet.getAnnotations()
-	annotations.insertNew(address, "This is an annotation")
+	filepicker = smgr.createInstanceWithContext("com.sun.star.ui.dialogs.FilePicker", ctx)
+	tcu.wtree(filepicker)
 	
 	
-	annotation = cell.getAnnotation()
+	
+# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+# 	cell = sheet["C1"]
+# 	address = cell.getCellAddress()
+# 	annotations = sheet.getAnnotations()
+# 	annotations.insertNew(address, "This is an annotation")
+# 	
+# 	
+# 	annotation = cell.getAnnotation()
 # 	annotation.setString("セル注釈")
 # 	annotation.setIsVisible(False)
 	
@@ -25,8 +30,8 @@ def macro():
 # 	annotations = sheet.getAnnotations()
 # 	tcu.wtree(annotations)
 	
-	shape = annotation.getAnnotationShape()
-	tcu.wtree(shape)
+# 	shape = annotation.getAnnotationShape()
+# 	tcu.wtree(shape)
 	
 	
 # 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。

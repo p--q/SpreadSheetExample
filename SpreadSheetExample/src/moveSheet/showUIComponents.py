@@ -6,6 +6,7 @@ from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.sheet import CellFlags as cf # 定数
 from com.sun.star.awt import XEnhancedMouseClickHandler
 from com.sun.star.awt import MouseButton  # 定数
+from com.sun.star.ui.dialogs import ExecutableDialogResults  # 定数
 def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。ただしマウスハンドラはフリーズするので直接pydevを書き込んだほうがよい。
 	def wrapper(*args, **kwargs):
 		frame = None
@@ -54,54 +55,60 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	datarows.extend(outputs)  # データ行を追加。	
 	sheet = getNewSheet(doc, sheetname)  # 新規シートの取得。
 	rowsToSheet(sheet, datarows)  # datarowsをシートに書き出し。		
-	annotations = sheet.getAnnotations()  # シートのセル注釈コレクションを取得。
-	txt = "Export the sheet in the UIName format to the home directory."
-	annotations.insertNew(sheet["A1"].getCellAddress(), txt)  # セル注釈を挿入。
-	txt = "Expand the return value of the FilterOptionsDialog."
+	annotations = sheet.getAnnotations()  # シートのコメントコレクションを取得。
+	txt = "Double-click to expand the return value of the FilterOptionsDialog."
 	annotations.insertNew(sheet["B1"].getCellAddress(), txt)  # セル注釈を挿入。
 	[i.getAnnotationShape().setPropertyValue("Visible", False) for i in annotations]  # これをしないとmousePressed()のTargetにAnnotationShapeが入ってしまう。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
 	r = len(datarows)  # データの最終行の1つ下の行のインデックス。
-	args = ctx, smgr, doc, configreader, r
+	args = ctx, smgr, doc, r
 	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(args))  # マウスハンドラをコントローラに設定。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # マウスハンドラ
 	def __init__(self, args):
-		self.args = args
+		ctx, smgr, doc, r = args
+		getFilterProperyValues = filterproperyvaluesCreator(ctx, smgr, doc)
+		self.args = r, getFilterProperyValues
 # 	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
-		ctx, smgr, doc, configreader, r = self.args
+		r, getFilterProperyValues = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
-				
 # 				import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  
-				
 				if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 					sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
 					celladdress = target.getCellAddress()  # ターゲットのセルアドレスを取得。
-					if 0<celladdress.Row<r and sheet[0, celladdress.Column].getString()=="FilterName":  # 行ヘッダーがFilterNameの列のとき。
-						filtername = target.getString()  # ターゲットセルの文字列を取得。
-						uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")  # フィルター名からUIComponent名を取得。
-						filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-						filteroptiondialog.setSourceDocument(doc)  # 変換元のドキュメントを設定。
-						propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-						filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
-						if filteroptiondialog.execute()==1:  # フィルターのオプションダイアログを表示。
-							propertyvalues = filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。XPropertyAccessインターフェイスのメソッド。
-							outputs = []  # 出力行のリスト。
-							expandPropertyValueStructs(outputs, propertyvalues, 0)  # PropertyValue Structを展開する。
-							header = filtername,
-							datarows = [header]
-							datarows.extend(outputs)
-							sheet.getRows().insertByIndex(r+1, len(datarows)+1)  # 行インデックスrに挿入するデータの行数の行を挿入する。
-							rowsToSheet(sheet[r+1, 0], datarows)
-						return False  # セル編集モードにしない。
+					if 0<celladdress.Row<r:  # 行を限定。
+						header = sheet[0, celladdress.Column].getString()  # 列のヘッダーを取得。
+						if header=="FilterName":  # 列ヘッダーがFilterNameの列のとき。
+							filtername = target.getString()  # ターゲットセルの文字列を取得。
+							filterpropertyvalues = getFilterProperyValues(filtername)
+							if filterpropertyvalues is not None:	
+								outputs = []  # 出力行のリスト。
+								expandPropertyValueStructs(outputs, filterpropertyvalues, 0)  # PropertyValue Structを展開する。
+								header = filtername,
+								datarows = [header]
+								datarows.extend(outputs)
+								sheet.getRows().insertByIndex(r+1, len(datarows)+1)  # 行インデックスrに挿入するデータの行数の行を挿入する。
+								rowsToSheet(sheet[r+1, 0], datarows)
+								return False  # セル編集モードにしない。
 		return True  # Falseを返すと右クリックメニューがでてこなくなる。
 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
 		return True  # Trueでイベントを次のハンドラに渡す。
 	def disposing(self, eventobject):
 		pass	
+def filterproperyvaluesCreator(ctx, smgr, doc):	
+	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
+	def getFilterProperyValues(filtername):
+		uicomponent = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername)).getPropertyValue("UIComponent")  # フィルター名からUIComponent名を取得。
+		filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
+		filteroptiondialog.setSourceDocument(doc)  # 変換元のドキュメントを設定。
+		propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
+		filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
+		if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
+			return filteroptiondialog.getPropertyValues()  # 戻り値はPropertyValue Structのタプル。XPropertyAccessインターフェイスのメソッド。		
+	return getFilterProperyValues
 def expandPropertyValueStructs(outputs, structs, h):  # outputs: 出力行のリスト、structs: PropertyValuesのタプル、h: 出力階層。
 	flg = True  # 先頭行のフラグ。
 	for struct in structs:
