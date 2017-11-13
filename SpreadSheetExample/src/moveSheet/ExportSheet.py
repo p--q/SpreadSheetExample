@@ -13,8 +13,8 @@ from com.sun.star.awt import MouseButton  # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。  
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	sheet = getNewSheet(doc, "ExportExample")  # 新規シートの取得。
-	cmds = "CSVとしてエクスポート", "PNGとしてエクスポート", "PDFとしてエクスポート", "ODSとしてエクスポート"
-	datarows = [(i,) for i in cmds]
+	cmds = {"CSVとしてエクスポート": "CSV", "PNGとしてエクスポート": "PNG", "PDFとしてエクスポート": "PDF", "ODSとしてエクスポート": "ODS"}
+	datarows = [(i,) for i in sorted(cmds.keys())]
 	cellrange = sheet[:len(datarows), :1]
 	cellrange.setDataArray(datarows)
 	cellrange.getColumns().setPropertyValue("OptimalWidth", True)  # 列幅を最適化する。		
@@ -22,85 +22,69 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。	
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。		
-	args = ctx, smgr, doc
+	args = ctx, smgr, doc, cmds
 	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(args))  # マウスハンドラをコントローラに設定。
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # マウスハンドラ
 	def __init__(self, args):
-		ctx, smgr, doc = args
+		ctx, smgr, doc, cmds = args
 		configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
 		props = "UIName", "UIComponent", "ExportExtension"  # 取得するプロパティ名のタプル。
 		filepicker = smgr.createInstanceWithArgumentsAndContext("com.sun.star.ui.dialogs.FilePicker", (TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS,), ctx)
 		if doc.hasLocation():  # ドキュメントが保存されているとき。
-			fileurl = os.path.dirname(doc.getLocation())
-		else:
+			fileurl = os.path.dirname(doc.getLocation())  # ドキュメントの親ディレクトリを取得。
+		else:  # ドキュメントが保存れていない時はホームディレクトリを取得。
 			pathsubstservice = smgr.createInstanceWithContext("com.sun.star.comp.framework.PathSubstitution", ctx)
 			fileurl = pathsubstservice.getSubstituteVariableValue("$(home)")
-		filepicker.setDisplayDirectory(fileurl)  # デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
-		self.args = ctx, smgr, filepicker, configreader, props, doc
+		filepicker.setDisplayDirectory(fileurl)  # ファイル保存ダイアログで、デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
+		self.args = ctx, smgr, filepicker, configreader, props, doc, cmds
 # 	@enableRemoteDebugging  # ダブルクリニックで2回呼ばれる。2回目はGUIで操作できないときあり。
 	def mousePressed(self, enhancedmouseevent):  # マウスボタンをクリックした時。ブーリアンを返さないといけない。
-		ctx, smgr, filepicker, configreader, props, doc = self.args
+		ctx, smgr, filepicker, configreader, props, doc, cmds = self.args
 		target = enhancedmouseevent.Target  # ターゲットを取得。
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
 # 				import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # これでブレークすべき。
 				if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
-					
-					cmd = target.getString()
-					if cmd=="CSVとしてエクスポート":
-						sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
-						name = sheet.getName()
-
-						
-						propertyvalues = PropertyValue(Name="Hidden",Value=True),
-						newdoc = ctx.getByName('/singletons/com.sun.star.frame.theDesktop').loadComponentFromURL("private:factory/scalc", "_blank", 0, propertyvalues)  
-						newsheets = newdoc.getSheets()
-						newsheets.importSheet(doc, name, 0)
-						del newsheets["Sheet1"]  # デフォルトシートを削除する。
-					
-						filepicker.setTitle(cmd)
+					txt = target.getString()  # セルの文字列を取得。
+					cmd = cmds[txt]  # コマンドを取得。
+					if cmd=="CSV":
 						filtername = "Text - txt - csv (StarCalc)"
 						root = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername))  # コンフィギュレーションのルートを取得。	
-						uiname, uicomponent, exportextension = root.getPropertyValues(props)  # フィルターのプロパティを取得。
-						newfilename = "{}.{}".format(name, exportextension)
-						filepicker.setDefaultName(newfilename)
-						displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # Windowsの場合は拡張子を含めない。
-						filepicker.appendFilter(displayfilter, exportextension)
-						filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)
+						uiname, uicomponent, exportextension = root.getPropertyValues(props)  # フィルターのプロパティを取得。	
+						sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
+						name = sheet.getName()  # シート名を取得。
+						newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
+						filepicker.setTitle(txt)  # ファイル保存ダイアログのタイトルを設定。
+						filepicker.setDefaultName(newfilename)  # ファイル保存ダイアログのデフォルトファイル名を設定。
+# 						displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # 表示フィルターの作成。Windowsの場合は拡張子を含めない。
+# 						filepicker.appendFilter(displayfilter, exportextension)  # ファイル選択ダイアログに表示フィルターを設定。しかし、これをするとなぜかマウスハンドラがはずれる。
+						filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
+						if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
+							propertyvalues = PropertyValue(Name="Hidden",Value=True),  # 新しいドキュメントのプロパティ。
+							newdoc = ctx.getByName('/singletons/com.sun.star.frame.theDesktop').loadComponentFromURL("private:factory/scalc", "_blank", 0, propertyvalues)  # 新規ドキュメントの取得。
+							newsheets = newdoc.getSheets()  # 新規ドキュメントのシートコレクションを取得。
+							newsheets.importSheet(doc, name, 0)  # 新規ドキュメントにシートをコピー。
+							del newsheets["Sheet1"]  # 新規ドキュメントのデフォルトシートを削除する。							
+							filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
+							filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
+							propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
+							filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
+							filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのフィルター編集チェックボックスの状態を取得。								
+							if filteroption:  # ファイル選択ダイアログのフィルター編集チェックボックスがチェックされている時。			
+								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。execute()するだけでデフォルト値が入る。
+									if filtername=="Text - txt - csv (StarCalc)":  # CSVのときのみ。
+										propertyvalues = list(propertyvalues)
+										propertyvalues.extend(filteroptiondialog.getPropertyValues())  # 戻り値はPropertyValue Structのタプル。CSVだけfilternameが入ってこないのでextendする必要がある。
+									else:
+										propertyvalues = filteroptiondialog.getPropertyValues()
+							else:  # デフォルト値を取得。
+								pass			
 										
-										# フィルターを編集しないという選択肢はない。デフォルト値を得るためにはfilteroptiondialog.execute()の必要がある。
-						
-						
-						
-						
-						if filepicker.execute()==ExecutableDialogResults.OK:
-# 							import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
-							filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)	
-							if filteroption:
-								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
-								propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。
-								
-								
-# 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。execute()するだけでデフォルト値が入る。
-									
-								filteroptiondialog.execute()  # フィルターのオプションダイアログを表示。execute()するだけでデフォルト値が入る。ダイアログでOKすると変更値が書き込まれるのでifで戻り値を受ける必要はない。
-								if filtername=="Text - txt - csv (StarCalc)":
-									propertyvalues = list(propertyvalues)
-									propertyvalues.extend(filteroptiondialog.getPropertyValues())  # 戻り値はPropertyValue Structのタプル。CSVだけfilternameが入ってこないのでextendする必要がある。
-								else:
-									propertyvalues = filteroptiondialog.getPropertyValues()
-								
-								
-								newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)		
-						
-												
-					
-					
-						newdoc.close(True)
+										
+							newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)		
+						newdoc.close(True)  # 新規ドキュメントを閉じる。
 						return False  # セル編集モードにしない。
-		return True  # Falseを返すと右クリックメニューがでてこなくなる。
+		return True
 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
 		return True  # Trueでイベントを次のハンドラに渡す。
 	def disposing(self, eventobject):
