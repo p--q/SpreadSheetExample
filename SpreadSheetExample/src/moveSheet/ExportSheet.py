@@ -48,6 +48,7 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 						txt = target.getString()  # セルの文字列を取得。
 						sheet = target.getSpreadsheet()  # ターゲットがあるシートを取得。
 						name = sheet.getName()  # シート名を取得。
+						newdoc = None
 						if txt.startswith("CSV"):
 							filepicker = smgr.createInstanceWithArgumentsAndContext("com.sun.star.ui.dialogs.FilePicker", (TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS,), ctx)  # キャッシュするとおかしくなる。
 							filepicker.setDisplayDirectory(fileurl)  # ファイル保存ダイアログで、デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
@@ -85,7 +86,8 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 							filepicker.setDisplayDirectory(fileurl)  # ファイル保存ダイアログで、デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
 							filtername = "calc_png_Export"
 							root = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername))  # コンフィギュレーションのルートを取得。	
-							uiname, uicomponent, exportextension = root.getPropertyValues(props)  # フィルターのプロパティを取得。	
+							uiname, uicomponent = root.getPropertyValues(props[:2])  # フィルターのプロパティを取得。	
+							exportextension = "png"
 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
 							filepicker.setTitle(txt)  # ファイル保存ダイアログのタイトルを設定。
 							filepicker.setDefaultName(newfilename)  # ファイル保存ダイアログのデフォルトファイル名を設定。
@@ -110,20 +112,21 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 								filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのフィルター編集チェックボックスの状態を取得。										
 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
 									propertyvalues = filteroptiondialog.getPropertyValues()
-									newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)									
-						elif txt.startswith("PDF"):
+									newdoc.storeToURL(filepicker.getFiles()[0], propertyvalues)	 # storeAsURLはダメ。								
+						elif txt.startswith("PDF"): 
 							filepicker = smgr.createInstanceWithArgumentsAndContext("com.sun.star.ui.dialogs.FilePicker", (TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS,), ctx)  # キャッシュするとおかしくなる。
 							filepicker.setDisplayDirectory(fileurl)  # ファイル保存ダイアログで、デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
 							filtername = "calc_pdf_Export"
 							root = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername))  # コンフィギュレーションのルートを取得。	
-							uiname, uicomponent, exportextension = root.getPropertyValues(props)  # フィルターのプロパティを取得。	
+							uiname, uicomponent = root.getPropertyValues(props[:2])  # フィルターのプロパティを取得。	
+							exportextension = "pdf"
 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
 							filepicker.setTitle(txt)  # ファイル保存ダイアログのタイトルを設定。
 							filepicker.setDefaultName(newfilename)  # ファイル保存ダイアログのデフォルトファイル名を設定。
 							displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # 表示フィルターの作成。Windowsの場合は拡張子を含めない。
 							filepicker.appendFilter(displayfilter, exportextension)  # ファイル選択ダイアログに表示フィルターを設定。
 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
-							filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECTED_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
+							filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
 							if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 								propertyvalues = PropertyValue(Name="Hidden",Value=True),  # 新しいドキュメントのプロパティ。
@@ -137,42 +140,43 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。										
 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
 									propertyvalues = filteroptiondialog.getPropertyValues()
-									newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)	
+									newdoc.storeToURL(filepicker.getFiles()[0], propertyvalues)	 # storeAsURL()はだめ。
 						elif txt.startswith("ODS"):
 							filepicker = smgr.createInstanceWithArgumentsAndContext("com.sun.star.ui.dialogs.FilePicker", (TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD,), ctx)  # キャッシュするとおかしくなる。
 							filepicker.setDisplayDirectory(fileurl)  # ファイル保存ダイアログで、デフォルトで表示するフォルダを設定。設定しないと「最近開いたファイル」が表示される。
-							
-							
-							
-							filtername = "calc_pdf_Export"
+							filtername = "calc8"
 							root = configreader("/org.openoffice.TypeDetection.Filter/Filters/{}".format(filtername))  # コンフィギュレーションのルートを取得。	
-							uiname, uicomponent, exportextension = root.getPropertyValues(props)  # フィルターのプロパティを取得。	
+							uiname = root.getPropertyValues(props[:1])  # フィルターのプロパティを取得。	
+							exportextension = "ods"
 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
 							filepicker.setTitle(txt)  # ファイル保存ダイアログのタイトルを設定。
 							filepicker.setDefaultName(newfilename)  # ファイル保存ダイアログのデフォルトファイル名を設定。
 							displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # 表示フィルターの作成。Windowsの場合は拡張子を含めない。
 							filepicker.appendFilter(displayfilter, exportextension)  # ファイル選択ダイアログに表示フィルターを設定。
-							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
-							filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECTED_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
-							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
+# 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。	
 							if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 								propertyvalues = PropertyValue(Name="Hidden",Value=True),  # 新しいドキュメントのプロパティ。
 								newdoc = ctx.getByName('/singletons/com.sun.star.frame.theDesktop').loadComponentFromURL("private:factory/scalc", "_blank", 0, propertyvalues)  # 新規ドキュメントの取得。
 								newsheets = newdoc.getSheets()  # 新規ドキュメントのシートコレクションを取得。
 								newsheets.importSheet(doc, name, 0)  # 新規ドキュメントにシートをコピー。
-								del newsheets["Sheet1"]  # 新規ドキュメントのデフォルトシートを削除する。							
-								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
-								propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。										
-								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
-									propertyvalues = filteroptiondialog.getPropertyValues()
-									newdoc.storeAsURL(filepicker.getFiles()[0], propertyvalues)										
+								del newsheets["Sheet1"]  # 新規ドキュメントのデフォルトシートを削除する。			
+								passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
+								if passwordoption:
+									pass
+								
+												
+# 								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
+# 								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
+# 								propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
+# 								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。										
+# 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
+# 									propertyvalues = filteroptiondialog.getPropertyValues()
+								newdoc.storeToURL(filepicker.getFiles()[0], ())										
 									
 									
 																			
-								
-						newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。
+						if newdoc is not None:	
+							newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。
 						return False  # セル編集モードにしない。
 		return True
 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
