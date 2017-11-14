@@ -162,19 +162,8 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler): # �
 								del newsheets["Sheet1"]  # 新規ドキュメントのデフォルトシートを削除する。			
 								passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
 								if passwordoption:
-									pass
-								
-												
-# 								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-# 								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
-# 								propertyvalues = PropertyValue(Name="FilterName", Value=filtername),  # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-# 								filteroptiondialog.setPropertyValues(propertyvalues)  # XPropertyAccessインターフェイスのメソッド。										
-# 								if filteroptiondialog.execute()==ExecutableDialogResults.OK:  # フィルターのオプションダイアログを表示。
-# 									propertyvalues = filteroptiondialog.getPropertyValues()
-								newdoc.storeToURL(filepicker.getFiles()[0], ())										
-									
-									
-																			
+									pass  # パスワード入力ダイアログの実装が必要。
+								newdoc.storeToURL(filepicker.getFiles()[0], ())																						
 						if newdoc is not None:	
 							newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。
 						return False  # セル編集モードにしない。
