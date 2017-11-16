@@ -23,33 +23,11 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # シートをアクティブにする。		
 	controller.registerContextMenuInterceptor(ContextMenuInterceptor(ctx, doc, sheet))  # コントローラにContextMenuInterceptorを登録する。
-def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
-	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
-	sheets = doc.getSheets()  # シートコレクションを取得。
-	c = 1  # 連番名の最初の番号。
-	newname = sheetname
-	while newname in sheets: # 同名のシートがあるとき。sheets[sheetname]ではFalseのときKeyErrorになる。
-		if not sheets[newname].queryContentCells(cellflags):  # シートが未使用のとき
-			return sheets[sheetname]  # 未使用の同名シートを返す。
-		newname = "{}{}".format(sheetname, c)  # 連番名を作成。
-		c += 1	
-	sheets.insertNewByName(newname, len(sheets))   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
-	if "Sheet1" in sheets:  # デフォルトシートがあるとき。
-		if not sheets["Sheet1"].queryContentCells(cellflags):  # シートが未使用のとき
-			del sheets["Sheet1"]  # シートを削除する。
-	return sheets[newname]
-def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にして一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
-	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
-	sheet = cellrange.getSpreadsheet()  # セル範囲のあるシートを取得。
-	cellcursor = sheet.createCursorByRange(cellrange)  # セル範囲のセルカーサーを取得。
-	cellcursor.collapseToSize(len(datarows[0]), len(datarows))  # (列、行)で指定。セルカーサーの範囲をdatarowsに合せる。
-	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは整数(int、ただしboolを除く)か文字列のみ。
-	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。	
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
 	def __init__(self, ctx, doc, sheet):
 		self.baseurl = getBaseURL(ctx, doc)  # ScriptingURLのbaseurlを取得。
-		global exportAsCSV, exportAsPDF, exportAsODS, exportSelection   # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
-		exportAsCSV, exportAsPDF, exportAsODS, exportSelection = globalFunctionCreator(ctx, doc, sheet)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
+		global exportAsCSV, exportAsPDF, exportAsODS, SelectionToNewSheet   # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
+		exportAsCSV, exportAsPDF, exportAsODS, SelectionToNewSheet = globalFunctionCreator(ctx, doc, sheet)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
 	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # 引数はContextMenuExecuteEvent Struct。
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer  # すでにあるコンテクストメニュー(アクショントリガーコンテナ)を取得。
@@ -57,7 +35,7 @@ class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コン
 		addMenuentry(submenucontainer, "ActionTrigger", 0, {"Text": "Export as CSV...", "CommandURL": baseurl.format(exportAsCSV.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
 		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Export as PDF...", "CommandURL": baseurl.format(exportAsPDF.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
 		addMenuentry(submenucontainer, "ActionTrigger", 2, {"Text": "Export as ODS...", "CommandURL": baseurl.format(exportAsODS.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
-		addMenuentry(submenucontainer, "ActionTrigger", 3, {"Text": "Export Selection", "CommandURL": baseurl.format(exportSelection.__name__)})
+		addMenuentry(submenucontainer, "ActionTrigger", 3, {"Text": "Selection to New Sheet", "CommandURL": baseurl.format(SelectionToNewSheet.__name__)})
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "ExportAs", "SubContainer": submenucontainer})  # サブメニューを一番上に挿入。
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # アクショントリガーコンテナのインデックス1にセパレーターを挿入。
 		return EXECUTE_MODIFIED  # このContextMenuInterceptorでコンテクストメニューのカスタマイズを終わらす。
@@ -138,15 +116,25 @@ def globalFunctionCreator(ctx, doc, sheet):
 				pass  # パスワード入力ダイアログの実装が必要。
 			newdoc.storeToURL(filepicker.getFiles()[0], ())		
 			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
-	def exportSelection():
-		sheets = doc.getSheets()
-		sheets.insertNewByName("Selection", len(sheets))   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
-		selection = doc.getCurrentSelection()
-		
-		
-		
-		
-	return exportAsCSV, exportAsPDF, exportAsODS, exportSelection
+	def SelectionToNewSheet():
+		newsheet = getNewSheet(doc, "Selection")  # 新しいシートの取得。
+		newindex = newsheet.getRangeAddress().Sheet  # 新しいシートのインデックスを取得。
+		def _copyRange(cellrange):  # セル範囲を新しいシートの同位置にコピー。
+			celladdress = cellrange[0, 0].getCellAddress()  # セル範囲の左上のセルのアドレスを取得。
+			celladdress.Sheet = newindex  # 新しいシートのアドレスにする。
+			sheet.copyRange(celladdress, cellrange.getRangeAddress())  # セル範囲を新しいシートの同じ位置にコピー。	
+		selection = doc.getCurrentSelection()  # 選択範囲を取得。
+		if selection.supportsService("com.sun.star.sheet.SheetCellRanges"):  # セル範囲コレクションの時。
+			for cellrange in selection:
+				_copyRange(cellrange)  # セル範囲を新しいシートの同位置にコピー。			
+		elif selection.supportsService("com.sun.star.sheet.SheetCellRange"):  # セル範囲の時。
+			_copyRange(selection)  # セル範囲を新しいシートの同位置にコピー。
+		controller = doc.getCurrentController()  # コントローラの取得。
+		controller.setActiveSheet(newsheet)  # シートをアクティブにする。
+		cellcursor = newsheet.createCursor()  # シート全体のセルカーサーを取得。
+		cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
+		cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。	
+	return exportAsCSV, exportAsPDF, exportAsODS, SelectionToNewSheet
 def getBaseURL(ctx, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
@@ -186,6 +174,29 @@ def createFilePicker(ctx, smgr, kwargs):
 			if kwargs:
 				[getattr(filepicker, key)(val) for key, val in kwargs.items()]
 		return filepicker
+def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
+	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
+	sheets = doc.getSheets()  # シートコレクションを取得。
+	c = 1  # 連番名の最初の番号。
+	newname = sheetname
+	while newname in sheets: # 同名のシートがあるとき。sheets[sheetname]ではFalseのときKeyErrorになる。
+		if not sheets[newname].queryContentCells(cellflags):  # シートが未使用のとき
+			return sheets[sheetname]  # 未使用の同名シートを返す。
+		newname = "{}{}".format(sheetname, c)  # 連番名を作成。
+		c += 1	
+	index = len(sheets)
+	sheets.insertNewByName(newname, index)   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
+	if "Sheet1" in sheets:  # デフォルトシートがあるとき。
+		if not sheets["Sheet1"].queryContentCells(cellflags):  # シートが未使用のとき
+			del sheets["Sheet1"]  # シートを削除する。
+	return sheets[newname]
+def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にして一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
+	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
+	sheet = cellrange.getSpreadsheet()  # セル範囲のあるシートを取得。
+	cellcursor = sheet.createCursorByRange(cellrange)  # セル範囲のセルカーサーを取得。
+	cellcursor.collapseToSize(len(datarows[0]), len(datarows))  # (列、行)で指定。セルカーサーの範囲をdatarowsに合せる。
+	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは整数(int、ただしboolを除く)か文字列のみ。
+	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。	
 def createConfigReader(ctx, smgr):  # ConfigurationProviderサービスのインスタンスを受け取る高階関数。
 	configurationprovider = smgr.createInstanceWithContext("com.sun.star.configuration.ConfigurationProvider", ctx)  # ConfigurationProviderの取得。
 	def configReader(path):  # ConfigurationAccessサービスのインスタンスを返す関数。
