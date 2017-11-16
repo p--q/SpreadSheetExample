@@ -63,6 +63,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}  # キーTemplateDescriptionは必須。
 		filepicker = createFilePicker(ctx, smgr, kwargs)  # ファイル選択ダイアログを取得。
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。	
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newfileurl = filepicker.getFiles()[0]  # ファイル選択ダイアログからfileurlを取得。
 			newdoc = toNewDoc(ctx, doc, name)  # docのシート名nameのシートを入れたドキュメントを取得。					
@@ -90,6 +91,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
 		filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newdoc = toNewDoc(ctx, doc, name)								
 			filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
@@ -109,6 +111,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
 		filepicker = createFilePicker(ctx, smgr, kwargs)								
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。	
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newdoc = toNewDoc(ctx, doc, name)				
 			passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
@@ -170,7 +173,7 @@ def createFilePicker(ctx, smgr, kwargs):
 			if key in kwargs:
 				uiname, exportextension = kwargs.pop(key)
 				displayfilter = uiname if sys.platform.startswith('win') else "{} (.{})".format(uiname, exportextension)  # 表示フィルターの作成。Windowsの場合は拡張子を含めない。
-				getattr(filepicker, key)(displayfilter, exportextension)
+				getattr(filepicker, key)(displayfilter, "*.{}".format(exportextension))
 			if kwargs:
 				[getattr(filepicker, key)(val) for key, val in kwargs.items()]
 		return filepicker
