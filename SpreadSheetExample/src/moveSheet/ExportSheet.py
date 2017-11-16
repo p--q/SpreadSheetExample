@@ -1,23 +1,17 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-
+import os, sys
 from itertools import zip_longest
 from com.sun.star.ui import XContextMenuInterceptor
 from com.sun.star.ui import ActionTriggerSeparatorType  # 定数
 from com.sun.star.ui.ContextMenuInterceptorAction import EXECUTE_MODIFIED  # enum
 from com.sun.star.sheet import CellFlags as cf # 定数
-
-
-import os, sys
-# 
 from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.ui.dialogs import ExtendedFilePickerElementIds  # 定数
 from com.sun.star.ui.dialogs import ControlActions  # 定数
 from com.sun.star.ui.dialogs import TemplateDescription  # 定数
 from com.sun.star.ui.dialogs import ExecutableDialogResults  # 定数
-# from com.sun.star.awt import XEnhancedMouseClickHandler
-# from com.sun.star.awt import MouseButton  # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。  
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -54,16 +48,16 @@ def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にし
 class ContextMenuInterceptor(unohelper.Base, XContextMenuInterceptor):  # コンテクストメニューのカスタマイズ。
 	def __init__(self, ctx, doc, sheet):
 		self.baseurl = getBaseURL(ctx, doc)  # ScriptingURLのbaseurlを取得。
-		global exportAsCSV, exportAsPNG, exportAsPDF, exportAsODS  # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
-		exportAsCSV, exportAsPNG, exportAsPDF, exportAsODS = globalFunctionCreator(ctx, doc, sheet)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
+		global exportAsCSV, exportAsPDF, exportAsODS, exportSelection   # ScriptingURLで呼び出す関数。オートメーションやAPSOでは不可。
+		exportAsCSV, exportAsPDF, exportAsODS, exportSelection = globalFunctionCreator(ctx, doc, sheet)  # クロージャーでScriptingURLで呼び出す関数に変数を渡す。
 	def notifyContextMenuExecute(self, contextmenuexecuteevent):  # 引数はContextMenuExecuteEvent Struct。
 		baseurl = self.baseurl  # ScriptingURLのbaseurlを取得。
 		contextmenu = contextmenuexecuteevent.ActionTriggerContainer  # すでにあるコンテクストメニュー(アクショントリガーコンテナ)を取得。
 		submenucontainer = contextmenu.createInstance("com.sun.star.ui.ActionTriggerContainer")  # サブメニューにするアクショントリガーコンテナをインスタンス化。
 		addMenuentry(submenucontainer, "ActionTrigger", 0, {"Text": "Export as CSV...", "CommandURL": baseurl.format(exportAsCSV.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
-		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Export as PNG...", "CommandURL": baseurl.format(exportAsPNG.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
-		addMenuentry(submenucontainer, "ActionTrigger", 2, {"Text": "Export as PDF...", "CommandURL": baseurl.format(exportAsPDF.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
-		addMenuentry(submenucontainer, "ActionTrigger", 3, {"Text": "Export as ODS...", "CommandURL": baseurl.format(exportAsODS.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(submenucontainer, "ActionTrigger", 1, {"Text": "Export as PDF...", "CommandURL": baseurl.format(exportAsPDF.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(submenucontainer, "ActionTrigger", 2, {"Text": "Export as ODS...", "CommandURL": baseurl.format(exportAsODS.__name__)})  # サブメニューを挿入。引数のない関数名を渡す。
+		addMenuentry(submenucontainer, "ActionTrigger", 3, {"Text": "Export Selection", "CommandURL": baseurl.format(exportSelection.__name__)})
 		addMenuentry(contextmenu, "ActionTrigger", 0, {"Text": "ExportAs", "SubContainer": submenucontainer})  # サブメニューを一番上に挿入。
 		addMenuentry(contextmenu, "ActionTriggerSeparator", 1, {"SeparatorType": ActionTriggerSeparatorType.LINE})  # アクショントリガーコンテナのインデックス1にセパレーターを挿入。
 		return EXECUTE_MODIFIED  # このContextMenuInterceptorでコンテクストメニューのカスタマイズを終わらす。
@@ -82,7 +76,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 	root = configreader("/org.openoffice.TypeDetection.Filter/Filters")  # コンフィギュレーションのルートを取得。		
 	name = sheet.getName()  # シート名を取得。
 	def exportAsCSV():
-		title = "Export as CSV"
+		title = "Export as CSV"  # ファイル選択ダイアログのタイトル。
 		filtername = "Text - txt - csv (StarCalc)"  # csvのフィルターネーム。
 		exportextension = "csv"  # csvの拡張子。
 		templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS  # パスワードとフィルター編集チェックボックス付きファイル選択ダイアログ。
@@ -105,113 +99,54 @@ def globalFunctionCreator(ctx, doc, sheet):
 			elif filteroption and filteroptiondialog.execute()==ExecutableDialogResults.OK:  # ファイル選択ダイアログのフィルター編集チェックボックスがチェックされている時はフィルターオプションダイアログを表示してそれがOKの時。
 				propertyvalues.extend(filteroptiondialog.getPropertyValues())
 				newdoc.storeAsURL(newfileurl, propertyvalues)  # ファイル選択ダイアログで取得したパスに保存する。			
-			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。
-	def exportAsPNG():
-		title = "Export as PNG"
-		filtername = "calc_png_Export"  # pngのフィルターネーム。
-		exportextension = "png"  # pngの拡張子。
-		templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_SELECTION # 選択範囲チェックボックス付きファイル選択ダイアログ。			
+			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
+	def exportAsPDF():
+		title = "Export as PDF"  # ファイル選択ダイアログのタイトル。
+		filtername = "calc_pdf_Export"  # フィルターネーム。
+		exportextension = "pdf"  # 拡張子。
+		templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS				
 		uiname, uicomponent = root[filtername].getPropertyValues(("UIName", "UIComponent"))  # フィルターのプロパティを取得。
 		newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
-		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}  # キーTemplateDescriptionは必須。
-		filepicker = createFilePicker(ctx, smgr, kwargs)  # ファイル選択ダイアログを取得。							
-		filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_SELECTION, ControlActions.SET_SELECT_ITEM, True)  # 選択範囲チェックボックスにチェックを付ける。
+		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
+		filepicker = createFilePicker(ctx, smgr, kwargs)		
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
+		filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
-			newfileurl = filepicker.getFiles()[0]  # ファイル選択ダイアログからfileurlを取得。
-			
-			newdoc = toNewDoc(ctx, doc, name)  # docのシート名nameのシートを入れたドキュメントを取得。	
-			
-						
-			cellcursor = newdoc.getSheets()[0].createCursor()
-			cellcursor.gotoEndOfUsedArea(True)
-			controller = newdoc.getCurrentController()  # コントローラの取得。
-			controller.select(cellcursor)		
+			newdoc = toNewDoc(ctx, doc, name)								
 			filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-			filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
-			filteroptiondialog.setPropertyValues((PropertyValue(Name="FilterName", Value=filtername),))   # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-			filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのフィルター編集チェックボックスの状態を取得。										
-			if filteroption:
-				if filteroptiondialog.execute()==ExecutableDialogResults.CANCEL:  # フィルターのオプションダイアログを表示。デフォルト値がfilteroptiondialogのPropertyValuesに入る。
-					return True  # キャンセルボタンがクリックされたとき。
-		newdoc.storeToURL(filepicker.getFiles()[0], filteroptiondialog.getPropertyValues())	 # storeAsURLはダメ。		
-	def exportAsPDF():
-		pass
+			filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。。
+			filteroptiondialog.setPropertyValues((PropertyValue(Name="FilterName", Value=filtername),)) 										
+			if filteroptiondialog.execute()==ExecutableDialogResults.CANCEL:  # フィルターのオプションダイアログを表示。
+				return True
+			newdoc.storeToURL(filepicker.getFiles()[0], filteroptiondialog.getPropertyValues())	 # storeAsURL()はだめ。
+			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
 	def exportAsODS():
-		pass
-	return exportAsCSV, exportAsPNG, exportAsPDF, exportAsODS
-
-	
-	
-	
-
-# 						elif txt.startswith("PNG"):  # pngで切り出す。
-# 							filtername = "calc_png_Export"  # pngのフィルターネーム。
-# 							exportextension = "png"  # pngの拡張子。
-# 							templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_SELECTION # 選択範囲チェックボックス付きファイル選択ダイアログ。			
-# 							uiname, uicomponent = root[filtername].getPropertyValues(("UIName", "UIComponent"))  # フィルターのプロパティを取得。
-# 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
-# 							kwargs = {"TemplateDescription": templatedescription, "setTitle": txt, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}  # キーTemplateDescriptionは必須。
-# 							filepicker = createFilePicker(ctx, smgr, kwargs)  # ファイル選択ダイアログを取得。							
-# 							filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_SELECTION, ControlActions.SET_SELECT_ITEM, True)  # 選択範囲チェックボックスにチェックを付ける。
-# # 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_SELECTION, False)  # 選択範囲チェックボックスを無効にする。
-# 							if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
-# 								newdoc = toNewDoc(ctx, doc, name)  # docのシート名nameのシートを入れたドキュメントを取得。	
-# 								
-# 											
-# 								cellcursor = newdoc.getSheets()[0].createCursor()
-# 								cellcursor.gotoEndOfUsedArea(True)
-# 								controller = newdoc.getCurrentController()  # コントローラの取得。
-# 								controller.select(cellcursor)		
-# 								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-# 								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。
-# 								filteroptiondialog.setPropertyValues((PropertyValue(Name="FilterName", Value=filtername),))   # 複数のフィルターに対応しているUIComponentはFilterNameを設定しないといけない。
-# 								filteroption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのフィルター編集チェックボックスの状態を取得。										
-# 								if filteroption:
-# 									if filteroptiondialog.execute()==ExecutableDialogResults.CANCEL:  # フィルターのオプションダイアログを表示。デフォルト値がfilteroptiondialogのPropertyValuesに入る。
-# 										return True  # キャンセルボタンがクリックされたとき。
-# 								newdoc.storeToURL(filepicker.getFiles()[0], filteroptiondialog.getPropertyValues())	 # storeAsURLはダメ。								
-# 						elif txt.startswith("PDF"): 
-# 							filtername = "calc_pdf_Export"  # フィルターネーム。
-# 							exportextension = "pdf"
-# 							templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD_FILTEROPTIONS				
-# 							uiname, uicomponent = root[filtername].getPropertyValues(("UIName", "UIComponent"))  # フィルターのプロパティを取得。
-# 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
-# 							kwargs = {"TemplateDescription": templatedescription, "setTitle": txt, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
-# 							filepicker = createFilePicker(ctx, smgr, kwargs)		
-# 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
-# 							filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
-# 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
-# 							if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
-# 								newdoc = toNewDoc(ctx, doc, name)								
-# 								filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
-# 								filteroptiondialog.setSourceDocument(newdoc)  # 変換元のドキュメントを設定。。
-# 								filteroptiondialog.setPropertyValues((PropertyValue(Name="FilterName", Value=filtername),)) 										
-# 								if filteroptiondialog.execute()==ExecutableDialogResults.CANCEL:  # フィルターのオプションダイアログを表示。
-# 									return True
-# 								newdoc.storeToURL(filepicker.getFiles()[0], filteroptiondialog.getPropertyValues())	 # storeAsURL()はだめ。
-# 						elif txt.startswith("ODS"):
-# 							filtername = "calc8"
-# 							exportextension = "ods"
-# 							templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD
-# 							uiname, dummy = root[filtername].getPropertyValues(("UIName", "UIComponent"))  # フィルターのプロパティを取得。
-# 							newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
-# 							kwargs = {"TemplateDescription": templatedescription, "setTitle": txt, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
-# 							filepicker = createFilePicker(ctx, smgr, kwargs)								
-# # 							filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。	
-# 							if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
-# 								newdoc = toNewDoc(ctx, doc, name)				
-# 								passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
-# 								if passwordoption:
-# 									pass  # パスワード入力ダイアログの実装が必要。
-# 								newdoc.storeToURL(filepicker.getFiles()[0], ())																						
-# 						if newdoc is not None:	
-# 							newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。
-# 							return False  # セル編集モードにしない。
-# 		return True
-# 	def mouseReleased(self, enhancedmouseevent):  # ブーリアンを返さないといけない。
-# 		return True  # Trueでイベントを次のハンドラに渡す。
-# 	def disposing(self, eventobject):
-# 		pass	
+		title = "Export as ODS"  # ファイル選択ダイアログのタイトル。
+		filtername = "calc8"  # フィルターネーム。
+		exportextension = "ods"  # 拡張子。
+		templatedescription = TemplateDescription.FILESAVE_AUTOEXTENSION_PASSWORD
+		uiname, dummy = root[filtername].getPropertyValues(("UIName", "UIComponent"))  # フィルターのプロパティを取得。
+		newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
+		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
+		filepicker = createFilePicker(ctx, smgr, kwargs)								
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。	
+		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
+			newdoc = toNewDoc(ctx, doc, name)				
+			passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
+			if passwordoption:
+				pass  # パスワード入力ダイアログの実装が必要。
+			newdoc.storeToURL(filepicker.getFiles()[0], ())		
+			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
+	def exportSelection():
+		sheets = doc.getSheets()
+		sheets.insertNewByName("Selection", len(sheets))   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
+		selection = doc.getCurrentSelection()
+		
+		
+		
+		
+	return exportAsCSV, exportAsPDF, exportAsODS, exportSelection
 def getBaseURL(ctx, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。

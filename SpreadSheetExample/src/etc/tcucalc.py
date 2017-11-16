@@ -5,11 +5,16 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+
+# 	filepicker = smgr.createInstanceWithContext("com.sun.star.ui.dialogs.FilePicker", ctx)
+# 	tcu.wtree(filepicker)
 	
-	filepicker = smgr.createInstanceWithContext("com.sun.star.ui.dialogs.FilePicker", ctx)
-	tcu.wtree(filepicker)
-	
-	
+
+
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
+# 	selection = doc.getCurrentSelection()  # 選択しているオブジェクトを取得。
+	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
+	tcu.wtree(cellrangeaddress)
 	
 # 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
 # 	controller = doc.getCurrentController()  # コントローラの取得。
