@@ -53,7 +53,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 	configreader = createConfigReader(ctx, smgr)  # 読み込み専用の関数を取得。
 	root = configreader("/org.openoffice.TypeDetection.Filter/Filters")  # コンフィギュレーションのルートを取得。		
 	name = sheet.getName()  # シート名を取得。
-	def exportAsCSV():
+	def exportAsCSV():  # アクティブシートをCSV形式で保存する。
 		title = "Export as CSV"  # ファイル選択ダイアログのタイトル。
 		filtername = "Text - txt - csv (StarCalc)"  # csvのフィルターネーム。
 		exportextension = "csv"  # csvの拡張子。
@@ -62,8 +62,9 @@ def globalFunctionCreator(ctx, doc, sheet):
 		newfilename = "{}.{}".format(name, exportextension)  # 新規ファイル名を作成。
 		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}  # キーTemplateDescriptionは必須。
 		filepicker = createFilePicker(ctx, smgr, kwargs)  # ファイル選択ダイアログを取得。
+		filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
-		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。	
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newfileurl = filepicker.getFiles()[0]  # ファイル選択ダイアログからfileurlを取得。
 			newdoc = toNewDoc(ctx, doc, name)  # docのシート名nameのシートを入れたドキュメントを取得。					
@@ -79,7 +80,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 				propertyvalues.extend(filteroptiondialog.getPropertyValues())
 				newdoc.storeAsURL(newfileurl, propertyvalues)  # ファイル選択ダイアログで取得したパスに保存する。			
 			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
-	def exportAsPDF():
+	def exportAsPDF():  # アクティブシートをPDF形式で保存する。
 		title = "Export as PDF"  # ファイル選択ダイアログのタイトル。
 		filtername = "calc_pdf_Export"  # フィルターネーム。
 		exportextension = "pdf"  # 拡張子。
@@ -91,7 +92,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。
 		filepicker.setValue(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, ControlActions.SET_SELECT_ITEM, True)  # ファイル保存ダイアログのフィルター編集チェックボックスにチェックをつける。	
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_FILTEROPTIONS, False)  # パスワードチェックボックスを無効にする。	
-		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newdoc = toNewDoc(ctx, doc, name)								
 			filteroptiondialog = smgr.createInstanceWithContext(uicomponent, ctx)  # UIコンポーネントをインスタンス化。
@@ -101,7 +102,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 				return True
 			newdoc.storeToURL(filepicker.getFiles()[0], filteroptiondialog.getPropertyValues())	 # storeAsURL()はだめ。
 			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
-	def exportAsODS():
+	def exportAsODS():  # アクティブシートをODS形式で保存する。
 		title = "Export as ODS"  # ファイル選択ダイアログのタイトル。
 		filtername = "calc8"  # フィルターネーム。
 		exportextension = "ods"  # 拡張子。
@@ -111,29 +112,34 @@ def globalFunctionCreator(ctx, doc, sheet):
 		kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": fileurl, "setDefaultName": newfilename, "appendFilter": (uiname, exportextension)}
 		filepicker = createFilePicker(ctx, smgr, kwargs)								
 		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, False)  # パスワードチェックボックスを無効にする。	
-		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。未実装。
+		filepicker.enableControl(ExtendedFilePickerElementIds.CHECKBOX_AUTOEXTENSION, False)  # 拡張子をつけるチェックボックスを無効にする。Windowsのみ関係する。
 		if filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
 			newdoc = toNewDoc(ctx, doc, name)				
 			passwordoption = filepicker.getValue(ExtendedFilePickerElementIds.CHECKBOX_PASSWORD, ControlActions.GET_SELECTED_ITEM)  # ファイル保存ダイアログのパスワードチェックボックスの状態を取得。
-			if passwordoption:
+			if passwordoption:  # パスワードチェックボックスがチェックサれている時。
 				pass  # パスワード入力ダイアログの実装が必要。
 			newdoc.storeToURL(filepicker.getFiles()[0], ())		
 			newdoc.close(True)  # 新規ドキュメントを閉じないと.~lock.ExportExample.csv#といったファイルが残ってしまう。		
-	def SelectionToNewSheet():
+	def SelectionToNewSheet():  # 選択範囲を新しいシートに切り出す。
 		newsheet = getNewSheet(doc, "Selection")  # 新しいシートの取得。
 		newindex = newsheet.getRangeAddress().Sheet  # 新しいシートのインデックスを取得。
+		newcellranges = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # 新しいシートでのセル範囲コレクション。あとでselectするために使う。
 		def _copyRange(cellrange):  # セル範囲を新しいシートの同位置にコピー。
 			celladdress = cellrange[0, 0].getCellAddress()  # セル範囲の左上のセルのアドレスを取得。
 			celladdress.Sheet = newindex  # 新しいシートのアドレスにする。
 			sheet.copyRange(celladdress, cellrange.getRangeAddress())  # セル範囲を新しいシートの同じ位置にコピー。	
+			cellrangeaddress = cellrange.getRangeAddress()  # セル範囲のアドレスを取得。
+			cellrangeaddress.Sheet = newindex  # 新しいシートでのセル範囲のアドレスにする。
+			newcellranges.addRangeAddress(cellrangeaddress, False)  # セル範囲コレクションに追加する。セル範囲は結合しない。
 		selection = doc.getCurrentSelection()  # 選択範囲を取得。
 		if selection.supportsService("com.sun.star.sheet.SheetCellRanges"):  # セル範囲コレクションの時。
-			for cellrange in selection:
+			for cellrange in selection:  # 各セル範囲について。
 				_copyRange(cellrange)  # セル範囲を新しいシートの同位置にコピー。			
 		elif selection.supportsService("com.sun.star.sheet.SheetCellRange"):  # セル範囲の時。
 			_copyRange(selection)  # セル範囲を新しいシートの同位置にコピー。
 		controller = doc.getCurrentController()  # コントローラの取得。
 		controller.setActiveSheet(newsheet)  # シートをアクティブにする。
+		controller.select(newcellranges)  # 元のシートと同位置のセルを選択状態にする。
 		cellcursor = newsheet.createCursor()  # シート全体のセルカーサーを取得。
 		cellcursor.gotoEndOfUsedArea(True)  # 使用範囲の右下のセルまでにセルカーサーのセル範囲を変更する。
 		cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。	
@@ -164,7 +170,7 @@ def toNewDoc(ctx, doc, name):  # 移動元doc、移動させるシート名name
 	newsheets.importSheet(doc, name, 0)  # 新規ドキュメントにシートをコピー。
 	del newsheets["Sheet1"]  # 新規ドキュメントのデフォルトシートを削除する。	
 	return newdoc
-def createFilePicker(ctx, smgr, kwargs):
+def createFilePicker(ctx, smgr, kwargs):  # ファイル選択ダイアログを返す。kwargsはFilePickerのメソッドをキー、引数を値とする辞書。
 	key = "TemplateDescription"
 	if key in kwargs:
 		filepicker = smgr.createInstanceWithArgumentsAndContext("com.sun.star.ui.dialogs.FilePicker", (kwargs.pop(key),), ctx)  # キャッシュするとおかしくなる。
@@ -207,54 +213,3 @@ def createConfigReader(ctx, smgr):  # ConfigurationProviderサービスのイン
 		return configurationprovider.createInstanceWithArguments("com.sun.star.configuration.ConfigurationAccess", (node,))
 	return configReader
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
-if __name__ == "__main__":  # オートメーションで実行するとき
-	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
-		import officehelper
-		from functools import wraps
-		import sys
-		from com.sun.star.beans import PropertyValue  # Struct
-		from com.sun.star.script.provider import XScriptContext  
-		def connectOffice(func):  # funcの前後でOffice接続の処理
-			@wraps(func)
-			def wrapper():  # LibreOfficeをバックグラウンドで起動してコンポーネントテクストとサービスマネジャーを取得する。
-				try:
-					ctx = officehelper.bootstrap()  # コンポーネントコンテクストの取得。
-				except:
-					print("Could not establish a connection with a running office.", file=sys.stderr)
-					sys.exit()
-				print("Connected to a running office ...")
-				smgr = ctx.getServiceManager()  # サービスマネジャーの取得。
-				print("Using {} {}".format(*_getLOVersion(ctx, smgr)))  # LibreOfficeのバージョンを出力。
-				return func(ctx, smgr)  # 引数の関数の実行。
-			def _getLOVersion(ctx, smgr):  # LibreOfficeの名前とバージョンを返す。
-				cp = smgr.createInstanceWithContext('com.sun.star.configuration.ConfigurationProvider', ctx)
-				node = PropertyValue(Name = 'nodepath', Value = 'org.openoffice.Setup/Product' )  # share/registry/main.xcd内のノードパス。
-				ca = cp.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
-				return ca.getPropertyValues(('ooName', 'ooSetupVersion'))  # LibreOfficeの名前とバージョンをタプルで返す。
-			return wrapper
-		@connectOffice  # createXSCRIPTCONTEXTの引数にctxとsmgrを渡すデコレータ。
-		def createXSCRIPTCONTEXT(ctx, smgr):  # XSCRIPTCONTEXTを生成。
-			class ScriptContext(unohelper.Base, XScriptContext):
-				def __init__(self, ctx):
-					self.ctx = ctx
-				def getComponentContext(self):
-					return self.ctx
-				def getDesktop(self):
-					return ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
-				def getDocument(self):
-					return self.getDesktop().getCurrentComponent()
-			return ScriptContext(ctx)  
-		XSCRIPTCONTEXT = createXSCRIPTCONTEXT()  # XSCRIPTCONTEXTの取得。
-		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-		doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
-	# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
-		if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
-			XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
-		flg = True
-		while flg:
-			doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-			if doc is not None:
-				flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
-		return XSCRIPTCONTEXT
-	XSCRIPTCONTEXT = automation()  # XSCRIPTCONTEXTを取得。	
-	macro()  # マクロの実行。
