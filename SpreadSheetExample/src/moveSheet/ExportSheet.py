@@ -146,7 +146,7 @@ def globalFunctionCreator(ctx, doc, sheet):
 	return exportAsCSV, exportAsPDF, exportAsODS, SelectionToNewSheet
 def getBaseURL(ctx, doc):	 # 埋め込みマクロ、オートメーション、マクロセレクターに対応してScriptingURLのbaseurlを返す。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	modulepath = __file__  # ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
+	modulepath = __file__  # sys.path[0]でもOK?ScriptingURLにするマクロがあるモジュールのパスを取得。ファイルのパスで場合分け。
 	ucp = "vnd.sun.star.tdoc:"  # 埋め込みマクロのucp。
 	if modulepath.startswith(ucp):  # 埋め込みマクロの時。__file__はvnd.sun.star.tdoc:/4/Scripts/python/filename.pyというように返ってくる。
 		filepath = modulepath.replace(ucp, "")  #  ucpを除去。
