@@ -15,7 +15,6 @@ from com.sun.star.sheet.TableOperationMode import BOTH, COLUMN
 from com.sun.star.sheet import CellFlags
 from com.sun.star.table import CellRangeAddress
 def macro():
-<<<<<<< HEAD
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
 	doCellSamples(doc)
 	doCellRangeSamples(doc)
@@ -29,28 +28,6 @@ def macro():
 	doFunctionAccessSamples()
 	doApplicationSettingsSamples()
 	
-=======
-	
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	global tcu
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-#  	tcu.wtree(doc)
-
-	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
-	doCellSamples(doc)
-	doCellRangeSamples(doc)
-	doCellRangesSamples(doc)
-	doCellCursorSamples()
-	doFormattingSamples()
-	doDocumentSamples()
-	doDatabaseSamples()
-	doDataPilotSamples()
-	doNamedRangesSamples()
-	doFunctionAccessSamples()
-	doApplicationSettingsSamples()
-
->>>>>>> branch 'develop' of https://github.com/p--q/SpreadSheetExample.git
 def	doCellSamples(doc):
 	print("\n*** Samples for service sheet.SheetCell ***\n")
 	sheets = doc.getSheets()
@@ -340,6 +317,16 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 		return ScriptContext(ctx)  
 	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
+# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
+	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
+		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
+	flg = True
+	while flg:
+		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+		if doc is not None:
+			flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
+	macro()ONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
 # 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
 	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
