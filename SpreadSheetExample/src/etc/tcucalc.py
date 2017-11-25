@@ -5,8 +5,16 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)
-	tcu.wtree(textoutputstream)
+	textinputstream = smgr.createInstanceWithContext("com.sun.star.io.TextInputStream", ctx)
+	tcu.wtree(textinputstream)	
+
+	
+# 	pipe = smgr.createInstanceWithContext("com.sun.star.io.Pipe", ctx)
+# 	tcu.wtree(pipe)
+	
+	
+# 	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)
+# 	tcu.wtree(textoutputstream)
 
 # 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
 # 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
