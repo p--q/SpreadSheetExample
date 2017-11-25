@@ -224,10 +224,7 @@ def	doCellRangesSamples(doc):
 	address = CellRangeAddress(Sheet=0, StartColumn=0, StartRow=0, EndColumn=0, EndRow=0)
 	rangecont.addRangeAddress(address, False)
 # 	print("Inserting {} {} merge,{} resulting list: {}".format())
-	
-	conv = doc.createInstance("com.sun.star.table.CellAddressConversion")
-	tcu.wtree(doc.createInstance("com.sun.star.table.CellAddressConversion"))
-	
+
 # 		insertRange( xRangeCont, 0, 0, 0, 0, 0, false );	// A1:A1
 # 		insertRange( xRangeCont, 0, 0, 1, 0, 2, true );	 // A2:A3
 # 		insertRange( xRangeCont, 0, 1, 0, 1, 2, false );	// B1:B3	
