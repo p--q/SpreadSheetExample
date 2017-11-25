@@ -9,12 +9,19 @@ def macro():
 # 	filepicker = smgr.createInstanceWithContext("com.sun.star.ui.dialogs.FilePicker", ctx)
 # 	tcu.wtree(filepicker)
 	
+# 	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)
+# 	tcu.wtree(simplefileaccess)
+
+	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)
+	tcu.wtree(textoutputstream)
 
 
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
+
+
+# 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
 # 	selection = doc.getCurrentSelection()  # 選択しているオブジェクトを取得。
-	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
-	tcu.wtree(cellrangeaddress)
+# 	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
+# 	tcu.wtree(cellrangeaddress)
 	
 # 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
 # 	controller = doc.getCurrentController()  # コントローラの取得。
