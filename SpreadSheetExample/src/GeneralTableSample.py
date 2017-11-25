@@ -4,6 +4,7 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.awt import Rectangle
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。  
+<<<<<<< HEAD
 	sheets = doc.getSheets()  # シートコレクションを取得。
 	sheet = sheets[0]  # インデックス0のシートを取得。
 	# *** Access and modify a VALUE CELL ***
@@ -78,6 +79,83 @@ def macro():
 	charts.addNewByName(chartname, rectangle, (rng,), False, False)
 	# Get the chart by name.
 	chart = charts[chartname]
+=======
+	sheets = doc.getSheets()
+	sheet = sheets[0]	
+	# *** Access and modify a VALUE CELL ***
+	cell = sheet[0, 0]
+	# Set cell value.
+	cell.setValue(1234)
+	# Get cell value.
+	val = cell.getValue()*2
+	sheet[1, 0].setValue(val)
+	# *** Create a FORMULA CELL and query error type ***
+	cell = sheet[2, 0]
+	# Set formula string.
+	cell.setFormula("=1/0")
+	# Get error type.
+	flag = (cell.getError()==0)  # cell.getError() return 532
+	# Get formula string.
+	txt = "The formula {} is ".format(cell.getFormula())
+	txt += "valid." if flag else "erroneous."
+	# *** Insert a TEXT CELL using the XText interface ***
+	cell = sheet[3,0]
+	textcursor = cell.createTextCursor()
+	cell.insertString(textcursor, txt, False)
+	# *** Change cell properties ***
+	color = 0x00FF00 if flag else 0xFF4040
+	cell.setPropertyValue("CellBackColor", color)
+	# *** Accessing a CELL RANGE ***
+	# Accessing a cell range over its position.
+	cellrange = sheet[:2,2:4]
+	# Change properties of the range.
+	cellrange.setPropertyValue("CellBackColor", 0x8080FF)
+	# Accessing a cell range over its name.
+	cellrange = sheet["C4:D5"] 
+	# Change properties of the range.
+	cellrange.setPropertyValue("CellBackColor", 0xFFFF80)
+	# *** Using the CELL CURSOR to add some data below of the filled area ***
+	cell = sheet["A1"]
+	cursor = sheet.createCursorByRange(cell)
+	# Move to the last filled cell.
+	cursor.gotoEnd()
+	# Move one row down.
+# 	cursor.gotoOffset(*reversed([1, 0])) # gotoOffset(ColumnOffset, RowOffset)
+	cursor.gotoOffset(*(1, 0)[::-1])
+	cursor[0, 0].setFormula("Beyond of the last filled cell.")
+	# *** Modifying COLUMNS and ROWS ***
+	columns = sheet.getColumns()
+	rows = sheet.getRows()
+	# Get column C by index (interface XIndexAccess).
+	column = columns[2]
+	column.setPropertyValue("Width", 5000)
+	# Get the name of the column.
+	txt = "The name of this column is {}.".format(column.getName())
+	sheet[2,2].setFormula(txt)
+	# Get column D by name (interface XNameAccess).
+	column = columns["D"]
+	column.setPropertyValue("IsVisible", False)
+	# Get row 7 by index (interface XIndexAccess)
+	row = rows[6]
+	row.setPropertyValue("Height", 5000)
+	sheet[6, 2].setFormula("What a big cell.")
+	# Create a cell series with the values 1 ... 7.
+	sheet[8:15, 0].setDataArray([[i] for i in range(1, 8)])
+	# Insert a row between 1 and 2
+	rows.insertByIndex(9, 1)
+	# Delete the rows with the values 3 and 4.
+	rows.removeByIndex(11, 2)
+	# *** Inserting CHARTS ***
+	charts = sheet.getCharts()
+	# The chart will base on the last cell series, initializing all values.
+	chartname = "newChart"
+	rectangle = Rectangle(X=10000, Y=3000, Width=5000, Height = 5000)
+	rng = sheet["A9:A14"].getRangeAddress()
+	# Create the chart.
+	charts.addNewByName(chartname, rectangle, (rng,), False, False)
+	# Get the chart by name.
+	chart = charts.getByName(chartname)
+>>>>>>> branch 'develop' of https://github.com/p--q/SpreadSheetExample.git
 	# Query the state of row and column headers.
 	txt = "Chart has column headers: "
 	txt += "yes" if chart.getHasColumnHeaders() else "no"
