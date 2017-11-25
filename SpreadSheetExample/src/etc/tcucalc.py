@@ -5,17 +5,19 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)
+	tcu.wtree(textoutputstream)
+
+# 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
+# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+# 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+# 	tcu.wcompare(desktop, docframe)
+	
+# 	tcu.wtree(desktop)
 
 # 	filepicker = smgr.createInstanceWithContext("com.sun.star.ui.dialogs.FilePicker", ctx)
 # 	tcu.wtree(filepicker)
 	
-# 	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)
-# 	tcu.wtree(simplefileaccess)
-
-	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)
-	tcu.wtree(textoutputstream)
-
-
 
 
 # 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
