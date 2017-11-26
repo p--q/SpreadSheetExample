@@ -1,3 +1,9 @@
 eclipse.preferences.version=1
 encoding//src/GeneralTableSample.py=utf-8
 encoding//src/SpreadsheetSample.py=utf-8
+encoding//src/contextmenu/DeleteDefaultContextMenuEntries.py=utf-8
+encoding//src/contextmenu/ExtractContexMenuItems.py=utf-8
+encoding//src/contextmenu/ExtractContexMenuItems2.py=utf-8
+encoding//src/contextmenu/cotextmenuembedded3.py=utf-8
+encoding//src/etc/tcucalc.py=utf-8
+encoding//src/moveSheet/showUIComponents2.py=utf-8
