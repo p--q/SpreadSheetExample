@@ -5,8 +5,14 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx)
-	tcu.wtree(tempfile)	
+# 	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx)
+# 	tcu.wtree(tempfile)	
+
+
+
+	import pythonscript
+	tcu.wtree(pythonscript)
+
 
 	
 # 	pipe = smgr.createInstanceWithContext("com.sun.star.io.Pipe", ctx)
