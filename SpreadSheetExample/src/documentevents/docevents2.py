@@ -3,6 +3,7 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from itertools import zip_longest
 from com.sun.star.sheet import CellFlags as cf # 定数
+FLG = True  # ドキュメントイベントを有効にするフラグ。
 ORDER = 0  # 呼び出された順番。
 RESULTS = [("Order", "Event Name")]
 DIC = {'OnStartApp': ("アプリケーションの開始時", "Start Application"),\
@@ -34,22 +35,25 @@ DIC = {'OnStartApp': ("アプリケーションの開始時", "Start Application
 		'OnModeChanged': ("OnModeChanged", "OnStorageChanged"),\
 		'OnStorageChanged': ("OnStorageChanged", "OnStorageChanged")}  # イベント名の辞書。	
 def macro(arg=None):  # 引数は文書のイベント駆動用。  
-	global ORDER  # RESULTSはリストなのでglobalに指定しなくても書き込める。
-	if arg.typeName=="com.sun.star.document.DocumentEvent":  # 引数がDocumentEventのとき。
-# 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグ用。
-		eventname = arg.EventName  # イベント名を取得。
-		RESULTS.append((ORDER, eventname, *DIC[eventname]))  # 呼び出され順、イベント名、イベントの日本語UI名、英語UI名、arg.Souruce(イベントを発火させたオブジェクト)はドキュメントモデル。。
-	else:  # 引数がDocumentEvent以外のときはない?
-		RESULTS.append((ORDER, str(arg)))
-	ORDER += 1
+	if FLG:
+		global ORDER  # RESULTSはリストなのでglobalに指定しなくても書き込める。
+		if arg.typeName=="com.sun.star.document.DocumentEvent":  # 引数がDocumentEventのとき。
+	# 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグ用。
+			eventname = arg.EventName  # イベント名を取得。
+			RESULTS.append((ORDER, eventname, *DIC[eventname]))  # 呼び出され順、イベント名、イベントの日本語UI名、英語UI名、arg.Souruce(イベントを発火させたオブジェクト)はドキュメントモデル。。
+		else:  # 引数がDocumentEvent以外のときはない?
+			RESULTS.append((ORDER, str(arg)))
+		ORDER += 1
 def output(documentevent=None):  # Calcのシートにイベントの呼び出し順を書き出す。
 	macro(documentevent)  # このイベント自身の呼び出し順を取得。
-	results = RESULTS.copy()  # この時点の結果を出力する。イベントを無効にする方法は?
+	global FLG
+	FLG = False  # フラグを倒してドキュメントイベントの結果をRESULTSに取得しないようにする。
 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	sheet = getNewSheet(doc, "Events")  # 連番名の新規シートの取得。OnTitleChanged→OnModifyChangedが呼ばれてしまう。
-	rowsToSheet(sheet[0, 0], results)  # 結果をシートに出力。シートを書き込むときのイベントを取得しないためにこの時点のRESULTSのコピーを渡す。
+	rowsToSheet(sheet[0, 0], RESULTS)  # 結果をシートに出力。シートを書き込むときのイベントを取得しないためにこの時点のRESULTSのコピーを渡す。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.setActiveSheet(sheet)  # 新規シートをアクティブにする。
+	FLG = True
 def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
 	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
 	sheets = doc.getSheets()  # シートコレクションを取得。
