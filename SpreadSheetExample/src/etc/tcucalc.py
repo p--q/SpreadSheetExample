@@ -8,8 +8,16 @@ def macro():
 	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx) # TempFile
 	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker
 	content = ucb.queryContent(ucb.createContentIdentifier(tempfile.Uri))  # Tempfileのコンテントを取得。
-	tcu.wtree(content.getParent())
+# 	tcu.wtree(content.getParent())
 	
+	
+	docframe = doc.getCurrentController().getFrame() 
+	
+	from com.sun.star.awt import FocusEvent
+	
+	docframe.focusGained(FocusEvent())
+	
+	pass
 # 	zipfileaccess = smgr.createInstanceWithContext("com.sun.star.packages.zip.ZipFileAccess", ctx)
 # 	tcu.wtree(zipfileaccess)	
 
