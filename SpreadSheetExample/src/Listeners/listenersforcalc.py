@@ -4,59 +4,60 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 import os
 import inspect
 from datetime import datetime
-from com.sun.star.frame import XTerminateListener
-from com.sun.star.frame import XFrameActionListener
-from com.sun.star.frame.FrameAction import COMPONENT_ATTACHED, COMPONENT_DETACHING, COMPONENT_REATTACHED, FRAME_ACTIVATED, FRAME_DEACTIVATING, CONTEXT_CHANGED, FRAME_UI_ACTIVATED, FRAME_UI_DEACTIVATING  # enum
-from com.sun.star.util import XCloseListener
-from com.sun.star.frame import XTitleChangeListener
-from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.awt import XEnhancedMouseClickHandler
-from com.sun.star.view import XSelectionChangeListener
-from com.sun.star.frame import XBorderResizeListener
-from com.sun.star.document import XDocumentEventListener
 from com.sun.star.awt import XKeyHandler
-from com.sun.star.document import XEventListener
-from com.sun.star.util import XModifyListener
+from com.sun.star.view import XSelectionChangeListener
 from com.sun.star.view import XPrintJobListener
 from com.sun.star.view.PrintableState import JOB_STARTED, JOB_COMPLETED, JOB_SPOOLED, JOB_ABORTED, JOB_FAILED, JOB_SPOOLING_FAILED  # enum 
-from com.sun.star.document import XStorageChangeListener
+from com.sun.star.util import XCloseListener
+from com.sun.star.util import XModifyListener
 from com.sun.star.util import XChangesListener
+from com.sun.star.frame import XTerminateListener
+from com.sun.star.frame import XFrameActionListener
+from com.sun.star.frame import XTitleChangeListener
+from com.sun.star.frame import XBorderResizeListener
+from com.sun.star.frame.FrameAction import COMPONENT_ATTACHED, COMPONENT_DETACHING, COMPONENT_REATTACHED, FRAME_ACTIVATED, FRAME_DEACTIVATING, CONTEXT_CHANGED, FRAME_UI_ACTIVATED, FRAME_UI_DEACTIVATING  # enum
+from com.sun.star.document import XDocumentEventListener
+from com.sun.star.document import XEventListener
+from com.sun.star.document import XStorageChangeListener
+from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.chart import XChartDataChangeEventListener
 from com.sun.star.chart.ChartDataChangeType import ALL, DATA_RANGE, COLUMN_INSERTED, ROW_INSERTED, COLUMN_DELETED, ROW_DELETED  # enum
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnStartAppでもDocumentEventが入るがSourceはNoneになる。# import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
-	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。
-	thisscriptpath = unohelper.fileUrlToSystemPath(path)
+	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
+	thisscriptpath = unohelper.fileUrlToSystemPath(path)  # fileurlをsystempathに変換。
 	dirpath = os.path.dirname(thisscriptpath)  # このスクリプトのあるディレクトリのフルパスを取得。
-	desktop = XSCRIPTCONTEXT.getDesktop()
-	desktop_terminatelistener = TerminateListener(dirpath, "desktop_terminatelistener")  # TerminateListener
-	desktop.addTerminateListener(desktop_terminatelistener)  # 使い終わったらremoveしないといけない。
-	controller = doc.getCurrentController()
-	frame = controller.getFrame()
-	frame.addFrameActionListener(FrameActionListener(dirpath, "frame_frameactionlistener")) 
-	frame.addCloseListener(CloseListener(dirpath, "frame_closelistener"))
-	frame.addTitleChangeListener(TitleChangeListener(dirpath, "frame_titlechangelistener"))
-	controller.addActivationEventListener(ActivationEventListener(dirpath, "controller_activationeventlistener"))
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(dirpath, "controller_enhancedmouseclickhandler"))
-	controller.addSelectionChangeListener(SelectionChangeListener(dirpath, "controller_selectionchangelistener"))
-	controller.addBorderResizeListener(BorderResizeListener(dirpath, "controller_borderresizelistener"))
-	controller.addTitleChangeListener(TitleChangeListener(dirpath, "controller_titlechangelistener"))	
-	controller.addKeyHandler(KeyHandler(dirpath, "controller_keyhandler"))		
-	doc.addDocumentEventListener(DocumentEventListener(dirpath, "doc_documenteventlistener"))	
-	doc.addEventListener(EventListener(dirpath, "doc_eventlistener"))		
-	doc.addModifyListener(ModifyListener(dirpath, "doc_modifylistener"))		
-	doc.addPrintJobListener(PrintJobListener(dirpath, "doc_printjoblistener"))	
-	doc.addStorageChangeListener(StorageChangeListener(dirpath, "doc_storagechangelistener"))	
-	doc.addTitleChangeListener(TitleChangeListener(dirpath, "doc_titlechangelistener"))
-	doc.addChangesListener(ChangesListener(dirpath, "doc_changelistener"))	
-	sheet = controller.getActiveSheet()
-	sheet.addChartDataChangeEventListener(ChartDataChangeEventListener(dirpath, "sheet_chartdatachangeeventlistener"))	
-	sheet.addModifyListener(ModifyListener(dirpath, "sheet_modifylistener"))	
-	cell = sheet["A1"]
-	cell.addModifyListener(ModifyListener(dirpath, "cell_modifylistener"))
-	cells = sheet["A2:C4"]
-	cells.addChartDataChangeEventListener(ChartDataChangeEventListener(dirpath, "cells_chartdatachangeeventlistener"))	
-	cells.addModifyListener(ModifyListener(dirpath, "cells_modifylistener"))	
+	desktop = XSCRIPTCONTEXT.getDesktop()  # デスクトップの取得。
+	desktop.addTerminateListener(TerminateListener(dirpath, "desktop_terminatelistener"))  # TerminateListenerは使い終わったらremoveしないと問題が起こる。
+	desktop.addFrameActionListener(FrameActionListener(dirpath, "desktop_frameactionlistener"))  # FrameActionListener
+	controller = doc.getCurrentController()  # コントローラーの取得。
+	frame = controller.getFrame()  # フレームの取得。
+	frame.addFrameActionListener(FrameActionListener(dirpath, "frame_frameactionlistener"))  # FrameActionListener 
+	frame.addCloseListener(CloseListener(dirpath, "frame_closelistener"))  # CloseListener
+	frame.addTitleChangeListener(TitleChangeListener(dirpath, "frame_titlechangelistener"))  # TitleChangeListener
+	controller.addActivationEventListener(ActivationEventListener(dirpath, "controller_activationeventlistener"))  # ActivationEventListener
+	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(dirpath, "controller_enhancedmouseclickhandler"))  # EnhancedMouseClickHandler
+	controller.addSelectionChangeListener(SelectionChangeListener(dirpath, "controller_selectionchangelistener"))  # SelectionChangeListener
+	controller.addBorderResizeListener(BorderResizeListener(dirpath, "controller_borderresizelistener"))  # BorderResizeListener
+	controller.addTitleChangeListener(TitleChangeListener(dirpath, "controller_titlechangelistener"))  # TitleChangeListener	
+	controller.addKeyHandler(KeyHandler(dirpath, "controller_keyhandler"))  # KeyHandler		
+	doc.addDocumentEventListener(DocumentEventListener(dirpath, "doc_documenteventlistener"))  # DocumentEventListener	
+	doc.addEventListener(EventListener(dirpath, "doc_eventlistener"))  # EventListener	
+	doc.addModifyListener(ModifyListener(dirpath, "doc_modifylistener"))  # ModifyListener		
+	doc.addPrintJobListener(PrintJobListener(dirpath, "doc_printjoblistener"))  # PrintJobListener	
+	doc.addStorageChangeListener(StorageChangeListener(dirpath, "doc_storagechangelistener"))  # StorageChangeListener	
+	doc.addTitleChangeListener(TitleChangeListener(dirpath, "doc_titlechangelistener"))  # TitleChangeListener
+	doc.addChangesListener(ChangesListener(dirpath, "doc_changelistener"))  # ChangesListener	
+	sheet = controller.getActiveSheet()  # アクティブシートを取得。
+	sheet.addChartDataChangeEventListener(ChartDataChangeEventListener(dirpath, "sheet_chartdatachangeeventlistener"))  # ChartDataChangeEventListener	
+	sheet.addModifyListener(ModifyListener(dirpath, "sheet_modifylistener"))  # ModifyListener	
+	cell = sheet["A1"]  # セルの取得。
+	cell.addChartDataChangeEventListener(ChartDataChangeEventListener(dirpath, "cell_chartdatachangeeventlistener"))  # ChartDataChangeEventListener		
+	cell.addModifyListener(ModifyListener(dirpath, "cell_modifylistener"))  # ModifyListener
+	cells = sheet["A2:C4"]  # セル範囲の取得。
+	cells.addChartDataChangeEventListener(ChartDataChangeEventListener(dirpath, "cells_chartdatachangeeventlistener"))  # ChartDataChangeEventListener	
+	cells.addModifyListener(ModifyListener(dirpath, "cells_modifylistener"))  # ModifyListener	
 class ChartDataChangeEventListener(unohelper.Base, XChartDataChangeEventListener):
 	def __init__(self, dirpath, name):
 		self.args = dirpath, name	
@@ -69,7 +70,7 @@ class ChartDataChangeEventListener(unohelper.Base, XChartDataChangeEventListener
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
 		for enum, chartdatachangetypename in chartdatachangetypes:
 			if chartdatachangetype==enum:
-				methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+				methodname = "_".join((name, inspect.currentframe().f_code.co_name, chartdatachangetypename))  # ChartDataChangeType名を追加。
 				createLog(dirpath, methodname, "ChartDataChangeType: {}".format(chartdatachangetypename))
 				return
 	def disposing(self, eventobject):
@@ -104,8 +105,8 @@ class PrintJobListener(unohelper.Base, XPrintJobListener):
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
 		for enum, printablestatename in printablestates:
 			if printablestate==enum:
-				methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-				createLog(dirpath, methodname, "FrameAction: {}, Source: {}".format(printablestatename, printjobevent.Source))
+				methodname = "_".join((name, inspect.currentframe().f_code.co_name, printablestatename))  # State名も追加。
+				createLog(dirpath, methodname, "PrintableState: {}, Source: {}".format(printablestatename, printjobevent.Source))
 				return
 	def disposing(self, eventobject):
 		pass		
@@ -123,7 +124,7 @@ class EventListener(unohelper.Base, XEventListener):
 		self.args = dirpath, name	
 	def notifyEvent(self, eventobject):
 		dirpath, name = self.args
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, eventobject.EventName))  # イベント名も追加。
 		createLog(dirpath, methodname, "EventName: {}, Source: {}".format(eventobject.EventName, eventobject.Source))	
 	def disposing(self, eventobject):
 		pass		
@@ -132,7 +133,7 @@ class DocumentEventListener(unohelper.Base, XDocumentEventListener):
 		self.args = dirpath, name	
 	def documentEventOccured(self, documentevent):
 		dirpath, name = self.args
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, documentevent.EventName))  # イベント名も追加。
 		createLog(dirpath, methodname, "EventName: {}, Source: {}".format(documentevent.EventName, documentevent.Source))	
 	def disposing(self, eventobject):
 		pass	
@@ -166,7 +167,9 @@ class SelectionChangeListener(unohelper.Base, XSelectionChangeListener):
 	def selectionChanged(self, eventobject):
 		dirpath, name = self.args
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "Source: {}".format(eventobject.Source))	
+		source = eventobject.Source
+		txt = "Selection: {}".format(source.getSelection()) if source.supportsService("com.sun.star.sheet.SpreadsheetView") else "Source: {}".format(source)  # sourceがコントローラーのときは選択しているオブジェクトを書き出す。
+		createLog(dirpath, methodname, txt)	
 	def disposing(self, eventobject):
 		pass	
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
@@ -190,7 +193,9 @@ class ActivationEventListener(unohelper.Base, XActivationEventListener):
 	def activeSpreadsheetChanged(self, activationevent):
 		dirpath, name = self.args
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "Source: {}".format(activationevent.Source))	
+		source = activationevent.Source
+		txt = "Selection: {}".format(source.getSelection()) if source.supportsService("com.sun.star.sheet.SpreadsheetView") else "Source: {}".format(source)  # sourceがコントローラーのときは選択しているオブジェクトを書き出す。
+		createLog(dirpath, methodname, txt)	
 	def disposing(self, eventobject):
 		pass
 class TitleChangeListener(unohelper.Base, XTitleChangeListener):
@@ -225,7 +230,7 @@ class FrameActionListener(unohelper.Base, XFrameActionListener):
 		frameaction = frameactionevent.Action
 		for enum, frameactionname in frameactions:
 			if frameaction==enum:
-				methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+				methodname = "_".join((name, inspect.currentframe().f_code.co_name, frameactionname))  # Action名も追加。
 				createLog(dirpath, methodname, "FrameAction: {}, Source: {}".format(frameactionname, frameactionevent.Source))
 				return
 	def disposing(self, eventobject):
@@ -245,7 +250,7 @@ class TerminateListener(unohelper.Base, XTerminateListener):  # TerminateListene
 		desktop.removeTerminateListener(self)  # TerminateListenerを除去。除去しなmethodname = inspect.currentframe().f_code.co_nameいとLibreOfficeのプロセスが残って起動できなくなる。
 	def disposing(self, eventobject):
 		pass
-C = 10
+C = 10  # カウンターの初期値。
 TIMESTAMP = datetime.now().isoformat().split(".")[0].replace("-", "").replace(":", "")  # コピー先ファイル名に使う年月日T時分秒を結合した文字列を取得。
 def createLog(dirpath, methodname, txt):  # 年月日T時分秒リスナーのインスタンス名_methodname.logファイルを作成。txtはファイルに書き込むテキスト。dirpathはファイルを書き出すディレクトリ。
 	global C
