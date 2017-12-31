@@ -5,22 +5,18 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	doc = XSCRIPTCONTEXT.getDocument()
+	frame = doc.getCurrentController().getFrame() 
+	containerwindow = frame.getContainerWindow()
+	componentwindow = frame.getComponentWindow()
+	tcu.wcompare(containerwindow, componentwindow)
 
-	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx) # TempFile
-	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker
-	content = ucb.queryContent(ucb.createContentIdentifier(tempfile.Uri))  # Tempfileのコンテントを取得。
+
+
+
 # 	tcu.wtree(content.getParent())
 	
 	
-	docframe = doc.getCurrentController().getFrame() 
-	
-	from com.sun.star.awt import FocusEvent
-	
-	docframe.focusGained(FocusEvent())
-	
-	pass
-# 	zipfileaccess = smgr.createInstanceWithContext("com.sun.star.packages.zip.ZipFileAccess", ctx)
-# 	tcu.wtree(zipfileaccess)	
 
 
 
