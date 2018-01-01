@@ -6,6 +6,7 @@ import inspect
 from datetime import datetime
 from com.sun.star.awt import XEnhancedMouseClickHandler
 from com.sun.star.awt import XKeyHandler
+from com.sun.star.awt import Key  # 定数
 from com.sun.star.view import XSelectionChangeListener
 from com.sun.star.view import XPrintJobListener
 from com.sun.star.view.PrintableState import JOB_STARTED, JOB_COMPLETED, JOB_SPOOLED, JOB_ABORTED, JOB_FAILED, JOB_SPOOLING_FAILED  # enum 
@@ -23,7 +24,6 @@ from com.sun.star.document import XStorageChangeListener
 from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.chart import XChartDataChangeEventListener
 from com.sun.star.chart.ChartDataChangeType import ALL, DATA_RANGE, COLUMN_INSERTED, ROW_INSERTED, COLUMN_DELETED, ROW_DELETED  # enum
-from com.sun.star.awt import Key  # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnStartAppでもDocumentEventが入るがSourceはNoneになる。# import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
@@ -82,19 +82,22 @@ class ChangesListener(unohelper.Base, XChangesListener):
 	def changesOccurred(self, changesevent):
 		dirpath, name = self.args
 		base = changesevent.Base
-		if base.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # モデルの時
-			basetxt = "Base URL: {}".format(__file__)
+		if base.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # ドキュメントの時
+			basetxt = "Base URL: {}".format(__file__)  # ドキュメントのURLを取得。
 		else:
 			basetxt = "Base: {}".format(base)	
-		txts = [basetxt]	
+		txts = [basetxt]  # ログファイルに出力する行のリスト。	
 		changes = changesevent.Changes
 		for change in changes:
 			txts.append("Accessor: {}".format(change.Accessor))
 			for element in change.Element:
 				if hasattr(element, "Name") and hasattr(element, "Value"):
-					txts.append("{}: {}".format(element.Name, element.Value))
-			replacedelement = getStringAddressFromCellRange(change.ReplacedElement)
-			replacedelement = replacedelement or change.ReplaceElement
+					propertyname, propertyvalue = element.Name, element.Value
+					if "Color" in propertyname:  # 色の時は16進数で出力する。
+						propertyvalue = hex(propertyvalue)
+					txts.append("{}: {}".format(propertyname, propertyvalue))
+			replacedelement = getStringAddressFromCellRange(change.ReplacedElement)  # 変更対象オブジェクトから文字列アドレスを取得する。
+			replacedelement = replacedelement or change.ReplaceElement  # 文字列アドレスを取得できないオブジェクトの時はオブジェクトをそのまま文字列にする。
 			txts.append("ReplacedElement: {}".format(replacedelement))					
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
 		createLog(dirpath, methodname, "\n".join(txts))
@@ -212,8 +215,16 @@ class SelectionChangeListener(unohelper.Base, XSelectionChangeListener):
 		self.args = dirpath, name	
 	def selectionChanged(self, eventobject):
 		dirpath, name = self.args
-		txt = getStringAddressFromController(eventobject.Source)  # sourceがコントローラーの時は選択範囲の文字列アドレスを返す。
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+		txt = ""
+		source = eventobject.Source
+		if source.supportsService("com.sun.star.sheet.SpreadsheetView"):  # sourceがコントローラーのとき
+			selection = source.getSelection()  # 選択しているオブジェクトを取得。
+			stringaddress = getStringAddressFromCellRange(selection)
+			if stringaddress:
+				methodname = "_".join((name, inspect.currentframe().f_code.co_name, stringaddress.replace(":", "")))
+				txt = "Selection: {}".format(stringaddress)
+		if not txt:
+			txt = "Source: {}".format(source)
 		createLog(dirpath, methodname, txt)	
 	def disposing(self, eventobject):
 		pass	
@@ -234,16 +245,27 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 		dirpath, dummy = self.args
 		target = enhancedmouseevent.Target
 		target = getStringAddressFromCellRange(target) or target  # sourceがセル範囲の時は選択範囲の文字列アドレスを返す。
-		createLog(dirpath, methodname, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, Target: {}".format(enhancedmouseevent.Buttons, enhancedmouseevent.ClickCount, enhancedmouseevent.PopupTrigger, enhancedmouseevent.Modifiers, target))	
+		clickcount = enhancedmouseevent.ClickCount
+		methodname = "{}_ClickCount{}".format(methodname, clickcount)	
+		createLog(dirpath, methodname, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, Target: {}".format(enhancedmouseevent.Buttons, clickcount, enhancedmouseevent.PopupTrigger, enhancedmouseevent.Modifiers, target))	
 class ActivationEventListener(unohelper.Base, XActivationEventListener):
 	def __init__(self, dirpath, name):
 		self.args = dirpath, name	
 	def activeSpreadsheetChanged(self, activationevent):
 		dirpath, name = self.args
 		activesheet = activationevent.ActiveSheet
-		txt = "ActiveSheet: {} ".format(activesheet.getName())  # アクティブシート名を取得。
-		txt += getStringAddressFromController(activationevent.Source)  # sourceがコントローラーの時は選択範囲の文字列アドレスを返す。
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
+		activesheetname = activesheet.getName()
+		txt = ""
+		source = activationevent.Source
+		if source.supportsService("com.sun.star.sheet.SpreadsheetView"):  # sourceがコントローラーのとき
+			selection = source.getSelection()  # 選択しているオブジェクトを取得。
+			stringaddress = getStringAddressFromCellRange(selection)
+			if stringaddress:
+				txt = "Selection: {}".format(stringaddress)
+		if not txt:
+			txt = "Source: {}".format(source)
+		txt = "ActiveSheet: {}, {}".format(activesheetname, txt)  # アクティブシート名を取得。
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, activesheetname))
 		createLog(dirpath, methodname, txt)	
 	def disposing(self, eventobject):
 		pass
@@ -252,8 +274,9 @@ class TitleChangeListener(unohelper.Base, XTitleChangeListener):
 		self.args = dirpath, name	
 	def titleChanged(self, titlechangedevent):
 		dirpath, name = self.args
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "Title: {}, Source: {}".format(titlechangedevent.Title, titlechangedevent.Source))	
+		title = titlechangedevent.Title
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, title))
+		createLog(dirpath, methodname, "Title: {}, Source: {}".format(title, titlechangedevent.Source))	
 	def disposing(self, eventobject):
 		pass
 class CloseListener(unohelper.Base, XCloseListener):
@@ -299,13 +322,6 @@ class TerminateListener(unohelper.Base, XTerminateListener):  # TerminateListene
 		desktop.removeTerminateListener(self)  # TerminateListenerを除去。除去しなmethodname = inspect.currentframe().f_code.co_nameいとLibreOfficeのプロセスが残って起動できなくなる。
 	def disposing(self, eventobject):
 		pass
-def getStringAddressFromController(source):	 # sourceがコントローラーの時は選択範囲の文字列アドレスを返す。文字列アドレスが取得できないオブジェクトの時はオブジェクトの文字列を返す。
-	if source.supportsService("com.sun.star.sheet.SpreadsheetView"):  # sourceがコントローラーのとき
-		selection = source.getSelection()  # 選択しているオブジェクトを取得。
-		selection = getStringAddressFromCellRange(selection) or selection  # sourceがセル範囲の時は選択範囲の文字列アドレスを返す。
-		return "Selection: {}".format(selection)
-	else:  # Sourceがコントローラーでない時
-		return "Source: {}".format(source)
 def getStringAddressFromCellRange(source):  # sourceがセル範囲の時は選択範囲の文字列アドレスを返す。文字列アドレスが取得できないオブジェクトの時はオブジェクトの文字列を返す。	
 	stringaddress = ""
 	propertysetinfo = source.getPropertySetInfo()  # PropertySetInfo
@@ -314,7 +330,7 @@ def getStringAddressFromCellRange(source):  # sourceがセル範囲の時は選�
 		names = absolutename.replace("$", "").split(",")  # $を削除してセル範囲の文字列アドレスのリストにする。
 		stringaddress = ", ".join(names)  # コンマでつなげる。
 	return stringaddress
-C = 10  # カウンターの初期値。
+C = 100  # カウンターの初期値。
 TIMESTAMP = datetime.now().isoformat().split(".")[0].replace("-", "").replace(":", "")  # コピー先ファイル名に使う年月日T時分秒を結合した文字列を取得。
 def createLog(dirpath, methodname, txt):  # 年月日T時分秒リスナーのインスタンス名_methodname.logファイルを作成。txtはファイルに書き込むテキスト。dirpathはファイルを書き出すディレクトリ。
 	global C
