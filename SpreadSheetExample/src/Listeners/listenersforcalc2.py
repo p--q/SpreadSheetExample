@@ -23,6 +23,7 @@ from com.sun.star.document import XStorageChangeListener
 from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.chart import XChartDataChangeEventListener
 from com.sun.star.chart.ChartDataChangeType import ALL, DATA_RANGE, COLUMN_INSERTED, ROW_INSERTED, COLUMN_DELETED, ROW_DELETED  # enum
+from com.sun.star.awt import Key  # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnStartAppでもDocumentEventが入るがSourceはNoneになる。# import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
@@ -80,10 +81,25 @@ class ChangesListener(unohelper.Base, XChangesListener):
 		self.args = dirpath, name	
 	def changesOccurred(self, changesevent):
 		dirpath, name = self.args
+		base = changesevent.Base
+		if base.supportsService("com.sun.star.sheet.SpreadsheetDocument"):  # モデルの時
+			basetxt = "Base URL: {}".format(__file__)
+		else:
+			basetxt = "Base: {}".format(base)	
+		txts = [basetxt]	
+		changes = changesevent.Changes
+		for change in changes:
+			txts.append("Accessor: {}".format(change.Accessor))
+			for element in change.Element:
+				if hasattr(element, "Name") and hasattr(element, "Value"):
+					txts.append("{}: {}".format(element.Name, element.Value))
+			replacedelement = getStringAddressFromCellRange(change.ReplacedElement)
+			replacedelement = replacedelement or change.ReplaceElement
+			txts.append("ReplacedElement: {}".format(replacedelement))					
 		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "Changes: {}".format(changesevent.Changes))	
+		createLog(dirpath, methodname, "\n".join(txts))
 	def disposing(self, eventobject):
-		pass		
+		pass	
 class StorageChangeListener(unohelper.Base, XStorageChangeListener):
 	def __init__(self, dirpath, name):
 		self.args = dirpath, name	
@@ -139,19 +155,43 @@ class DocumentEventListener(unohelper.Base, XDocumentEventListener):
 		pass	
 class KeyHandler(unohelper.Base, XKeyHandler):
 	def __init__(self, dirpath, name):
+		self.keycodes = {
+			Key.DOWN: "DOWN",
+			Key.UP: "UP",
+			Key.LEFT: "LEFT", 
+			Key.RIGHT: "RIGHT", 
+			Key.HOME: "HOME", 
+			Key.END: "END",
+			Key.RETURN: "RETURN",
+			Key.ESCAPE: "ESCAPE",
+			Key.TAB: "TAB",		
+			Key.BACKSPACE: "BACKSPACE", 
+			Key.SPACE: "SPACE", 
+			Key.DELETE: "DELETE"
+		}  # キーは定数。特殊文字を文字列に置換する。
 		self.args = dirpath, name	
 	def keyPressed(self, keyevent):
 		dirpath, name = self.args
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "KeyCode: {}, KeyFunc: {}, Modifiers: {}".format(keyevent.KeyCode, keyevent.KeyFunc, keyevent.Modifiers))	 # KeyCharが矢印などの場合はその後のテキストが表示されないので書き込まない。
+		keychar, txt = self._keyevetToText(keyevent)
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, keychar))
+		createLog(dirpath, methodname,  txt)
 		return False
 	def keyReleased(self, keyevent):
 		dirpath, name = self.args
-		methodname = "_".join((name, inspect.currentframe().f_code.co_name))
-		createLog(dirpath, methodname, "KeyCode: {}, KeyFunc: {}, Modifiers: {}".format(keyevent.KeyCode, keyevent.KeyFunc, keyevent.Modifiers))	 # KeyCharが矢印などの場合はその後のテキストが表示されないので書き込まない。	
+		keychar, txt = self._keyevetToText(keyevent)
+		methodname = "_".join((name, inspect.currentframe().f_code.co_name, keychar))
+		createLog(dirpath, methodname,  txt)
 		return False		
 	def disposing(self, eventobject):
-		pass			
+		pass		
+	def _keyevetToText(self, keyevent):
+		keycode = keyevent.KeyCode
+		keychar = ""  # KeyCharが特殊文字の場合はその後のテキストが表示されないときがあるので書き込まない。
+		if keycode in self.keycodes:  # self.keycodesにキーがある特殊文字は文字列に置換する。
+			keychar = self.keycodes[keycode]
+		elif 255<keycode<267 or 511<keycode<538:  # 数値かアルファベットの時
+			keychar = keyevent.KeyChar.value
+		return keychar, "KeyCode: {},{} KeyFunc: {}, Modifiers: {}".format(keycode, " KeyChar: {},".format(keychar), keyevent.KeyFunc, keyevent.Modifiers)
 class BorderResizeListener(unohelper.Base, XBorderResizeListener):
 	def __init__(self, dirpath, name):
 		self.args = dirpath, name	
