@@ -31,7 +31,7 @@ DIC = {'OnStartApp': ("アプリケーションの開始時", "Start Application
 		'OnViewClosed': ("ビューを閉じた時", "View closed"),\
 		'OnModifyChanged': ("'変更'ステータス変更時", "'Modified' status was changed"),\
 		'OnTitleChanged': ("文書のタイトルを変更した時", "Document title changed"),\
-		'OnVisAreaChanged': ("OnStorageChanged", "OnStorageChanged"),\
+		'OnVisAreaChanged': ("OnVisAreaChanged", "OnVisAreaChanged"),\
 		'OnModeChanged': ("OnModeChanged", "OnStorageChanged"),\
 		'OnStorageChanged': ("OnStorageChanged", "OnStorageChanged")}  # イベント名の辞書。	
 def macro(arg=None):  # 引数は文書のイベント駆動用。  
