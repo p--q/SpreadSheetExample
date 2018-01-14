@@ -3,10 +3,33 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	textinputstream = smgr.createInstanceWithContext("com.sun.star.io.TextInputStream", ctx)
-	tcu.wtree(textinputstream)	
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	doc = XSCRIPTCONTEXT.getDocument()
+	
+	controller = doc.getCurrentController()  # コントローラの取得。
+
+	
+	pass
+
+# 	frame = doc.getCurrentController().getFrame() 
+# 	containerwindow = frame.getContainerWindow()
+# 	componentwindow = frame.getComponentWindow()
+# 	tcu.wcompare(containerwindow, componentwindow)
+
+
+
+
+# 	tcu.wtree(content.getParent())
+	
+	
+
+
+
+
+# 	import pythonscript
+# 	tcu.wtree(pythonscript)
+
 
 	
 # 	pipe = smgr.createInstanceWithContext("com.sun.star.io.Pipe", ctx)
