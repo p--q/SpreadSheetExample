@@ -224,7 +224,10 @@ def	doCellRangesSamples(doc):
 	address = CellRangeAddress(Sheet=0, StartColumn=0, StartRow=0, EndColumn=0, EndRow=0)
 	rangecont.addRangeAddress(address, False)
 # 	print("Inserting {} {} merge,{} resulting list: {}".format())
-
+	
+	conv = doc.createInstance("com.sun.star.table.CellAddressConversion")
+	tcu.wtree(doc.createInstance("com.sun.star.table.CellAddressConversion"))
+	
 # 		insertRange( xRangeCont, 0, 0, 0, 0, 0, false );	// A1:A1
 # 		insertRange( xRangeCont, 0, 0, 1, 0, 2, true );	 // A2:A3
 # 		insertRange( xRangeCont, 0, 1, 0, 1, 2, false );	// B1:B3	
@@ -314,16 +317,6 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 		return ScriptContext(ctx)  
 	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
-# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
-	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
-		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
-	flg = True
-	while flg:
-		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-		if doc is not None:
-			flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
-	macro()ONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
 # 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
 	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
