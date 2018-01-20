@@ -6,12 +6,14 @@ def macro():
 # 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 # 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	
 	controller = doc.getCurrentController()  # コントローラの取得。
-
+	sheet = controller.getActiveSheet()
+	cell = sheet["B2"]
+	
+	selection = controller.getSelection()
 	
 	pass
-
+	
 # 	frame = doc.getCurrentController().getFrame() 
 # 	containerwindow = frame.getContainerWindow()
 # 	componentwindow = frame.getComponentWindow()
