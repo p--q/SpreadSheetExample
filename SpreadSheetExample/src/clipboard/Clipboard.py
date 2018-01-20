@@ -39,8 +39,8 @@ Still clipboard owner...""")
 				print("Still clipboard owner...")
 			first += 1
 		else:
-			print(".", end="")
-		time.sleep(1)
+			print(".", end="")  # 改行が来るまで出力されない。
+		time.sleep(1)  # 1秒待つ。
 	readClipBoard(systemclipboard)
 	systemclipboard.removeClipboardListener(clipboardlistener)
 	if hasattr(doc, "close"):
