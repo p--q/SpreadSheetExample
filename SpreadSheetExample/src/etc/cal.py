@@ -31,11 +31,13 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					dialog, addControl = dialogCreator(ctx, smgr, {"PositionX": x, "PositionY": y, "Width": 380, "Height": 380, "Title": "日付を選択", "Name": "DatePicker", "Step": 0, "Moveable": True, "PosSize": PosSize.POSSIZE})  # "TabIndex": 0
 					
 					
+					
+					
 					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 					toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。
 					dialog.createPeer(toolkit, containerwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 
-
+					# topwindowlistenerをつけてdeactivateの時にダイアログを閉じる。
 					showModelessly(ctx, smgr, frame, dialog)  # ノンモダルダイアログとして表示。
 					
 					# ダイアログの戻り値をどう受け取る？
