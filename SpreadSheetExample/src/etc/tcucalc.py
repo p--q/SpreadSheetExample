@@ -3,17 +3,23 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。
-	sheet = controller.getActiveSheet()
-	cell = sheet["B2"]
-	
-	selection = controller.getSelection()
-	
-	pass
-	
+
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()
+# 	
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+
+	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
+
+	transferable = systemclipboard.getContents()
+
+
+
+
+# 	tcu.wtree(systemclipboard.getContents())
+
+
 # 	frame = doc.getCurrentController().getFrame() 
 # 	containerwindow = frame.getContainerWindow()
 # 	componentwindow = frame.getComponentWindow()
