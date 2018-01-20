@@ -3,6 +3,7 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 # 	doc = XSCRIPTCONTEXT.getDocument()
@@ -14,8 +15,10 @@ def macro():
 	transferable = systemclipboard.getContents()
 
 
-	pass
+
+
 # 	tcu.wtree(systemclipboard.getContents())
+
 
 # 	frame = doc.getCurrentController().getFrame() 
 # 	containerwindow = frame.getContainerWindow()
