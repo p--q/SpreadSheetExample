@@ -1,86 +1,31 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
-import unohelper  # オートメーションには必須(必須なのはuno)。
-import sys
-import time
-from com.sun.star.view import DocumentZoomType
-from com.sun.star.datatransfer.clipboard import XClipboardListener
-from com.sun.star.datatransfer.clipboard import XClipboardOwner
-from com.sun.star.datatransfer import XTransferable
-from com.sun.star.datatransfer import DataFlavor  # Struct
-from com.sun.star.datatransfer import UnsupportedFlavorException
+import unohelper
+from com.sun.star.i18n.TransliterationModulesNew import HALFWIDTH_FULLWIDTH, FULLWIDTH_HALFWIDTH   # enum
+from com.sun.star.lang import Locale  # Struct
 def macro():
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
-	clipboardlistener = ClipboardListener()
-	systemclipboard.addClipboardListener(clipboardlistener)
-	readClipBoard(systemclipboard)
-	print("Becoming a clipboard owner...\n")	
-	clipboardowner = ClipboardOwner()
-	systemclipboard.setContents(TextTransferable("Hello World!"), clipboardowner)
-	print("""Change clipboard ownership by putting something into the clipboard!
+	controller = doc.getCurrentController()  # コントローラの取得。
+	sheet = controller.getActiveSheet()
+	ns = sheet[3, 2:5].getDataArray()
+	transliteration = smgr.createInstanceWithContext("com.sun.star.i18n.Transliteration", ctx)  
+	locale = Locale(Language = "ja", Country = "JP")
+	transliteration.loadModuleNew((HALFWIDTH_FULLWIDTH,), locale)
+# 	w = ns[0][2].replace(" ", "")
+# 	print(w)
+# 	t = transliteration.transliterate(w, 0, len(w), [])[0]
+	
+	t = "テスト　ハンカク ｾﾞﾝｶｸ"
+	
+	print(t)
+	
+	transliteration.loadModuleNew((FULLWIDTH_HALFWIDTH,), locale)
+	t = transliteration.transliterate(t, 0, len(t), [])[0]
+	print(t)
 
-Still clipboard owner...""")
-	c = 0
-	while clipboardowner.isowner:
-		print("."*c, end="\r")  # Eclipse4.6のコンソールでは/rでも改行される。
-		c += 1
-		time.sleep(1)
-	readClipBoard(systemclipboard)
-	systemclipboard.removeClipboardListener(clipboardlistener)
-	if hasattr(doc, "close"):
-		doc.close(True)
-	else:
-		doc.dispose() 
-	sys.exit(0)
-def readClipBoard(systemclipboard):
-	transferable = systemclipboard.getContents()
-	dataflavors = transferable.getTransferDataFlavors()
-	print("""Reading the clipboard...
-Available clipboard formats:""")
-	flavor = None
-	for dataflavor in dataflavors:
-		print("""----------
-MimeType: {}
-HumanPresentableName: {}
-DataType: {}""".format(dataflavor.MimeType, dataflavor.HumanPresentableName, dataflavor.DataType.typeClass.value))
-		if dataflavor.MimeType=="text/plain;charset=utf-16":
-			flavor = dataflavor  # utf-16のDataFlavorを保存しておく。
-	if flavor is None:
-		print("""
-Requested format is not available on the clipboard!""")
-	else:
-		print("""
-Unicode text on the clipboard ...
-Your selected text \"{}\" is now in the clipboard.
-""".format(transferable.getTransferData(flavor)))
-class TextTransferable(unohelper.Base, XTransferable):
-	def __init__(self, txt):
-		self.txt = txt
-		self.unicode_content_type = "text/plain;charset=utf-16"
-	def getTransferData(self, flavor):
-		if flavor.MimeType.lower()!=self.unicode_content_type:
-			raise UnsupportedFlavorException()
-		return self.txt
-	def getTransferDataFlavors(self):
-		return DataFlavor(MimeType=self.unicode_content_type, HumanPresentableName="Unicode Text"),  # DataTypeの設定方法は不明。
-	def isDataFlavorSupported(self, flavor):
-		return flavor.MimeType.lower()==self.unicode_content_type
-class ClipboardOwner(unohelper.Base, XClipboardOwner):
-	def __init__(self):
-		self.isowner = True
-	def lostOwnership(self, clipboard, transferable):
-		print("""
-Lost clipboard ownership...
-""")
-		self.isowner = False
-class ClipboardListener(unohelper.Base, XClipboardListener):
-	def changedContents(self, clipboardEvent):
-		print("\nClipboard content has changed!\n")
-	def disposing(self, eventobject):
-		pass
+
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper

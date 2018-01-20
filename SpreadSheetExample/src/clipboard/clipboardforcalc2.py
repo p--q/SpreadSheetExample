@@ -34,7 +34,7 @@ Still clipboard owner...""")
 				print("Still clipboard owner...")
 			first += 1
 		else:
-			print(".", end="")
+			print(".", end="\r")
 		time.sleep(1)
 	readClipBoard(systemclipboard)
 	systemclipboard.removeClipboardListener(clipboardlistener)

@@ -350,7 +350,7 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 		target = getStringAddressFromCellRange(target) or target  # sourceがセル範囲の時は選択範囲の文字列アドレスを返す。
 		clickcount = enhancedmouseevent.ClickCount
 		filename = "_".join((name, methodname, "ClickCount", str(clickcount)))
-		createLog(dirpath, filename, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, Target: {}\nSource: {}".format(enhancedmouseevent.Buttons, clickcount, enhancedmouseevent.PopupTrigger, enhancedmouseevent.Modifiers, target, enhancedmouseevent.Source))	
+		createLog(dirpath, filename, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, Target: {}\nX: {}, Y: {}\nSource: {}".format(enhancedmouseevent.Buttons, clickcount, enhancedmouseevent.PopupTrigger, enhancedmouseevent.Modifiers, target, enhancedmouseevent.X, enhancedmouseevent.Y, enhancedmouseevent.Source))	
 class ActivationEventListener(unohelper.Base, XActivationEventListener):
 	def __init__(self, dirpath, name, subj):
 		self.subj = subj

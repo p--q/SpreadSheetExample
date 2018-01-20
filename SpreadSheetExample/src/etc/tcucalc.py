@@ -10,9 +10,9 @@ def macro():
 # 	
 # 	controller = doc.getCurrentController()  # コントローラの取得。
 
-	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
-
-	transferable = systemclipboard.getContents()
+# 	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
+# 
+# 	transferable = systemclipboard.getContents()
 
 
 
@@ -20,10 +20,12 @@ def macro():
 # 	tcu.wtree(systemclipboard.getContents())
 
 
-# 	frame = doc.getCurrentController().getFrame() 
+	frame = doc.getCurrentController().getFrame() 
 # 	containerwindow = frame.getContainerWindow()
-# 	componentwindow = frame.getComponentWindow()
+	componentwindow = frame.getComponentWindow()
 # 	tcu.wcompare(containerwindow, componentwindow)
+	
+	tcu.wtree(componentwindow.getAccessibleContext())
 
 
 
