@@ -6,8 +6,13 @@ def macro():
 
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-# 	doc = XSCRIPTCONTEXT.getDocument()
-# 	
+	doc = XSCRIPTCONTEXT.getDocument()
+
+	sheet = doc.getSheets()[0]
+	print(len(sheet.getRows()))
+	print(len(sheet.getColumns()))
+
+
 # 	controller = doc.getCurrentController()  # コントローラの取得。
 
 # 	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
@@ -20,12 +25,12 @@ def macro():
 # 	tcu.wtree(systemclipboard.getContents())
 
 
-	frame = doc.getCurrentController().getFrame() 
-# 	containerwindow = frame.getContainerWindow()
-	componentwindow = frame.getComponentWindow()
-# 	tcu.wcompare(containerwindow, componentwindow)
-	
-	tcu.wtree(componentwindow.getAccessibleContext())
+# 	frame = doc.getCurrentController().getFrame() 
+# # 	containerwindow = frame.getContainerWindow()
+# 	componentwindow = frame.getComponentWindow()
+# # 	tcu.wcompare(containerwindow, componentwindow)
+# 	
+# 	tcu.wtree(componentwindow.getAccessibleContext())
 
 
 

@@ -28,11 +28,11 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					controller = doc.getCurrentController()
 					frame = controller.getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
-					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
-					border = controller.getBorder()  # 行ヘッダの高さ(border.Top)、列ヘッダの幅(border.Left)を取得できる。
+# 					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
+# 					border = controller.getBorder()  # 行ヘッダの高さ(border.Top)、列ヘッダの幅(border.Left)を取得できる。
 					# enhancedmouseeventから取得できる座標は行と列のヘッダとの境界からの相対位置。
-					x = enhancedmouseevent.X + border.Left
-					y = enhancedmouseevent.Y + border.Top
+# 					x = enhancedmouseevent.X + border.Left
+# 					y = enhancedmouseevent.Y + border.Top
 					# コンテナウィンドウの位置を利用。
 # 					containerwindowpossize= containerwindow.getPosSize()  # コンテナウィンドウの左上角の画面に対する相対位置が返る。
 # 					x += containerwindowpossize.X
@@ -46,14 +46,23 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 # 					x += componentwindowpossize.X
 # 					y += componentwindowpossize.Y				
 					# コンポーネントウィンドウのAccessibleContextの位置を利用。
-					componentwindowlocationon = componentwindow.getAccessibleContext().getLocation()  
-					x += componentwindowlocationon.X
-					y += componentwindowlocationon.Y  # enhancedmouseevent.Yは数式バーを含まないコンポーネントウィンドウの相対座標なのでY軸は上にずれる。					
+# 					componentwindowlocationon = componentwindow.getAccessibleContext().getLocation()  
+# 					x += componentwindowlocationon.X
+# 					y += componentwindowlocationon.Y  # enhancedmouseevent.Yは数式バーを含まないコンポーネントウィンドウの相対座標なのでY軸は上にずれる。					
 		
-					point = componentwindow.convertPointToLogic(Point(X=x, Y=y), MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
+# 					point = componentwindow.convertPointToLogic(Point(X=x, Y=y), MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
+
+					
+					pixelpoint = containerwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)  # ピクセル単位をma単位に変換。
+					point = point = containerwindow.convertPointToLogic(pixelpoint, MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
+					
 					dialog, addControl = dialogCreator(ctx, smgr, {"PositionX": point.X, "PositionY": point.Y, "Width": 100, "Height": 100, "Title": "ノンモダルダイアログ", "Name": "NoneModalDialog", "Step": 0, "Moveable": True})  # PositionXとPositionYはそれぞれ親ウィンドウの左端と上端からの相対位置。
 					# addControlでここでコントロールを作成する。
 # 					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
+# 					toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。
+# 					toolkit = componentwindow.getToolkit()  # ピアからツールキットを取得。
+# 					dialog.createPeer(toolkit, componentwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
+					
 					toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。
 					dialog.createPeer(toolkit, containerwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 					dialogframe = showModelessly(ctx, smgr, frame, dialog)  # ノンモダルダイアログとして表示。ダイアログのフレームを取得。
@@ -92,11 +101,11 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 	def addControl(controltype, props, attrs=None):  # props: コントロールモデルのプロパティ、attr: コントロールの属性。
 		control = None
 		items, currentitemid = None, None
-# 		if controltype == "Roadmap":  # Roadmapコントロールのとき、Itemsはダイアログモデルに追加してから設定する。そのときはCurrentItemIDもあとで設定する。
-# 			if "Items" in props:  # Itemsはダイアログモデルに追加されてから設定する。
-# 				items = props.pop("Items")
-# 				if "CurrentItemID" in props:  # CurrentItemIDはItemsを追加されてから設定する。
-# 					currentitemid = props.pop("CurrentItemID")
+		if controltype == "Roadmap":  # Roadmapコントロールのとき、Itemsはダイアログモデルに追加してから設定する。そのときはCurrentItemIDもあとで設定する。
+			if "Items" in props:  # Itemsはダイアログモデルに追加されてから設定する。
+				items = props.pop("Items")
+				if "CurrentItemID" in props:  # CurrentItemIDはItemsを追加されてから設定する。
+					currentitemid = props.pop("CurrentItemID")
 		if "PosSize" in props:  # コントロールモデルのプロパティの辞書にPosSizeキーがあるときはピクセル単位でコントロールに設定をする。
 			control = smgr.createInstanceWithContext("com.sun.star.awt.UnoControl{}".format(controltype), ctx)  # コントロールを生成。
 			control.setPosSize(props.pop("PositionX"), props.pop("PositionY"), props.pop("Width"), props.pop("Height"), props.pop("PosSize"))  # ピクセルで指定するために位置座標と大きさだけコントロールで設定。
