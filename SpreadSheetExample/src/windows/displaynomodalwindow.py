@@ -15,12 +15,6 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(controller, ctx, smgr, doc))  # EnhancedMouseClickHandler
-
-	frame = controller.getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
-	componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
-	pass
-
-
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 	def __init__(self, subj, ctx, smgr, doc):
 		self.subj = subj
