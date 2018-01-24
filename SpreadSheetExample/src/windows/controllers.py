@@ -4,11 +4,11 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
-	for subcontroller in controller:
+	for i, subcontroller in enumerate(controller):  # インデックスも取得する。
 		cellrangeaddress = subcontroller.getVisibleRange()  # 見えているセル範囲のアドレスを取得。
 		cellrange = subcontroller.getReferredCells()  # 見えているセル範囲を取得。
-		cellrange[0, 0].setString("StartRow: {}, EndRow: {}, StartColumn: {}, EndColumn: {}"\
-			.format(cellrangeaddress.StartRow, cellrangeaddress.EndRow, cellrangeaddress.StartColumn, cellrangeaddress.EndColumn))  # 各コントローラーのセル範囲の左上端セルにセル範囲アドレスを代入する。
+		cellrange[0, 0].setString("Index: {}, StartRow: {}, EndRow: {}, StartColumn: {}, EndColumn: {}"\
+			.format(i, cellrangeaddress.StartRow, cellrangeaddress.EndRow, cellrangeaddress.StartColumn, cellrangeaddress.EndColumn))  # 各コントローラーのセル範囲の左上端セルにセル範囲アドレスを代入する。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper

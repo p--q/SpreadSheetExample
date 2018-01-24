@@ -8,12 +8,19 @@ def macro():
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
 
-	sheet = doc.getSheets()[0]
-	print(len(sheet.getRows()))
-	print(len(sheet.getColumns()))
 
 
-# 	controller = doc.getCurrentController()  # コントローラの取得。
+
+# 	sheet = doc.getSheets()[0]
+# 	print(len(sheet.getRows()))
+# 	print(len(sheet.getColumns()))
+
+
+	controller = doc.getCurrentController()  # コントローラの取得。
+	
+	tcu.wtree(controller[0])
+	
+	
 
 # 	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
 # 
