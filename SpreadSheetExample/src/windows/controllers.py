@@ -7,8 +7,9 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	for i, subcontroller in enumerate(controller):  # インデックスも取得する。
 		cellrangeaddress = subcontroller.getVisibleRange()  # 見えているセル範囲のアドレスを取得。
 		cellrange = subcontroller.getReferredCells()  # 見えているセル範囲を取得。
-		cellrange[0, 0].setString("Index: {}, StartRow: {}, EndRow: {}, StartColumn: {}, EndColumn: {}"\
+		cellrange[0, 0].setString("Index: {}\nStartRow: {}, EndRow: {}\nStartColumn: {}, EndColumn: {}"\
 			.format(i, cellrangeaddress.StartRow, cellrangeaddress.EndRow, cellrangeaddress.StartColumn, cellrangeaddress.EndColumn))  # 各コントローラーのセル範囲の左上端セルにセル範囲アドレスを代入する。
+		cellrange[0, 0].getRows()[0].setPropertyValue("OptimalHeight", True)
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	import officehelper
