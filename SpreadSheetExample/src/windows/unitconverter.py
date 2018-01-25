@@ -2,20 +2,7 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.style.VerticalAlignment import MIDDLE
-
-# import re
-# from collections import deque, namedtuple
-# from com.sun.star.util import Time, Date, XCloseListener
-# from com.sun.star.lang import Locale
-# from com.sun.star.awt.ScrollBarOrientation import VERTICAL
-# from com.sun.star.awt import XMouseListener, XTextListener, XFocusListener, XKeyListener, XSpinListener, XItemListener, XAdjustmentListener
-# from com.sun.star.awt.SystemPointer import REFHAND
-# from com.sun.star.awt.MessageBoxType import INFOBOX
-# from com.sun.star.awt.MessageBoxButtons import BUTTONS_OK
-# from com.sun.star.awt.FocusChangeReason import TAB
-# from com.sun.star.awt.AdjustmentType import ADJUST_LINE, ADJUST_PAGE, ADJUST_ABS 
-# from com.sun.star.awt.Key import BACKSPACE, SPACE, DELETE, LEFT, RIGHT, HOME, END
-
+from com.sun.star.awt import XActionListener
 def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
 	def wrapper(*args, **kwargs):
 		frame = None
@@ -43,7 +30,6 @@ def enableRemoteDebugging(func):  # デバッグサーバーに接続したい�
 		except:
 			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
 	return wrapper
-# @enableRemoteDebugging
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
@@ -51,264 +37,75 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 	docwindow = docframe.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 	toolkit = docwindow.getToolkit()  # ピアからツールキットを取得。  
-	label_width = 50
-	line_height = 16
-	margin = 6
-	field_width = 50
-	button_width = 40
-	
-	dialog, addControl = dialogCreator(ctx, smgr, {"PositionX": 102, "PositionY": 41, "Width": label_width+field_width+margin*3, "Height": 380, "Title": "Convert Units", "Name": "ConvertUnits", "Step": 0, "Moveable": True})  # "TabIndex": 0
-	addControl("FixedText", {"PositionX": margin, "PositionY": margin, "Width": label_width, "Height": line_height, "Label": "Pixel", "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}) 
-	addControl("NumericField", {"PositionX": label_width+margin*2, "PositionY": margin, "Width": field_width, "Height": line_height, "Spin": True, "StrictFormat": True, "ValueMin": 0.0, "ValueMax": 1000.0, "Value": 500.0, "ValueStep": 100.0, "ShowThousandsSeparator": True, "DecimalAccuracy": 1})  
-	addControl("FixedText", {"PositionX": margin, "PositionY": margin*2+line_height, "Width": label_width, "Height": line_height, "Label": "Map AppFont", "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}) 
-	addControl("NumericField", {"PositionX": label_width+margin*2, "PositionY": margin*2+line_height, "Width": field_width, "Height": line_height, "Spin": True, "StrictFormat": True, "ValueMin": 0.0, "ValueMax": 1000.0, "Value": 500.0, "ValueStep": 100.0, "ShowThousandsSeparator": True, "DecimalAccuracy": 1})  
-	addControl("FixedText", {"PositionX": margin, "PositionY": margin*3+line_height*2, "Width": label_width, "Height": line_height, "Label": "Millimeter", "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}) 
-	addControl("NumericField", {"PositionX": label_width+margin*2, "PositionY": margin*3+line_height*2, "Width": field_width, "Height": line_height, "Spin": True, "StrictFormat": True, "ValueMin": 0.0, "ValueMax": 1000.0, "Value": 500.0, "ValueStep": 100.0, "ShowThousandsSeparator": True, "DecimalAccuracy": 1})  
-	margin2 = int(label_width+field_width+margin*3-button_width*2/3)
-	addControl("Button", {"PositionX": margin2, "PositionY": margin*4+line_height*3, "Width": button_width, "Height": line_height, "Label": "Con~vert", "PushButtonType": 0})  # PushButtonTypeの値はEnumではエラーになる。
-	addControl("Button", {"PositionX": button_width+margin2*2, "PositionY": margin*4+line_height*3, "Width": button_width, "Height": line_height, "Label": "~Clear", "PushButtonType": 0})  # PushButtonTypeの値はEnumではエラーになる。
-	
-	
-# 	textlistener = TextListener()
-# 	spinlistener = SpinListener()
-# 	itemlistener = ItemListener(dialog) 
-# 	addControl("FixedText", {"Name": "Headerlabel", "PositionX": 106, "PositionY": 6, "Width": 300, "Height": 8, "Label": "This code-sample demonstrates how to create various controls in a dialog"})
-# 	addControl("FixedText", {"PositionX": 106, "PositionY": 18, "Width": 100, "Height": 8, "Label": "My Label", "NoLabel": True}, {"addMouseListener": MouseListener(ctx, smgr)})  # , "Step": 0
-# 	addControl("CurrencyField", {"PositionX": 106, "PositionY": 30, "Width": 60, "Height": 12, "PrependCurrencySymbol": True, "CurrencySymbol": "$", "Value": 2.93}, {"addTextListener": textlistener})
-# 	addControl("FixedLine", {"PositionX": 106, "PositionY": 58, "Width": 100, "Height": 8, "Orientation": 0, "Label": "My FixedLine"})   
-# 	addControl("Edit", {"PositionX": 106, "PositionY": 72, "Width": 60, "Height": 12, "Text": "MyText", "EchoChar": ord("*"), "HelpText": "EchoChar will be canceled when moving the focus with the tab key."}, {"addFocusListener": FocusListener(), "addKeyListener": KeyListener(dialog)})  
-# 	addControl("FixedLine", {"PositionX": 106, "PositionY": 58, "Width": 100, "Height": 8, "Orientation": 0, "Label": "My FixedLine"}) 
-# 	t, tmin, tmax = toTime(10, 0, 0), toTime(1, 0, 0), toTime(17, 5, 0)
-# 	addControl("TimeField", {"PositionX": 106, "PositionY": 96, "Width": 50, "Height": 12, "Spin": True, "TimeFormat": 5, "Time": t.Time, "TimeMin": tmin.Time, "TimeMax": tmax.Time, "HelpText": "Min: {} Max: {}".format(tmin, tmax)})  # com.sun.star.util.Timeで時刻を指定。  
-# 	d, dmin, dmax = toDate(2017, 7, 4), toDate(2017, 6, 16), toDate(2017, 8, 15)
-# 	addControl("DateField", {"PositionX": 166, "PositionY": 96, "Width": 55, "Height": 12, "Dropdown": True, "DateFormat": 9, "DateMin": dmin.Date, "DateMax": dmax.Date, "Date": d.Date, "Spin": True, "HelpText": "Min: {} Max: {}".format(dmin, dmax)}, {"addSpinListener": spinlistener})	 # com.sun.star.util.Dateで日付を指定。
-# 	addControl("GroupBox", {"PositionX": 102, "PositionY": 124, "Width": 100, "Height": 70, "Label": "My GroupBox"})   
-# 	addControl("PatternField", {"PositionX": 106, "PositionY": 136, "Width": 50, "Height": 12, "LiteralMask": "__.05.2007", "EditMask": "NNLLLLLLLL", "StrictFormat": True, "HelpText": "_ means a digit can be entered"})   
-# 	addControl("NumericField", {"PositionX": 60, "PositionY": 6, "Width": 50, "Height": 12, "Spin": True, "StrictFormat": True, "ValueMin": 0.0, "ValueMax": 1000.0, "Value": 500.0, "ValueStep": 100.0, "ShowThousandsSeparator": True, "DecimalAccuracy": 1})  
-# 	addControl("CheckBox", {"PositionX": 106, "PositionY": 168, "Width": 150, "Height": 8, "Label": "~Enable Close dialog Button", "TriState": True, "State": 1}, {"addItemListener": itemlistener})  
-# 	addControl("RadioButton", {"PositionX": 130, "PositionY": 200, "Width": 150, "Height": 8, "Label": "~First Option", "State": 1, "TabIndex": 50})	 
-# 	addControl("RadioButton", {"PositionX": 130, "PositionY": 214, "Width": 150, "Height": 8, "Label": "~Second Option", "TabIndex": 51})	  
-# 	addControl("ListBox", {"PositionX": 106, "PositionY": 230, "Width": 50, "Height": 30, "Dropdown": False, "Step": 0, "MultiSelection": True, "StringItemList": ("First Item", "Second Item", "ThreeItem"), "SelectedItems": (0, 2)})	 
-# 	addControl("ComboBox", {"PositionX": 160, "PositionY": 230, "Width": 60, "Height": 12, "Dropdown": True, "MaxTextLen": 10, "ReadOnly": False, "Autocomplete": True, "StringItemList": ("First Entry", "Second Entry", "Third Entry", "Fourth Entry")}, {"addItemListener": itemlistener})  # 選択した文字列が取得できない。
-# 	numberformatssupplier = smgr.createInstanceWithContext("com.sun.star.util.NumberFormatsSupplier", ctx)  # フォーマットサプライヤーをインスタンス化。
-# 	numberformats = numberformatssupplier.getNumberFormats()  # フォーマットサプライヤーからフォーマット一覧を取得。
-# 	formatstring = "NNNNMMMM DD, YYYY"  # フォーマット。デフォルトのフォーマット一覧はCalc→書式→セル→数値でみれる。
-# 	locale = Locale(Language="en", Country="US")  # フォーマット一覧をくくる言語と国を設定。
-# 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べる。第3引数のブーリアンは意味はないはず。
-# 	if formatkey == -1:  # デフォルトのフォーマットにformatstringがないとき。
-# 		formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと?
-# 	addControl("FormattedField", {"PositionX": 106, "PositionY": 270, "Width": 100, "Height": 12, "EffectiveValue": 12348, "StrictFormat": True, "Spin": True, "FormatsSupplier": numberformatssupplier, "FormatKey": formatkey}, {"addSpinListener": spinlistener})  
-# 	addControl("ScrollBar", {"PositionX": 230, "PositionY": 230, "Width": 8, "Height": 52, "Orientation": VERTICAL, "ScrollValueMin": 0, "ScrollValueMax": 100, "ScrollValue": 5, "LineIncrement": 2, "BlockIncrement": 10}, {"addAdjustmentListener": AdjustmentListener(ctx, smgr, docframe)})  
-# 	workurl = ctx.getByName('/singletons/com.sun.star.util.thePathSettings').getPropertyValue("Work")  # Ubuntuではホームフォルダ、Windows10ではドキュメントフォルダのURIが返る。
-# 	systemworkpath = unohelper.fileUrlToSystemPath(workurl)  # URIをシステム固有のパスに変換する。
-# 	addControl("FileControl", {"PositionX": 106, "PositionY": 290, "Width": 200, "Height": 14, "Text": systemworkpath})  
-# 	addControl("Button", {"PositionX": 106, "PositionY": 320, "Width": 50, "Height": 14, "Label": "~Close dialog", "PushButtonType": 1})  # PushButtonTypeの値はEnumではエラーになる。
-# 	addControl("FixedHyperlink", {"PositionX": 106, "PositionY": 350, "Width": 100, "Height": 14, "Label": "p--q.blogspot.jp", "URL": "https://p--q.blogspot.jp/", "TextColor": 0x3D578C})
+	m = 6  # 垂直マージン
+	n = 5  # 行数
+	name = {"PositionX": m, "Width": 42, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 単位名の共通プロパティ。
+	num = {"PositionX": name["PositionX"]+name["Width"], "Width": 40, "Height": name["Height"], "VerticalAlign": MIDDLE}  # 値入力欄の共通プロパティ。
+	unit = {"PositionX": num["PositionX"]+num["Width"], "Width": 32, "Height": name["Height"], "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
+	button = {"Height": name["Height"]+2, "PushButtonType": 0}  # ボタンの共通プロパティ。PushButtonTypeの値はEnumではエラーになる。
+	controldialog =  {"PositionX": name["PositionX"], "PositionY": 40, "Width": unit["PositionX"]+unit["Width"]+m, "Height": m*(n+1)+name["Height"]*(n-1)+button["Height"], "Title": "Units", "Name": "ConvertUnits", "Step": 0, "Moveable": True}  # ダイアログのプロパティ。
+	dialog, addControl = dialogCreator(ctx, smgr, controldialog)
+	fixedline = {"PositionX": name["PositionX"], "PositionY": m, "Width": unit["PositionX"]+unit["Width"]-m, "Height": name["Height"], "Label": "Input only one of unit"}
+	addControl("FixedLine", fixedline)
+	name1, num1, unit1 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	name1["PositionY"] = num1["PositionY"] = unit1["PositionY"] = fixedline["PositionY"] + fixedline["Height"] + m    
+	name1["Label"] = "Pixel "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	unit1["Label"] = "px"
+	addControl("FixedText", name1)
+	addControl("Edit", num1)  
+	addControl("FixedText", unit1)
+	name2, num2, unit2 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	name2["PositionY"] = num2["PositionY"] = unit2["PositionY"] = name1["PositionY"] + name1["Height"] + m  
+	name2["Label"] = "Map AppFont "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	unit2["Label"] = "ma"
+	addControl("FixedText", name2)
+	addControl("Edit", num2)  
+	addControl("FixedText", unit2)	
+	name3, num3, unit3 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	name3["PositionY"] = num3["PositionY"] = unit3["PositionY"] = name2["PositionY"] + name2["Height"] + m  
+	name3["Label"] = "Millimeter "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	unit3["Label"] = "1/100mm"
+	addControl("FixedText", name3)
+	addControl("Edit", num3)  
+	addControl("FixedText", unit3)		
+	button1, button2 = button.copy(), button.copy()
+	button1["PositionY"] = button2["PositionY"] = name3["PositionY"] + name3["Height"] + m  
+	button1["Width"] = 40
+	button1["Label"] = "Con~vert"
+	button2["Width"] = 30
+	button2["Label"] = "~Clear"	
+	button2["PositionX"] = unit["PositionX"] + unit["Width"] - button2["Width"]
+	button1["PositionX"] = button2["PositionX"] - m - button1["Width"]
+	actionlistener = ActionListener(ctx, smgr)
+	addControl("Button", button1, {"setActionCommand": "convert" ,"addActionListener": actionlistener})
+	addControl("Button", button2, {"setActionCommand": "clear" ,"addActionListener": actionlistener})
 	dialog.createPeer(toolkit, docwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
-# 	h = dialog.getModel().getPropertyValue("Height")  # ダイアログの高さをma単位で取得。
-# 	items = ("Introduction", True),\
-# 			("Documents", True) # この順に0からIDがふられる。この順に表示される。
-# 	addControl("Roadmap", {"PositionX": 0, "PositionY": 0, "Width": 85, "Height": h-26, "Complete": False, "Text": "Steps", "Items": items})  # Roadmapコントロールはダイアログウィンドウを描画してからでないと項目が表示されない。
-# 	dialogwindow = dialog.getPeer()  # ダイアログウィンドウ(=ピア）を取得。
-# 	textlistener.setPeer(dialogwindow)  # ダイアログのピアをリスナーに渡す。
 	# ノンモダルダイアログにするとき。
 # 	showModelessly(ctx, smgr, docframe, dialog)  
 	# モダルダイアログにする。フレームに追加するとエラーになる。
 	dialog.execute()  
 	dialog.dispose()	
-# class MouseListener(unohelper.Base, XMouseListener):  # Editコントロールではうまく動かない。	
-# 	def __init__(self, ctx, smgr):
-# 		self.pointer = smgr.createInstanceWithContext("com.sun.star.awt.Pointer", ctx)  # ポインタのインスタンスを取得。
-# 	def mousePressed(self, mouseevent):
-# 		pass			
-# 	def mouseReleased(self, mouseevent):
-# 		pass
-# 	def mouseEntered(self, mouseevent):
-# 		control, dummy_controlmodel, name = eventSource(mouseevent)
-# 		if name == "FixedText1":
-# 			self.pointer.setType(REFHAND)  # マウスポインタの種類を設定。
-# 			control.getPeer().setPointer(self.pointer)  # マウスポインタを変更。コントロールからマウスがでるとポインタは元に戻る。
-# 	def mouseExited(self, mouseevent):
-# 		pass
-# 	def disposing(self, eventobject):
-# 		pass
-# class TextListener(unohelper.Base, XTextListener):
-# 	def __init__(self):
-# 		self.vals = {}  # 前値を保存する辞書。
-# 	def setPeer(self, dialogwindow):  # ダイアログのピアを取得。
-# 		self.dialogwindow = dialogwindow
-# 		self.toolkit = dialogwindow.getToolkit()		
-# 	def textChanged(self, textevent):  # 複数回呼ばれるので前値との比較が必要。
-# 		dummy_control, controlmodel, name = eventSource(textevent)	
-# 		val = controlmodel.Value if hasattr(controlmodel, "Value") else controlmodel.Text  # Textが数値の場合は有効桁数が変化するのでValueがあればValueを取得する。
-# 		if name in self.vals:  # 前値の辞書にキーがあるとき
-# 			if val == self.vals[name]:  # 前値と変化がなければなにもしない
-# 				return
-# 		self.vals[name] = val  # 辞書の値を更新。
-# 		if name.startswith("CurrencyField"):	# CurrencyFieldコントロールすべてに対して。
-# 			txt = controlmodel.getPropertyValue("Value")	
-# 			msgbox = self.toolkit.createMessageBox(self.dialogwindow, INFOBOX, BUTTONS_OK, "TextListener", "{} has changed to {}".format(name, txt))  # コントロールのpeerを親にしてもよい。
-# 			msgbox.execute()  # メッセージボックスを表示。
-# 			msgbox.dispose()  # メッセージボックスを破棄。
-# 	def disposing(self, eventobject):
-# 		pass	
-# class FocusListener(unohelper.Base, XFocusListener):
-# 	def focusGained(self, focusevent):
-# 		dummy_control, controlmodel, name = eventSource(focusevent)
-# 		if name == "Edit1":
-# 			focuschangereason = focusevent.FocusFlags & TAB  # 論理積を取得。
-# 			if focuschangereason==TAB:  # タブで移動してきたとき
-# 				self.echochar = controlmodel.getPropertyValue("EchoChar")  # 伏せ文字を取得。
-# 				controlmodel.setPropertyValue("EchoChar", 0)  # 伏せ文字を解除。
-# 	def focusLost(self, focusevent):  # マウスでフォーカスを移動させたときはこれは呼ばれない。
-# 		dummy_control, controlmodel, name = eventSource(focusevent)		
-# 		if name == "Edit1":
-# 			controlmodel.setPropertyValue("EchoChar", self.echochar)  # 伏せ文字を再設定。
-# 	def disposing(self, eventobject):
-# 		pass  
-# class KeyListener(unohelper.Base, XKeyListener):
-# 	def __init__(self, dialog):
-# 		dialogmodel = dialog.getModel()
-# 		controlmodel = dialogmodel.createInstance("com.sun.star.awt.UnoControl{}Model".format("FixedText"))  # コントロールモデルを生成。UnoControlDialogElementサービスのためにUnoControlDialogModelからの作成が必要。
-# 		props = {"Name": "forKeyListener",  "PositionX": 170, "PositionY": 72, "Width": 200, "Height": 12, "Step": 0, "NoLabel": True}
-# 		controlmodel.setPropertyValues(tuple(props.keys()), tuple(props.values()))
-# 		dialogmodel.insertByName(props["Name"], controlmodel)  # ダイアログモデルにモデルを追加するだけでコントロールも作成される。
-# 		self.control = dialog.getControl(props["Name"])
-# 		self.keycodes = {
-# 			BACKSPACE: "BACKSPACE", 
-# 			SPACE: "SPACE", 
-# 			DELETE: "DELETE",
-# 			LEFT: "LEFT", 
-# 			RIGHT: "RIGHT", 
-# 			HOME: "HOME", 
-# 			END: "END"
-# 			}
-# 		self.reg = re.compile(r"[!\"#$%&'()=~|`{+*}<>?\-\^\\@[;:\],./\\\w]+")  # キーボードの文字を網羅。_は\wに含まれる。
-# # 	@enableRemoteDebugging
-# 	def keyPressed(self, keyevent):
-# 		dummy_control, dummy_controlmodel, name = eventSource(keyevent)
-# 		if name == "Edit1":
-# 			keycode = keyevent.KeyCode
-# 			if keycode in self.keycodes.keys():
-# 				key = self.keycodes[keycode]		
-# 			else:
-# 				key = keyevent.KeyChar.value
-# 			if self.reg.match(key):  # キーボードにある文字のときのみ表示する。
-# 				self.control.setText("Last Input valid Key: {}".format(key))		
-# 			else:
-# 				self.control.setText("")	
-# 	def keyReleased(self, keyevnet):
-# 		pass
-# 	def disposing(self, eventobject):
-# 		pass  
-# class SpinListener(unohelper.Base, XSpinListener):
-# 	def up(self, spinevent):
-# 		control, controlmodel, name = eventSource(spinevent)
-# 		controlpeer = control.getPeer()  # コントロールのピアを取得。
-# 		toolkit = controlpeer.getToolkit()  # ピアからツールキットを取得。
-# 		if name == "FormattedField1":
-# 			val = controlmodel.EffectiveValue
-# 			msgbox = toolkit.createMessageBox(controlpeer, INFOBOX, BUTTONS_OK, "SpinListener", "Controlvalue:  {}" .format(val))  # コントロールのpeerを親にしている。
-# 			msgbox.execute()  # メッセージボックスを表示。
-# 			msgbox.dispose()  # メッセージボックスを破棄。
-# 	def down(self, spinevent):
-# 		pass
-# 	def first(self, spinevent):
-# 		pass
-# 	def last(self, spinevent):
-# 		pass
-# 	def disposing(self, eventobject):
-# 		pass  
-# class ItemListener(unohelper.Base, XItemListener): 
-# 	def __init__(self, dialog):
-# 		self.dialog = dialog
-# # 	@enableRemoteDebugging
-# 	def itemStateChanged(self, itemevent):
-# 		control, dummy_controlmodel, name = eventSource(itemevent)
-# 		if name == "CheckBox1":
-# 			button = self.dialog.getControl("Button1")
-# 			buttonmodel = button.getModel()
-# 			state = control.getState()
-# 			btnenable = True
-# 			if state==0 or state==2:
-# 				btnenable = False
-# 			buttonmodel.setPropertyValue("Enabled", btnenable)
-# 		elif name == "ComboBox1":  # コンボボックスは選択した文字列が取得できない。
-# 			control.setText(itemevent.Selected)		
-# 	def disposing(self, eventobject):
-# 		pass	  
-# class AdjustmentListener(unohelper.Base, XAdjustmentListener):	# ブレークするとマウスのクリックが無効になる。
-# 	def __init__(self, ctx, smgr, parentframe):
-# 		self.ctx = ctx
-# 		self.smgr = smgr
-# 		self.adjustmentdialog = None
-# 		self.parentframe = parentframe  # モードレスダイアログの親フレームを取得。
-# 		self.dic = {  # スクロールバーの操作の種類をキーとする。
-# 			ADJUST_ABS.value: "The event has been triggered by dragging the thumb...",
-# 			ADJUST_LINE.value: "The event has been triggered by a single line move..",
-# 			ADJUST_PAGE.value: "The event has been triggered by a block move..."
-# 			}
-# 		self.txts = deque(maxlen=4)  # 要素4個順繰りになる配列を作成。
-# 	def adjustmentValueChanged(self, adjustmentevent):  # 子ダイアログを表示させると2回呼ばれてしまう。
-# 		control, dummy_controlmodel, name = eventSource(adjustmentevent)
-# 		if name == "ScrollBar1":
-# 			adjustmenttype = adjustmentevent.Type.value  # スクロールバーの操作の種類を取得。
-# 			if self.adjustmentdialog is None:  # まだダイアログオブジェクトがないときはダイアログオブジェクトを作成
-# 				controlpeer = control.getPeer()	 # コントロールのピアオプジェクトを取得。			
-# 				toolkit = controlpeer.getToolkit()  # ツールキットを取得。
-# 				self.adjustmentdialog, addControl = dialogCreator(self.ctx, self.smgr, {"PositionX": 150, "PositionY": 150, "Width": 200, "Height": 70, "Title": "AdjustmentListener", "Name": "adjustmentlistenerdialog", "Step": 0, "TabIndex": 0, "Moveable": True})
-# 				self.adjustmentdialog.createPeer(toolkit, controlpeer)  # 新しいダイアログのピアを作成。
-# 				addControl("FixedText", {"PositionX": 10, "PositionY": 8, "Width": 190, "Height": 8, "Step": 0, "NoLabel": True})
-# 				addControl("FixedText", {"PositionX": 10, "PositionY": 16, "Width": 190, "Height": 32, "Step": 0, "NoLabel": True})
-# 				addControl("Button", {"PositionX": 75, "PositionY": 50, "Width": 50, "Height": 14, "Label": "~Close dialog", "PushButtonType": 1})  # PushButtonTypeの値はEnumではエラーになる。
-# 				frame = showModelessly(self.ctx, self.smgr, self.parentframe, self.adjustmentdialog)  # モードレスダイアログとして表示。
-# 				frame.addCloseListener(CloseListener(self))  # モードレスダイアログが閉じられた時はダイアログオブジェクトをクリアする。ダイアログオブジェクトが残っていてもsetVisble(True)ではなぜか表示されない。
-# 				text1 = self.adjustmentdialog.getControl("FixedText1")  # 1行目のコントロールを取得。
-# 				text1.setText(self.dic[adjustmenttype])  # 1行目を代入。
-# 				self.txts.clear()  # 2行目以降にいれるリストをクリア。
-# 			else:  # すでにダイアログオブジェクトがあるとき
-# 				if self.adjustmentdialog.isVisible():  # すでにダイアログが表示されている時
-# 					text1 = self.adjustmentdialog.getControl("FixedText1")  # 1行目のコントロールを取得。
-# 					if text1.getText() != self.dic[adjustmenttype]:  # 1行目について前回と異なるとき
-# 						text1.setText(self.dic[adjustmenttype])  # 1行目を更新。
-# 						self.txts.clear()  # 2行目以降にいれるリストをクリア。
-# 			text2 = self.adjustmentdialog.getControl("FixedText2")  # 2行目以降のコントロールを取得。
-# 			self.txts.append("The value of the scrollbar is: {}".format(adjustmentevent.Value))  # 2行目以降の内容にするリストを取得。
-# 			text2.setText("\n".join(self.txts))  # 2行目を更新。
-# 	def disposing(self, eventobject):
-# 		pass
-# class CloseListener(unohelper.Base, XCloseListener):  # モードレスダイアログを閉じたときの処理をする。フレームにつける。
-# 	def __init__(self, adjustmentlistener):
-# 		self.adjustmentlistener = adjustmentlistener
-# 	def queryClosing(self, eventobject, getownership):
-# 		pass
-# 	def notifyClosing(self, eventobject):
-# 		if eventobject.Source.getName() == self.adjustmentlistener.adjustmentdialog.getModel().getPropertyValue("Name"):  # フレーム名を確認。
-# 			self.adjustmentlistener.adjustmentdialog.dispose()  # dispose()してもNoneになるわけではない。
-# 			self.adjustmentlistener.adjustmentdialog = None
-# 	def disposing(self, eventobject):
-# 		pass  
-# def toDate(year, month, day):  # 日付のnamedtupleを返す
-# 	struct = Date(Year=year, Month=month, Day=day)	 # com.sun.star.util.Date
-# 	class StructDate(namedtuple("StructDate", "Date y m d")):
-# 		__slots__ = ()  # インスタンス辞書の作成抑制。
-# 		def __str__(self):  # 文字列として呼ばれた場合に返す値を設定。
-# 			return "{:0>4}-{}-{}".format(self.y, self.m, self.d)
-# 	return StructDate(struct, year, month, day)  # namedtupleを返す
-# def toTime(hour=0, minute=0, second=0, microsecond=None, tzinfo=None):  # 時刻のnamedtupleを返す。
-# 	microsecond, flg = (0, False) if microsecond is None else (microsecond, True)  # flgはマイクロ秒の表示のためのフラグ。
-# 	tzinfo = False if tzinfo is None else tzinfo
-# 	struct = Time(Hours=hour, Minutes=minute, Seconds=second, NanoSeconds=microsecond*1000, IsUTC=tzinfo) # com.sun.star.util.Time
-# 	class StructTime(namedtuple("StructTime", "Time h m s ms")):
-# 		__slots__ = ()  # インスタンス辞書の作成抑制。
-# 		def __str__(self):  # 文字列として呼ばれた場合に返す値を設定。tzinfoは出力で使っていません。
-# 			return "{:>2}:{:0>2}:{:0>2}.{:0>6}".format(self.h, self.m, self.s, self.ms)	if flg else "{:>2}:{:0>2}:{:0>2}".format(self.h, self.m, self.s)
-# 	return StructTime(struct, hour, minute, second, microsecond)  # namedtupleを返す
-# def eventSource(event):  # イベントからコントロール、コントロールモデル、コントロール名を取得。
-# 	control = event.Source  # イベントを駆動したコントロールを取得。
-# 	controlmodel = control.getModel()  # コントロールモデルを取得。
-# 	name = controlmodel.getPropertyValue("Name")  # コントロール名を取得。	
-# 	return control, controlmodel, name	
+class ActionListener(unohelper.Base, XActionListener):
+	def __init__(self, ctx, smgr):
+		self.args = ctx, smgr
+		
+	def actionPerformed(self, actionevent):
+		ctx, smgr = self.args
+		cmd = actionevent.ActionCommand
+		if cmd == "convert":
+			
+			
+			pass
+		elif cmd == "clear":
+			
+			
+			
+			pass
+	def disposing(self, eventobject):
+		
+		
+		
+		pass
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションではリスナー動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。	
@@ -345,7 +142,7 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 			for i, j in enumerate(items):  # 各Roadmapアイテムについて
 				item = controlmodel.createInstance()
 				item.setPropertyValues(("Label", "Enabled"), j)
-				controlmodel.insertByIndex(i, item)  # IDは0から整数が自動追加される	   
+				controlmodel.insertByIndex(i, item)  # IDは0から整数が自動追加される
 			if currentitemid is not None:  #Roadmapアイテムを追加するとそれがCurrentItemIDになるので、Roadmapアイテムを追加してからCurrentIDを設定する。
 				controlmodel.setPropertyValue("CurrentItemID", currentitemid)
 		if control is None:  # コントロールがまだインスタンス化されていないとき
