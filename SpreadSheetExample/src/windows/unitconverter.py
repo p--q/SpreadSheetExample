@@ -80,33 +80,43 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	addControl("Button", button1, {"setActionCommand": "convert" ,"addActionListener": actionlistener})
 	addControl("Button", button2, {"setActionCommand": "clear" ,"addActionListener": actionlistener})
 	dialog.createPeer(toolkit, docwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
-	# ノンモダルダイアログにするとき。
-# 	showModelessly(ctx, smgr, docframe, dialog)  
+	# ノンモダルダイアログにするとき。オートメーションでは動かない。
+	showModelessly(ctx, smgr, docframe, dialog)  
 	# モダルダイアログにする。フレームに追加するとエラーになる。
-	dialog.execute()  
-	dialog.dispose()	
+# 	dialog.execute()  
+# 	dialog.dispose()	
 class ActionListener(unohelper.Base, XActionListener):
 	def __init__(self, ctx, smgr):
 		self.args = ctx, smgr
-		
+# 	@enableRemoteDebugging
 	def actionPerformed(self, actionevent):
 		ctx, smgr = self.args
 		cmd = actionevent.ActionCommand
+		source = actionevent.Source  # ボタンコントロールが返る。
+		context = source.getContext()  # コントロールダイアログが返ってくる。
+		edit1 = context.getControl("Edit1")
+		edit2 = context.getControl("Edit2")
+		edit3 = context.getControl("Edit3")
 		if cmd == "convert":
-			
-			
-			pass
+			e1, e2, e3 = edit1.getText(), edit2.getText(), edit3.getText()
+			if e1.isdigit() and e2.isdigit() and e3.isdigit():
+				pass
+			else:
+				pass
+				
+	
 		elif cmd == "clear":
-			
-			
-			
-			pass
+			edit1.setText("")
+			edit2.setText("")
+			edit3.setText("")
 	def disposing(self, eventobject):
-		
-		
-		
-		pass
-def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションではリスナー動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
+		eventobject.Source.removeActionListener(self)
+def eventSource(event):  # イベントからコントロール、コントロールモデル、コントロール名を取得。
+	control = event.Source  # イベントを駆動したコントロールを取得。
+	controlmodel = control.getModel()  # コントロールモデルを取得。
+	name = controlmodel.getPropertyValue("Name")  # コントロール名を取得。
+	return control, controlmodel, name
+def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションでは動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。	
 	frame.setName(dialog.getModel().getPropertyValue("Name"))  # フレーム名をダイアログモデル名から取得（一致させる必要性はない）して設定。ｽﾍﾟｰｽは不可。
@@ -212,9 +222,14 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 				return self.getDesktop().getCurrentComponent()
 		return ScriptContext(ctx)  
 	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
-	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントを取得。
-	if not hasattr(doc, "getCurrentController"):  # ドキュメント以外のとき。スタート画面も除外。
-		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, ())  # Writerのドキュメントを開く。
-		while doc is None:  # ドキュメントのロード待ち。
-			doc = XSCRIPTCONTEXT.getDocument()
-	macro()	   
+	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
+# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
+	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
+		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
+	flg = True
+	while flg:
+		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+		if doc is not None:
+			flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
+	macro()
