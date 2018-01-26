@@ -43,31 +43,31 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	num = {"PositionX": name["PositionX"]+name["Width"], "Width": 40, "Height": name["Height"], "VerticalAlign": MIDDLE}  # 値入力欄の共通プロパティ。
 	unit = {"PositionX": num["PositionX"]+num["Width"], "Width": 32, "Height": name["Height"], "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
 	button = {"Height": name["Height"]+2, "PushButtonType": 0}  # ボタンの共通プロパティ。PushButtonTypeの値はEnumではエラーになる。
-	controldialog =  {"PositionX": name["PositionX"], "PositionY": 40, "Width": unit["PositionX"]+unit["Width"]+m, "Height": m*(n+1)+name["Height"]*(n-1)+button["Height"], "Title": "Units", "Name": "ConvertUnits", "Step": 0, "Moveable": True}  # ダイアログのプロパティ。
+	controldialog =  {"PositionX": name["PositionX"], "PositionY": 40, "Width": unit["PositionX"]+unit["Width"]+m, "Title": "Units", "Name": "ConvertUnits", "Step": 0, "Moveable": True}  # ダイアログのプロパティ。
 	dialog, addControl = dialogCreator(ctx, smgr, controldialog)
 	fixedline = {"PositionX": name["PositionX"], "PositionY": m, "Width": unit["PositionX"]+unit["Width"]-m, "Height": name["Height"], "Label": "Input only one of unit"}
 	addControl("FixedLine", fixedline)
 	name1, num1, unit1 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
 	name1["PositionY"] = num1["PositionY"] = unit1["PositionY"] = fixedline["PositionY"] + fixedline["Height"] + m    
-	name1["Label"] = "Pixel "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	name1["Label"] = "Pixel: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
 	unit1["Label"] = "px"
 	addControl("FixedText", name1)
 	addControl("Edit", num1)  
 	addControl("FixedText", unit1)
 	name2, num2, unit2 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
 	name2["PositionY"] = num2["PositionY"] = unit2["PositionY"] = name1["PositionY"] + name1["Height"] + m  
-	name2["Label"] = "Map AppFont "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	name2["Label"] = "Map AppFont: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
 	unit2["Label"] = "ma"
 	addControl("FixedText", name2)
 	addControl("Edit", num2)  
 	addControl("FixedText", unit2)	
 	name3, num3, unit3 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
 	name3["PositionY"] = num3["PositionY"] = unit3["PositionY"] = name2["PositionY"] + name2["Height"] + m  
-	name3["Label"] = "Millimeter "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
+	name3["Label"] = "Millimeter: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
 	unit3["Label"] = "1/100mm"
 	addControl("FixedText", name3)
 	addControl("Edit", num3)  
-	addControl("FixedText", unit3)		
+	addControl("FixedText", unit3)	
 	button1, button2 = button.copy(), button.copy()
 	button1["PositionY"] = button2["PositionY"] = name3["PositionY"] + name3["Height"] + m  
 	button1["Width"] = 40
@@ -75,10 +75,13 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	button2["Width"] = 30
 	button2["Label"] = "~Clear"	
 	button2["PositionX"] = unit["PositionX"] + unit["Width"] - button2["Width"]
-	button1["PositionX"] = button2["PositionX"] - m - button1["Width"]
+	button1["PositionX"] = button2["PositionX"] - int(m/2) - button1["Width"]
+	message = {"Name": "Message", "PositionX": int(m/2), "Width": button1["PositionX"]-int(m/2), "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}
 	actionlistener = ActionListener(ctx, smgr)
+	addControl("FixedText", message)
 	addControl("Button", button1, {"setActionCommand": "convert" ,"addActionListener": actionlistener})
 	addControl("Button", button2, {"setActionCommand": "clear" ,"addActionListener": actionlistener})
+	dialog.getModel().setPropertyValue("Height", button1["PositionY"]+button1["Height"]+m)
 	dialog.createPeer(toolkit, docwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 	# ノンモダルダイアログにするとき。オートメーションでは動かない。
 	showModelessly(ctx, smgr, docframe, dialog)  
@@ -99,11 +102,14 @@ class ActionListener(unohelper.Base, XActionListener):
 		edit3 = context.getControl("Edit3")
 		if cmd == "convert":
 			e1, e2, e3 = edit1.getText(), edit2.getText(), edit3.getText()
+			
+			# 2つは空欄でないといけない。
+			
 			if e1.isdigit() and e2.isdigit() and e3.isdigit():
 				pass
 			else:
-				pass
-				
+				message = context.getControl("Message")
+				message.setText("")
 	
 		elif cmd == "clear":
 			edit1.setText("")
@@ -111,11 +117,11 @@ class ActionListener(unohelper.Base, XActionListener):
 			edit3.setText("")
 	def disposing(self, eventobject):
 		eventobject.Source.removeActionListener(self)
-def eventSource(event):  # イベントからコントロール、コントロールモデル、コントロール名を取得。
-	control = event.Source  # イベントを駆動したコントロールを取得。
-	controlmodel = control.getModel()  # コントロールモデルを取得。
-	name = controlmodel.getPropertyValue("Name")  # コントロール名を取得。
-	return control, controlmodel, name
+# def eventSource(event):  # イベントからコントロール、コントロールモデル、コントロール名を取得。
+# 	control = event.Source  # イベントを駆動したコントロールを取得。
+# 	controlmodel = control.getModel()  # コントロールモデルを取得。
+# 	name = controlmodel.getPropertyValue("Name")  # コントロール名を取得。
+# 	return control, controlmodel, name
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションでは動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。	
