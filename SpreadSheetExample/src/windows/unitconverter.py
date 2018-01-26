@@ -37,8 +37,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 	docwindow = docframe.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 	toolkit = docwindow.getToolkit()  # ピアからツールキットを取得。  
-	m = 6  # 垂直マージン
-	n = 5  # 行数
+	m = 6  # コントロール間の間隔
 	name = {"PositionX": m, "Width": 42, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 単位名の共通プロパティ。
 	num = {"PositionX": name["PositionX"]+name["Width"], "Width": 40, "Height": name["Height"], "VerticalAlign": MIDDLE}  # 値入力欄の共通プロパティ。
 	unit = {"PositionX": num["PositionX"]+num["Width"], "Width": 32, "Height": name["Height"], "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
@@ -109,6 +108,8 @@ class ActionListener(unohelper.Base, XActionListener):
 				pass
 			else:
 				message = context.getControl("Message")
+				
+				
 				message.setText("")
 	
 		elif cmd == "clear":
