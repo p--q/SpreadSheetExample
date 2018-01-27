@@ -3,33 +3,8 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from com.sun.star.style.VerticalAlignment import MIDDLE
 from com.sun.star.awt import XActionListener
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。
-	def wrapper(*args, **kwargs):
-		frame = None
-		doc = XSCRIPTCONTEXT.getDocument()
-		if doc:  # ドキュメントが取得できた時
-			frame = doc.getCurrentController().getFrame()  # ドキュメントのフレームを取得。
-		else:
-			currentframe = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()  # モードレスダイアログのときはドキュメントが取得できないので、モードレスダイアログのフレームからCreatorのフレームを取得する。
-			frame = currentframe.getCreator()
-		if frame:   
-			import time
-			indicator = frame.createStatusIndicator()  # フレームからステータスバーを取得する。
-			maxrange = 2  # ステータスバーに表示するプログレスバーの目盛りの最大値。2秒ロスするが他に適当な告知手段が思いつかない。
-			indicator.start("Trying to connect to the PyDev Debug Server for about 20 seconds.", maxrange)  # ステータスバーに表示する文字列とプログレスバーの目盛りを設定。
-			t = 1  # プレグレスバーの初期値。
-			while t<=maxrange:  # プログレスバーの最大値以下の間。
-				indicator.setValue(t)  # プレグレスバーの位置を設定。
-				time.sleep(1)  # 1秒待つ。
-				t += 1  # プログレスバーの目盛りを増やす。
-			indicator.end()  # reset()の前にend()しておかないと元に戻らない。
-			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
-		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
-		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。
-		except:
-			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
-	return wrapper
+from com.sun.star.awt import Point  # Struct
+from com.sun.star.util import MeasureUnit
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
@@ -38,46 +13,67 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	docwindow = docframe.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 	toolkit = docwindow.getToolkit()  # ピアからツールキットを取得。  
 	m = 6  # コントロール間の間隔
-	name = {"PositionX": m, "Width": 42, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 単位名の共通プロパティ。
-	num = {"PositionX": name["PositionX"]+name["Width"], "Width": 40, "Height": name["Height"], "VerticalAlign": MIDDLE}  # 値入力欄の共通プロパティ。
-	unit = {"PositionX": num["PositionX"]+num["Width"], "Width": 32, "Height": name["Height"], "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
-	button = {"Height": name["Height"]+2, "PushButtonType": 0}  # ボタンの共通プロパティ。PushButtonTypeの値はEnumではエラーになる。
-	controldialog =  {"PositionX": name["PositionX"], "PositionY": 40, "Width": unit["PositionX"]+unit["Width"]+m, "Title": "Units", "Name": "ConvertUnits", "Step": 0, "Moveable": True}  # ダイアログのプロパティ。
+	nameX = {"PositionX": m, "Width": 10, "Height": 12, "Label": "X: ", "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 名前Xの共通プロパティ。
+	numX = {"PositionX": nameX["PositionX"]+nameX["Width"], "Width": 40, "Height": nameX["Height"], "VerticalAlign": MIDDLE}  # X値入力欄の共通プロパティ。
+	unitX = {"PositionX": numX["PositionX"]+numX["Width"], "Width": 32, "Height": nameX["Height"], "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
+	nameY, numY, unitY = nameX.copy(), numX.copy(), unitX.copy()  # コントロールのプロパティの辞書をコピーする。
+	nameY["PositionX"] = unitX["PositionX"] + unitX["Width"]  # 左隣のコントロールのPositionXと幅からPositionXを算出。
+	nameY["Label"] = "Y: " 
+	numY["PositionX"] = nameY["PositionX"] + nameY["Width"]
+	unitY["PositionX"] = numY["PositionX"] + numY["Width"]
+	controls = nameX, numX, unitX, nameY, numY, unitY  # 1行に表示するコントロールのタプル。
+	button = {"Height": nameX["Height"]+2, "PushButtonType": 0}  # ボタンの共通プロパティ。PushButtonTypeの値はEnumではエラーになる。
+	controldialog =  {"PositionX": 100, "PositionY": 40, "Width": unitY["PositionX"]+unitY["Width"]+m, "Title": "Unit Converter", "Name": "ConvertUnits", "Step": 0, "Moveable": True}  # コントロールダイアログのプロパティ。幅は右端のコントロールから取得。高さは最後に設定する。
 	dialog, addControl = dialogCreator(ctx, smgr, controldialog)
-	fixedline = {"PositionX": name["PositionX"], "PositionY": m, "Width": unit["PositionX"]+unit["Width"]-m, "Height": name["Height"], "Label": "Input only one of unit"}
-	addControl("FixedLine", fixedline)
-	name1, num1, unit1 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
-	name1["PositionY"] = num1["PositionY"] = unit1["PositionY"] = fixedline["PositionY"] + fixedline["Height"] + m    
-	name1["Label"] = "Pixel: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
-	unit1["Label"] = "px"
-	addControl("FixedText", name1)
-	addControl("Edit", num1)  
-	addControl("FixedText", unit1)
-	name2, num2, unit2 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
-	name2["PositionY"] = num2["PositionY"] = unit2["PositionY"] = name1["PositionY"] + name1["Height"] + m  
-	name2["Label"] = "Map AppFont: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
-	unit2["Label"] = "ma"
-	addControl("FixedText", name2)
-	addControl("Edit", num2)  
-	addControl("FixedText", unit2)	
-	name3, num3, unit3 = name.copy(), num.copy(), unit.copy()  # addControlに渡した辞書は変更されるのでコピーを渡す。
-	name3["PositionY"] = num3["PositionY"] = unit3["PositionY"] = name2["PositionY"] + name2["Height"] + m  
-	name3["Label"] = "Millimeter: "  # 右寄せにすると右端文字が途中で切れるので最後はスペースにする。
-	unit3["Label"] = "1/100mm"
-	addControl("FixedText", name3)
-	addControl("Edit", num3)  
-	addControl("FixedText", unit3)	
+	# 1行目
+	for c in controls:
+		c["PositionY"] = m	
+	nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	unitX["Label"] = unitY["Label"] = "px"
+	addControl("FixedText", nameX)
+	addControl("Edit", numX)  
+	addControl("FixedText", unitX)	
+	addControl("FixedText", nameY)
+	addControl("Edit", numY)  
+	addControl("FixedText", unitY)		
+	# 2行目
+	y = unitY["PositionY"] + unitY["Height"] + m  
+	for c in controls:
+		c["PositionY"] = y
+	nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	unitX["Label"] = unitY["Label"] = "ma"
+	addControl("FixedText", nameX)
+	addControl("Edit", numX)  
+	addControl("FixedText", unitX)	
+	addControl("FixedText", nameY)
+	addControl("Edit", numY)  
+	addControl("FixedText", unitY)	
+	# 3行目
+	y = unitY["PositionY"] + unitY["Height"] + m  
+	for c in controls:
+		c["PositionY"] = y
+	nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+	unitX["Label"] = unitY["Label"] = "1/100mm"
+	addControl("FixedText", nameX)
+	addControl("Edit", numX)  
+	addControl("FixedText", unitX)	
+	addControl("FixedText", nameY)
+	addControl("Edit", numY)  
+	addControl("FixedText", unitY)	
+	# 4行目
+	y = unitY["PositionY"] + unitY["Height"] + m  
+	message = {"Name": "Message", "PositionX": m, "PositionY": y, "Width": controldialog["Width"]-m*2, "Height": 12, "Label": "Pass any one of units and push Convert", "NoLabel": True}
+	addControl("FixedText", message)
+	# 5行目
 	button1, button2 = button.copy(), button.copy()
-	button1["PositionY"] = button2["PositionY"] = name3["PositionY"] + name3["Height"] + m  
+	button1["PositionY"] = button2["PositionY"] = message["PositionY"] + message["Height"] + m  
 	button1["Width"] = 40
 	button1["Label"] = "Con~vert"
 	button2["Width"] = 30
 	button2["Label"] = "~Clear"	
-	button2["PositionX"] = unit["PositionX"] + unit["Width"] - button2["Width"]
-	button1["PositionX"] = button2["PositionX"] - int(m/2) - button1["Width"]
-	message = {"Name": "Message", "PositionX": int(m/2), "Width": button1["PositionX"]-int(m/2), "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}
-	actionlistener = ActionListener(ctx, smgr)
-	addControl("FixedText", message)
+	button2["PositionX"] = unitY["PositionX"] + unitY["Width"] - button2["Width"]
+	button1["PositionX"] = button2["PositionX"] - m - button1["Width"]
+	actionlistener = ActionListener()
 	addControl("Button", button1, {"setActionCommand": "convert" ,"addActionListener": actionlistener})
 	addControl("Button", button2, {"setActionCommand": "clear" ,"addActionListener": actionlistener})
 	dialog.getModel().setPropertyValue("Height", button1["PositionY"]+button1["Height"]+m)
@@ -88,41 +84,82 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 # 	dialog.execute()  
 # 	dialog.dispose()	
 class ActionListener(unohelper.Base, XActionListener):
-	def __init__(self, ctx, smgr):
-		self.args = ctx, smgr
-# 	@enableRemoteDebugging
 	def actionPerformed(self, actionevent):
-		ctx, smgr = self.args
 		cmd = actionevent.ActionCommand
 		source = actionevent.Source  # ボタンコントロールが返る。
 		context = source.getContext()  # コントロールダイアログが返ってくる。
-		edit1 = context.getControl("Edit1")
-		edit2 = context.getControl("Edit2")
-		edit3 = context.getControl("Edit3")
+		message = context.getControl("Message")
 		if cmd == "convert":
-			e1, e2, e3 = edit1.getText(), edit2.getText(), edit3.getText()
-			
-			# 2つは空欄でないといけない。
-			
-			if e1.isdigit() and e2.isdigit() and e3.isdigit():
-				pass
-			else:
-				message = context.getControl("Message")
-				
-				
-				message.setText("")
-	
+			edits = [context.getControl("Edit{}".format(i)) for i in range(1, 7)]
+			edittxts = [e.getText() for e in edits]
+			if ["".join((edittxts[i], edittxts[i+1])) for i in range(0, 6, 2)].count("")==2:  # 2行だけテキストボックスが空文字の時。
+				pxToma, pxTomm, maTopx, maTomm, mmTopx, mmToma = createConverters(context)
+				edit11, edit12, edit21, edit22, edit31, edit32 = edits
+				for i in range(0, 6, 2):  # 各行について。
+					x, y = edittxts[i], edittxts[i+1]
+					if x or y:  # いずれかは空文字でない時。
+						x = int(x) if x.isdigit() else 0  # テキストボックスの文字が数字の時は整数に変換。数字でなければ0にする。
+						y = int(y) if y.isdigit() else 0
+						if i==0:  # 1行目に数字が入力されている時。
+							edit11.setText(x)
+							edit12.setText(y)							
+							maX, maY = pxToma(x, y)
+							edit21.setText(maX)
+							edit22.setText(maY)
+							mmX, mmY = pxTomm(x, y)
+							edit31.setText(mmX)
+							edit32.setText(mmY)
+							u = "px"
+						elif i==2:  # 2行目に数字が入力されている時。
+							pxX, pxY = maTopx(x, y)
+							edit11.setText(pxX)
+							edit12.setText(pxY)
+							edit21.setText(x)
+							edit22.setText(y)								
+							mmX, mmY = maTomm(x, y)
+							edit31.setText(mmX)
+							edit32.setText(mmY)		
+							u = "ma"
+						elif i==4:  # 3行目に数字が入力されている時。
+							pxX, pxY = mmTopx(x, y)
+							edit11.setText(pxX)										
+							edit12.setText(pxY)
+							maX, maY = mmToma(x, y)
+							edit21.setText(maX)
+							edit22.setText(maY)	
+							edit31.setText(x)
+							edit32.setText(y)								
+							u = "mm"	
+						message.setText("{} converted to another unit".format(u))		
+						message.getModel().setPropertyValue("TextColor", None)
+						return		
+			else:  # パラメーターが1つだけでない時。
+				message.setText("Too many inputs or no input")
+				message.getModel().setPropertyValue("TextColor", 0xFF0000)
 		elif cmd == "clear":
-			edit1.setText("")
-			edit2.setText("")
-			edit3.setText("")
+			[context.getControl("Edit{}".format(i)).setText("") for i in range(1, 7)]
+			message.setText("Pass any one of units and push Convert")
+			message.getModel().setPropertyValue("TextColor", None)
 	def disposing(self, eventobject):
 		eventobject.Source.removeActionListener(self)
-# def eventSource(event):  # イベントからコントロール、コントロールモデル、コントロール名を取得。
-# 	control = event.Source  # イベントを駆動したコントロールを取得。
-# 	controlmodel = control.getModel()  # コントロールモデルを取得。
-# 	name = controlmodel.getPropertyValue("Name")  # コントロール名を取得。
-# 	return control, controlmodel, name
+def createConverters(window):
+	def maTopx(x, y):  # maをpxに変換する。
+		point = window.convertPointToPixel(Point(X=x, Y=y), MeasureUnit.APPFONT)
+		return point.X, point.Y
+	def mmTopx(x, y):  # 1/100mmをpxに変換する。
+		point = window.convertPointToPixel(Point(X=x, Y=y), MeasureUnit.MM_100TH)
+		return point.X, point.Y
+	def pxToma(x, y):  # pxをmaに変換する。
+		point = window.convertPointToLogic(Point(X=x, Y=y), MeasureUnit.APPFONT)
+		return point.X, point.Y
+	def pxTomm(x, y):  # pxをmmに変換する。
+		point = window.convertPointToLogic(Point(X=x, Y=y), MeasureUnit.MM_100TH)
+		return point.X, point.Y
+	def mmToma(x, y):  # 1/100mmをmaに変換する。
+		return pxToma(*mmTopx(x, y))
+	def maTomm(x, y):  # maをmmに変換する。
+		return pxTomm(*maTopx(x, y))
+	return pxToma, pxTomm, maTopx, maTomm, mmTopx, mmToma
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションでは動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。	
@@ -192,51 +229,3 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 		return name
 	return dialog, addControl  # コントロールコンテナとそのコントロールコンテナにコントロールを追加する関数を返す。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
-if __name__ == "__main__":  # オートメーションで実行するとき
-	import officehelper
-	from functools import wraps
-	import sys
-	from com.sun.star.beans import PropertyValue
-	from com.sun.star.script.provider import XScriptContext  
-	def connectOffice(func):  # funcの前後でOffice接続の処理
-		@wraps(func)
-		def wrapper():  # LibreOfficeをバックグラウンドで起動してコンポーネントテクストとサービスマネジャーを取得する。
-			try:
-				ctx = officehelper.bootstrap()  # コンポーネントコンテクストの取得。
-			except:
-				print("Could not establish a connection with a running office.", file=sys.stderr)
-				sys.exit()
-			print("Connected to a running office ...")
-			smgr = ctx.getServiceManager()  # サービスマネジャーの取得。
-			print("Using {} {}".format(*_getLOVersion(ctx, smgr)))  # LibreOfficeのバージョンを出力。
-			return func(ctx, smgr)  # 引数の関数の実行。
-		def _getLOVersion(ctx, smgr):  # LibreOfficeの名前とバージョンを返す。
-			cp = smgr.createInstanceWithContext('com.sun.star.configuration.ConfigurationProvider', ctx)
-			node = PropertyValue(Name = 'nodepath', Value = 'org.openoffice.Setup/Product' )  # share/registry/main.xcd内のノードパス。
-			ca = cp.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
-			return ca.getPropertyValues(('ooName', 'ooSetupVersion'))  # LibreOfficeの名前とバージョンをタプルで返す。
-		return wrapper
-	@connectOffice  # mainの引数にctxとsmgrを渡すデコレータ。
-	def main(ctx, smgr):  # XSCRIPTCONTEXTを生成。
-		class ScriptContext(unohelper.Base, XScriptContext):
-			def __init__(self, ctx):
-				self.ctx = ctx
-			def getComponentContext(self):
-				return self.ctx
-			def getDesktop(self):
-				return ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
-			def getDocument(self):
-				return self.getDesktop().getCurrentComponent()
-		return ScriptContext(ctx)  
-	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
-	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
-# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
-	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
-		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
-	flg = True
-	while flg:
-		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-		if doc is not None:
-			flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
-	macro()
