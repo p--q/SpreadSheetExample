@@ -16,9 +16,12 @@ def macro():
 # 	print(len(sheet.getColumns()))
 
 
-	controller = doc.getCurrentController()  # コントローラの取得。
+# 	controller = doc.getCurrentController()  # コントローラの取得。
 	
-	tcu.wtree(controller[0])
+	selection  = doc.getCurrentSelection()
+	
+	pass
+# 	tcu.wtree(controller[0])
 	
 	
 

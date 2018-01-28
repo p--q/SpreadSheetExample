@@ -1,7 +1,6 @@
 #!/opt/libreoffice5.2/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-import os, inspect
 from datetime import datetime
 from com.sun.star.style.VerticalAlignment import MIDDLE
 from com.sun.star.awt import XActionListener
@@ -68,6 +67,9 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。impo
 	# モダルダイアログにする。フレームに追加するとエラーになる。
 # 	dialog.execute()  
 # 	dialog.dispose()	
+
+import os, inspect
+from datetime import datetime
 C = 100  # カウンターの初期値。
 TIMESTAMP = datetime.now().isoformat().split(".")[0].replace("-", "").replace(":", "")  # コピー先ファイル名に使う年月日T時分秒を結合した文字列を取得。
 def createLog(source, filename, txt):  # 年月日T時分秒リスナーのインスタンス名_メソッド名(_オプション).logファイルを作成。txtはファイルに書き込むテキスト。dirpathはファイルを書き出すディレクトリ。
@@ -80,12 +82,14 @@ def createLog(source, filename, txt):  # 年月日T時分秒リスナーのイ�
 	C += 1
 	with open(os.path.join(dirpath, filename), "w") as f:
 		f.write(txt)
+		
+		
 class CloseListener(unohelper.Base, XCloseListener):
 	def queryClosing(self, eventobject, getsownership):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "getsownership: {}\nSource: {}".format(getsownership, eventobject.Source))	
 	def notifyClosing(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
-	def disposingself(self, eventobject):
+	def disposing(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
 class FrameActionListener(unohelper.Base, XFrameActionListener):
 	def __init__(self):

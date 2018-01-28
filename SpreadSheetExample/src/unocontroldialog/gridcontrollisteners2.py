@@ -10,6 +10,22 @@ from com.sun.star.awt import ScrollBarOrientation  # 定数
 from com.sun.star.awt import MouseButton  # 定数
 from com.sun.star.awt import XEnhancedMouseClickHandler
 from com.sun.star.util import XCloseListener
+
+import os, inspect
+from datetime import datetime
+C = 100  # カウンターの初期値。
+TIMESTAMP = datetime.now().isoformat().split(".")[0].replace("-", "").replace(":", "")  # コピー先ファイル名に使う年月日T時分秒を結合した文字列を取得。
+def createLog(source, filename, txt):  # 年月日T時分秒リスナーのインスタンス名_メソッド名(_オプション).logファイルを作成。txtはファイルに書き込むテキスト。dirpathはファイルを書き出すディレクトリ。
+	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
+	thisscriptpath = unohelper.fileUrlToSystemPath(path)  # fileurlをsystempathに変換。
+	dirpath = os.path.dirname(thisscriptpath)  # このスクリプトのあるディレクトリのフルパスを取得。
+	name = source.getImplementationName().split(".")[-1]
+	global C
+	filename = "".join((TIMESTAMP, "_", str(C), "{}_{}".format(name, filename), ".log"))
+	C += 1
+	with open(os.path.join(dirpath, filename), "w") as f:
+		f.write(txt)
+
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
@@ -26,19 +42,17 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 				if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
-					cellbackcolor = target.getPropertyValue("CellBackColor")  # セルの背景色を取得。
-					if cellbackcolor==0x8080FF:  # 背景が青紫色の時。
-						createDialog(ctx, smgr, doc, True)  # ノンモダルダイアログにする。	
-						return False  # セル編集モードにしない。
-					elif cellbackcolor==0xFFFF80:  # 背景が黄色の時。	
-						createDialog(ctx, smgr, doc, False)  # モダルダイアログにする。		
-						return False  # セル編集モードにしない。
+					createDialog(ctx, smgr, doc)		
+					return False  # セル編集モードにしない。
 		return True  # セル編集モードにする。
 	def mouseReleased(self, enhancedmouseevent):
 		return True  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
-	def disposing(self, eventobject):  # ドキュメントを閉じる時でも呼ばれない。
+	def disposing(self, eventobject):
+		
+		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
+
 		self.subj.removeEnhancedMouseClickHandler(self)	
-def createDialog(ctx, smgr, doc, flg):	
+def createDialog(ctx, smgr, doc):	
 	frame = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 	containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 	toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。  
@@ -83,12 +97,12 @@ def createDialog(ctx, smgr, doc, flg):
 	addControl("Button", button2)  
 	dialog.getModel().setPropertyValue("Height", button1["PositionY"]+button1["Height"]+m)  # コントロールダイアログの高さを設定。
 	dialog.createPeer(toolkit, containerwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
-	if flg:  # ノンモダルダイアログにするとき。オートメーションでは動かない。
-		dialogframe = showModelessly(ctx, smgr, frame, dialog)  
-		dialogframe.addCloseListener(CloseListener(dialog, mouselister, actionlistener))  # CloseListener
-	else:  # モダルダイアログにする。フレームに追加するとエラーになる。
-		dialog.execute()  
-		dialog.dispose()	
+	# ノンモダルダイアログにするとき。オートメーションでは動かない。
+	dialogframe = showModelessly(ctx, smgr, frame, dialog)  
+	dialogframe.addCloseListener(CloseListener(dialog, mouselister, actionlistener))  # CloseListener
+	# モダルダイアログにする。フレームに追加するとエラーになる。
+# 	dialog.execute()  
+# 	dialog.dispose()	
 class CloseListener(unohelper.Base, XCloseListener):  # ノンモダルダイアログのリスナー削除用。
 	def __init__(self, dialog, mouselister, actionlistener):
 		self.args = dialog, mouselister, actionlistener
@@ -215,3 +229,52 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 		return name
 	return dialog, addControl  # コントロールコンテナとそのコントロールコンテナにコントロールを追加する関数を返す。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
+if __name__ == "__main__":  # オートメーションで実行するとき
+	import officehelper
+	from functools import wraps
+	import sys
+	from com.sun.star.beans import PropertyValue
+	from com.sun.star.script.provider import XScriptContext  
+	def connectOffice(func):  # funcの前後でOffice接続の処理
+		@wraps(func)
+		def wrapper():  # LibreOfficeをバックグラウンドで起動してコンポーネントテクストとサービスマネジャーを取得する。
+			try:
+				ctx = officehelper.bootstrap()  # コンポーネントコンテクストの取得。
+			except:
+				print("Could not establish a connection with a running office.", file=sys.stderr)
+				sys.exit()
+			print("Connected to a running office ...")
+			smgr = ctx.getServiceManager()  # サービスマネジャーの取得。
+			print("Using {} {}".format(*_getLOVersion(ctx, smgr)))  # LibreOfficeのバージョンを出力。
+			return func(ctx, smgr)  # 引数の関数の実行。
+		def _getLOVersion(ctx, smgr):  # LibreOfficeの名前とバージョンを返す。
+			cp = smgr.createInstanceWithContext('com.sun.star.configuration.ConfigurationProvider', ctx)
+			node = PropertyValue(Name = 'nodepath', Value = 'org.openoffice.Setup/Product' )  # share/registry/main.xcd内のノードパス。
+			ca = cp.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
+			return ca.getPropertyValues(('ooName', 'ooSetupVersion'))  # LibreOfficeの名前とバージョンをタプルで返す。
+		return wrapper
+	@connectOffice  # mainの引数にctxとsmgrを渡すデコレータ。
+	def main(ctx, smgr):  # XSCRIPTCONTEXTを生成。
+		class ScriptContext(unohelper.Base, XScriptContext):
+			def __init__(self, ctx):
+				self.ctx = ctx
+			def getComponentContext(self):
+				return self.ctx
+			def getDesktop(self):
+				return ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
+			def getDocument(self):
+				return self.getDesktop().getCurrentComponent()
+		return ScriptContext(ctx)  
+	XSCRIPTCONTEXT = main()  # XSCRIPTCONTEXTを取得。
+	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+	doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
+# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
+	if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
+		XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
+	flg = True
+	while flg:
+		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
+		if doc is not None:
+			flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
+	macro()
+	

@@ -79,10 +79,10 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	dialog.getModel().setPropertyValue("Height", button1["PositionY"]+button1["Height"]+m)
 	dialog.createPeer(toolkit, docwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 	# ノンモダルダイアログにするとき。オートメーションでは動かない。
-	showModelessly(ctx, smgr, docframe, dialog)  
+# 	showModelessly(ctx, smgr, docframe, dialog)   # リスナー削除は未処理。
 	# モダルダイアログにする。フレームに追加するとエラーになる。
-# 	dialog.execute()  
-# 	dialog.dispose()	
+	dialog.execute()  
+	dialog.dispose()	
 class ActionListener(unohelper.Base, XActionListener):
 	def actionPerformed(self, actionevent):
 		cmd = actionevent.ActionCommand
