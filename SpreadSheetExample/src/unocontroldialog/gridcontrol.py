@@ -63,7 +63,7 @@ def createDialog(ctx, smgr, doc, flg):
 	column1.Title = "Time"  # 列ヘッダー。
 	column1.ColumnWidth = grid["Width"] - column0.ColumnWidth  #  列幅。列の合計がグリッドコントロールの幅に一致するようにする。
 	gridcolumn.addColumn(column1)  # 列を追加。	
-	griddata = grid1.getModel().getPropertyValue("GridDataModel")  # GridDataModel
+	griddata = gridmodel.getPropertyValue("GridDataModel")  # GridDataModel
 	now = datetime.now()  # 現在の日時を取得。
 	griddata.addRow(0, (now.date().isoformat(), now.time().isoformat()))  # グリッドに行を挿入。
 	y = grid["PositionY"] + grid["Height"] + m  # 下隣のコントロールのY座標を取得。
