@@ -130,7 +130,7 @@ class ActionListener(unohelper.Base, XActionListener):
 							edit31.setText(x)
 							edit32.setText(y)								
 							u = "mm"	
-						message.setText("{} converted to another unit".format(u))		
+						message.setText("{} converted to other unit".format(u))		
 						message.getModel().setPropertyValue("TextColor", None)
 						return		
 			else:  # パラメーターが1つだけでない時。
