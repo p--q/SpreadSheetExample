@@ -10,12 +10,26 @@ from com.sun.star.awt import ScrollBarOrientation  # 定数
 from com.sun.star.awt import MouseButton  # 定数
 from com.sun.star.awt import XEnhancedMouseClickHandler
 from com.sun.star.util import XCloseListener
+from com.sun.star.document import XDocumentEventListener
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	doc = XSCRIPTCONTEXT.getDocument()  # マクロを起動した時のドキュメントのモデルを取得。   
 	controller = doc.getCurrentController()  # コントローラの取得。
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(controller, ctx, smgr, doc))  # EnhancedMouseClickHandler	
+	enhancedmouseclickhandler = EnhancedMouseClickHandler(controller, ctx, smgr, doc)
+	controller.addEnhancedMouseClickHandler(enhancedmouseclickhandler)  # EnhancedMouseClickHandler	
+	doc.addDocumentEventListener(DocumentEventListener(enhancedmouseclickhandler))  # DocumentEventListener	
+class DocumentEventListener(unohelper.Base, XDocumentEventListener):
+	def __init__(self, enhancedmouseclickhandler):
+		self.args = enhancedmouseclickhandler
+	def documentEventOccured(self, documentevent):
+		enhancedmouseclickhandler = self.args
+		if documentevent.EventName=="OnUnload":  
+			source = documentevent.Source
+			source.removeEnhancedMouseClickHandler(enhancedmouseclickhandler)
+			source.removeDocumentEventListener(self)
+	def disposing(self, eventobject):
+		eventobject.Source.removeDocumentEventListener(self)
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 	def __init__(self, subj, ctx, smgr, doc):
 		self.subj = subj

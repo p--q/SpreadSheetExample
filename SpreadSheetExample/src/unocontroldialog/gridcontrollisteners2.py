@@ -89,7 +89,7 @@ def createDialog(ctx, smgr, doc, flg):
 		dialogframe = showModelessly(ctx, smgr, frame, dialog)  
 		dialogframe.addCloseListener(CloseListener(dialog, mouselister, actionlistener))  # CloseListener
 		# ログ出力用。
-		dialogframe.addFrameActionListener(FrameActionListener())  # FrameActionListener 		
+		dialogframe.addFrameActionListener(FrameActionListener())  # FrameActionListener 	
 	else:  # モダルダイアログにする。フレームに追加するとエラーになる。
 		dialog.execute()  
 		dialog.dispose()	
@@ -147,7 +147,7 @@ class ActionListener(unohelper.Base, XActionListener):
 						return
 	def disposing(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
-		eventobject.Source.removeActionListener(self)
+		eventobject.Source.removeActionListener(self)	
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションでは動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。	
@@ -241,6 +241,7 @@ def createLog(source, filename, txt):  # 年月日T時分秒リスナーのイ�
 from com.sun.star.awt import XTopWindowListener
 from com.sun.star.frame import XFrameActionListener
 from com.sun.star.frame.FrameAction import COMPONENT_ATTACHED, COMPONENT_DETACHING, COMPONENT_REATTACHED, FRAME_ACTIVATED, FRAME_DEACTIVATING, CONTEXT_CHANGED, FRAME_UI_ACTIVATED, FRAME_UI_DEACTIVATING  # enum
+from com.sun.star.awt import XFocusListener
 class FrameActionListener(unohelper.Base, XFrameActionListener):
 	def __init__(self):
 		enums = COMPONENT_ATTACHED, COMPONENT_DETACHING, COMPONENT_REATTACHED, FRAME_ACTIVATED, FRAME_DEACTIVATING, CONTEXT_CHANGED, FRAME_UI_ACTIVATED, FRAME_UI_DEACTIVATING  # enum
@@ -255,6 +256,7 @@ class FrameActionListener(unohelper.Base, XFrameActionListener):
 				return
 	def disposing(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
+		eventobject.Source.removeFrameActionListener(self)
 class TopWindowListener(unohelper.Base, XTopWindowListener):
 	def windowOpened(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
@@ -272,3 +274,16 @@ class TopWindowListener(unohelper.Base, XTopWindowListener):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
 	def disposing(self, eventobject):
 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
+		eventobject.Source.removeTopWindowListener(self)
+# class FocusListener(unohelper.Base, XFocusListener):
+# 	def focusGained(self, focusevent):
+# 		createLog(focusevent.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(focusevent.Source))	
+# # 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+# # 		createLog(focusevent.Source, "{}_{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name, focusevent.FocusFlags), "FocusFlags: {}, Temporary: {}\nNextFocus: {}\nSource: {}".format(focusevent.FocusFlags, focusevent.Temporary, focusevent.NextFocus, focusevent.Source))	
+# 	def focusLost(self, focusevent):
+# 		createLog(focusevent.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(focusevent.Source))
+# # 		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+# # 		createLog(focusevent.Source, "{}_{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name, focusevent.FocusFlags), "FocusFlags: {}, Temporary: {}\nNextFocus: {}\nSource: {}".format(focusevent.FocusFlags, focusevent.Temporary, focusevent.NextFocus, focusevent.Source))	
+# 	def disposing(self, eventobject):
+# 		createLog(eventobject.Source, "{}_{}".format(self.__class__.__name__, inspect.currentframe().f_code.co_name), "Source: {}".format(eventobject.Source))	
+# 		eventobject.Source.removeFocusListener(self)	
