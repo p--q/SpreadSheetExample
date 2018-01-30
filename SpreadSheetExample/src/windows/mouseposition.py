@@ -9,25 +9,85 @@ from com.sun.star.frame.FrameAction import FRAME_UI_DEACTIVATING  # enum
 from com.sun.star.frame import XFrameActionListener
 from com.sun.star.awt import Point  # Struct
 from com.sun.star.util import MeasureUnit
-def macro(documentevent=None):  # 引数は文書のイベント駆動用。
+from com.sun.star.document import XDocumentEventListener
+from com.sun.star.style.VerticalAlignment import MIDDLE
+from com.sun.star.awt import XActionListener
+from com.sun.star.awt import Point  # Struct
+from com.sun.star.util import MeasureUnit
+def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(controller, ctx, smgr, doc))  # EnhancedMouseClickHandler
+	enhancedmouseclickhandler = EnhancedMouseClickHandler(controller, ctx, smgr, doc)
+	controller.addEnhancedMouseClickHandler(enhancedmouseclickhandler)  # EnhancedMouseClickHandler
+	doc.addDocumentEventListener(DocumentEventListener(enhancedmouseclickhandler))  # DocumentEventListener	
 class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 	def __init__(self, subj, ctx, smgr, doc):
-		self.subj = subj
+		self.subj = subj  # disposing()用。コントローラは取得し直さないと最新の画面の状態が反映されない。
 		self.args = ctx, smgr, doc
 	def mousePressed(self, enhancedmouseevent):
+		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 		ctx, smgr, doc = self.args
 		target = enhancedmouseevent.Target  # ターゲットのセルを取得。
 		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
 				if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
-					controller = doc.getCurrentController()
-					frame = controller.getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
-					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
+					controller = doc.getCurrentController()  # 現在のコントローラを取得。
+					frame = controller.getFrame()  # フレームを取得。
+					componentwindow = frame.getComponentWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
+					m = 6  # コントロール間の間隔
+					nameX = {"PositionX": m, "Width": 10, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 名前Xの共通プロパティ。
+					numX = {"PositionX": nameX["PositionX"]+nameX["Width"], "Width": 40, "Height": nameX["Height"], "VerticalAlign": MIDDLE}  # X値入力欄の共通プロパティ。
+					unitX = {"PositionX": numX["PositionX"]+numX["Width"], "Width": 32, "Height": nameX["Height"], "Label": "px", "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
+					nameY, numY, unitY = nameX.copy(), numX.copy(), unitX.copy()  # コントロールのプロパティの辞書をコピーする。
+					nameY["PositionX"] = unitX["PositionX"] + unitX["Width"]  # 左隣のコントロールのPositionXと幅からPositionXを算出。
+					nameY["Label"] = ".Y: " 
+					numY["PositionX"] = nameY["PositionX"] + nameY["Width"]
+					unitY["PositionX"] = numY["PositionX"] + numY["Width"]
+					controls = nameX, numX, unitX, nameY, numY, unitY  # 1行に表示するコントロールのタプル。
+					controldialog =  {"PositionX": 100, "PositionY": 40, "Width": unitY["PositionX"]+unitY["Width"]+m, "Title": "Position", "Name": "Position", "Step": 0, "Moveable": True}  # コントロールダイアログのプロパティ。幅は右端のコントロールから取得。高さは最後に設定する。
+					dialog, addControl = dialogCreator(ctx, smgr, controldialog)
+					# 1行目
+					for c in controls:
+						c["PositionY"] = m	
+					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+					nameX["Label"] = "EnhancedMouseEvent.X: "
+					numX["Text"] = enhancedmouseevent.X
+					numY["Text"] = enhancedmouseevent.Y	
+					addControl("FixedText", nameX)
+					addControl("Edit", numX)  
+					addControl("FixedText", unitX)	
+					addControl("FixedText", nameY)
+					addControl("Edit", numY)  
+					addControl("FixedText", unitY)		
+					# 2行目
+					y = unitY["PositionY"] + unitY["Height"] + m  
+					for c in controls:
+						c["PositionY"] = y
+					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+					nameX["Label"] = "Target X: "
+					point = componentwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)
+					numX["Text"] = point.X
+					numY["Text"] = point.Y				
+					addControl("FixedText", nameX)
+					addControl("Edit", numX)  
+					addControl("FixedText", unitX)	
+					addControl("FixedText", nameY)
+					addControl("Edit", numY)  
+					addControl("FixedText", unitY)	
+					# 3行目
+					button = {"PositionY": nameX["PositionY"]+nameX["Height"]+m, "Height": nameX["Height"]+2, "Width": 30, "Label": "~Close", "PushButtonType": 2}  # ボタン。PushButtonTypeの値はEnumではエラーになる。
+					button["PositionX"] = unitY["PositionX"] + unitY["Width"] - button["Width"]
+					addControl("Button", button)
+					dialog.getModel().setPropertyValue("Height", button["PositionY"]+button["Height"]+m)
+			
+					
+					
+					
+# 					controller = doc.getCurrentController()
+# 					frame = controller.getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+# 					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
 # 					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
 # 					border = controller.getBorder()  # 行ヘッダの高さ(border.Top)、列ヘッダの幅(border.Left)を取得できる。
 					# enhancedmouseeventから取得できる座標は行と列のヘッダとの境界からの相対位置。
@@ -53,36 +113,19 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 # 					point = componentwindow.convertPointToLogic(Point(X=x, Y=y), MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
 
 					
-					pixelpoint = containerwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)  # ピクセル単位をma単位に変換。
-					point = point = containerwindow.convertPointToLogic(pixelpoint, MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
-					
-					dialog, addControl = dialogCreator(ctx, smgr, {"PositionX": point.X, "PositionY": point.Y, "Width": 100, "Height": 100, "Title": "ノンモダルダイアログ", "Name": "NoneModalDialog", "Step": 0, "Moveable": True})  # PositionXとPositionYはそれぞれ親ウィンドウの左端と上端からの相対位置。
-					# addControlでここでコントロールを作成する。
-# 					containerwindow = frame.getContainerWindow()  # ドキュメントのウィンドウ(コンテナウィンドウ=ピア)を取得。
-# 					toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。
-# 					toolkit = componentwindow.getToolkit()  # ピアからツールキットを取得。
-# 					dialog.createPeer(toolkit, componentwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
-					
-					toolkit = containerwindow.getToolkit()  # ピアからツールキットを取得。
-					dialog.createPeer(toolkit, containerwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
-					dialogframe = showModelessly(ctx, smgr, frame, dialog)  # ノンモダルダイアログとして表示。ダイアログのフレームを取得。
-					dialogframe.addFrameActionListener(FrameActionListener(dialog))  # FrameActionListener。ウィンドウを閉じる時はそのコンテナウィンドウをsetVisible(False)にするのでdialogを渡しておく。
+# 					pixelpoint = containerwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)  # ピクセル単位をma単位に変換。
+# 					point = point = containerwindow.convertPointToLogic(pixelpoint, MeasureUnit.APPFONT)  # ピクセル単位をma単位に変換。
+# 					
+# 					dialog, addControl = dialogCreator(ctx, smgr, {"PositionX": point.X, "PositionY": point.Y, "Width": 100, "Height": 100, "Title": "ノンモダルダイアログ", "Name": "NoneModalDialog", "Step": 0, "Moveable": True})  # PositionXとPositionYはそれぞれ親ウィンドウの左端と上端からの相対位置。
+					toolkit = componentwindow.getToolkit()  # ピアからツールキットを取得。コンテナウィンドウでもコンポーネントウィンドウでも結果は同じ。
+					dialog.createPeer(toolkit, componentwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
+					showModelessly(ctx, smgr, frame, dialog)  # ノンモダルダイアログとして表示。ダイアログのフレームを取得。
 					return False  # セル編集モードにしない。
 		return True  # セル編集モードにする。
 	def mouseReleased(self, enhancedmouseevent):
 		return True  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
 	def disposing(self, eventobject):
 		self.subj.removeEnhancedMouseClickHandler(self)
-class FrameActionListener(unohelper.Base, XFrameActionListener):
-	def __init__(self, containerwindow):
-		self.args = containerwindow
-	def frameAction(self, frameactionevent):
-		containerwindow = self.args
-		if frameactionevent.Action==FRAME_UI_DEACTIVATING:  # フレームがアクティブでなくなった時。TopWindowListenerのwindowDeactivated()だとウィンドウタイトルバーをクリックしただけで発火してしまう。
-			frameactionevent.Frame.removeFrameActionListener(self)  # フレームにつけたリスナーを除去。
-			containerwindow.setVisible(False)  # ウィンドウを閉じる。フレームのclose()メソッドだとLibreOfficeがクラッシュする。
-	def disposing(self, eventobject):
-		eventobject.Source.removeFrameActionListener(self)
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションではリスナー動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。
@@ -157,6 +200,17 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 			i += 1
 		return name
 	return dialog, addControl  # コントロールコンテナとそのコントロールコンテナにコントロールを追加する関数を返す。
+class DocumentEventListener(unohelper.Base, XDocumentEventListener):
+	def __init__(self, enhancedmouseclickhandler):
+		self.args = enhancedmouseclickhandler
+	def documentEventOccured(self, documentevent):
+		enhancedmouseclickhandler = self.args
+		if documentevent.EventName=="OnUnload":  
+			source = documentevent.Source
+			source.removeEnhancedMouseClickHandler(enhancedmouseclickhandler)
+			source.removeDocumentEventListener(self)
+	def disposing(self, eventobject):
+		eventobject.Source.removeDocumentEventListener(self)
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
