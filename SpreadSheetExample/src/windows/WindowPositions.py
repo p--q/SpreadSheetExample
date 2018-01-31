@@ -1,34 +1,69 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-from com.sun.star.awt import XMouseClickHandler
-from com.sun.star.awt import MouseButton  # 定数
-from com.sun.star.frame.FrameAction import FRAME_UI_DEACTIVATING  # enum
-from com.sun.star.frame import XFrameActionListener
-from com.sun.star.util import MeasureUnit
-from com.sun.star.document import XDocumentEventListener
-from com.sun.star.style.VerticalAlignment import MIDDLE
-from com.sun.star.awt import XActionListener
-from com.sun.star.awt import Point  # Struct
+from itertools import zip_longest
+from com.sun.star.sheet import CellFlags as cf # 定数
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+	outputs = [("", "X", "Y", "X onScreen", "Y onScreen"),]  # 出力する行。列数は統一する必要あり。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	frame = controller.getFrame()  # フレームを取得。
-	
+	# コンテナウィンドウ
+	outputs.append(("ContainerWindow",))	
 	containerwindow = frame.getContainerWindow()
-	
-	
-	componentwindow = controller.ComponentWindow  # コンポーネントウィンドウはコントローラのアトリビュートでも取得できる。
-	sheet = controller.getActiveSheet()
-	outputs = [("", "X", "Y"),]
+	possize = containerwindow.getPosSize()
+	outputs.append(("PosSize", possize.X, possize.Y))
+	outputs.append(("AccessibleContext",))
+	accessiblecontext = containerwindow.getAccessibleContext()
+	location = accessiblecontext.getLocation()
+	outputs.append(("Location", location.X, location.Y), )
+	locationonscreen = accessiblecontext.getLocationOnScreen()
+	outputs.append(("LocationOnScreen", "", "", locationonscreen.X, locationonscreen.Y))
+	outputs.append(("",))	
+	# コンポーネントウィンドウ
+	outputs.append(("ComponentWindow",))	
+	componentwindow = frame.getComponentWindow()
 	possize = componentwindow.getPosSize()
 	outputs.append(("PosSize", possize.X, possize.Y))
-	accessiblecontext = componentwindow.getAccessibleContext()  # コンポーネントウィンドウのAccessibleContextを取得。
-	point = accessiblecontext.getLocation()  # 位置を取得。
-	outputs.append(("Location", point.X, point.Y))
-	sheet[:3, :len(outputs)].setDataArray(outputs)
+	outputs.append(("AccessibleContext",))
+	accessiblecontext = componentwindow.getAccessibleContext()
+	location = accessiblecontext.getLocation()
+	outputs.append(("Location", location.X, location.Y))
+	locationonscreen = accessiblecontext.getLocationOnScreen()
+	outputs.append(("LocationOnScreen", "", "", locationonscreen.X, locationonscreen.Y))	
+	outputs.append(("",))	
+	# コントローラ
+	outputs.append(("Controller", "Left", "Top"))
+	border = controller.getBorder()
+	outputs.append(("Border", border.Left, border.Top))
+	# シートに出力。
+	sheet = getNewSheet(doc, "Positions")  # 連番名の新規シートの取得。
+	rowsToSheet(sheet["A1"], outputs)
+	controller.setActiveSheet(sheet)  # 新規シートをアクティブにする。
+def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
+	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
+	sheets = doc.getSheets()  # シートコレクションを取得。
+	c = 1  # 連番名の最初の番号。
+	newname = sheetname
+	while newname in sheets: # 同名のシートがあるとき。sheets[newname]ではFalseのときKeyErrorになる。
+		if not sheets[newname].queryContentCells(cellflags):  # シートが未使用のとき
+			return sheets[newname]  # 未使用の同名シートを返す。
+		newname = "{}{}".format(sheetname, c)  # 連番名を作成。
+		c += 1 
+	index = len(sheets)  # 最終シートにする。
+#  index = 0  # 先頭シートにする。
+	sheets.insertNewByName(newname, index)   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
+	if "Sheet1" in sheets:  # デフォルトシートがあるとき。
+		if not sheets["Sheet1"].queryContentCells(cellflags):  # シートが未使用のとき
+			del sheets["Sheet1"]  # シートを削除する。
+	return sheets[newname]
+def rowsToSheet(cellrange, datarows):  # 引数のセル範囲を左上端にして一括書き込みして列幅を最適化する。datarowsはタプルのタプル。
+	datarows = tuple(zip(*zip_longest(*datarows, fillvalue="")))  # 一番長い行の長さに合わせて空文字を代入。
+	sheet = cellrange.getSpreadsheet()  # セル範囲のあるシートを取得。
+	cellcursor = sheet.createCursorByRange(cellrange)  # セル範囲のセルカーサーを取得。
+	cellcursor.collapseToSize(len(datarows[0]), len(datarows))  # (列、行)で指定。セルカーサーの範囲をdatarowsに合せる。
+	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは整数(int、ただしboolを除く)か文字列のみ。
+	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。行幅は限定サれない。  
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。

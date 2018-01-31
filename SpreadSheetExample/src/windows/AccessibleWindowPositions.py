@@ -7,23 +7,30 @@ DIC_ACCESSIBLEROLE = {'26': 'HEADING', '24': 'GROUP_BOX', '39': 'PAGE_TAB_LIST',
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
+	outputs = [("ComponentWindow",)]
 	componentwindow = controller.ComponentWindow  # コントローラーのアトリビュートからコンポーネントウィンドウを取得。
-	outputs = [("AccessibleRole", "X", "Y", "Width", "Height")]
 	getAccessibleChildren((), componentwindow, outputs)
+	outputs.append(("",))
+	outputs.append(("ContainerWindow",))
+	frame = controller.getFrame()  # フレームを取得。
+	containerwindow = frame.getContainerWindow()
+	getAccessibleChildren((), containerwindow, outputs)
 	sheet = getNewSheet(doc, "SubWindows")  # 連番名の新規シートの取得。OnTitleChanged→OnModifyChangedが呼ばれてしまう。
 	rowsToSheet(sheet["A1"], outputs)
 	controller.setActiveSheet(sheet)  # 新規シートをアクティブにする。
 def getAccessibleChildren(head, accessiblecontext, outputs):
+	outputs.append(head+("AccessibleRole", "X", "Y", "Width", "Height", "X onScreen", "Y onScreen"))
 	accessiblecontext = accessiblecontext.getAccessibleContext()
 	for i in range(accessiblecontext.getAccessibleChildCount()):	
 		accessiblechild = accessiblecontext.getAccessibleChild(i)
 		childaccessiblecontext = accessiblechild.getAccessibleContext()
 		bounds = childaccessiblecontext.getBounds()
+		locationonscreen = childaccessiblecontext.getLocationOnScreen()
 		accessiblerole = childaccessiblecontext.getAccessibleRole()
-		outputrow = "{}={}".format(DIC_ACCESSIBLEROLE[str(accessiblerole)], accessiblerole), bounds.X, bounds.Y, bounds.Width, bounds.Height
+		outputrow = "{}={}".format(DIC_ACCESSIBLEROLE[str(accessiblerole)], accessiblerole), bounds.X, bounds.Y, bounds.Width, bounds.Height, locationonscreen.X, locationonscreen.Y
 		outputs.append(head+outputrow)	
 		if accessiblerole==51:  # SCROLL_PANEの時。
-			getAccessibleChildren(("",)*5, accessiblechild, outputs)
+			getAccessibleChildren(("",)*7, accessiblechild, outputs)
 def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
 	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
 	sheets = doc.getSheets()  # シートコレクションを取得。
