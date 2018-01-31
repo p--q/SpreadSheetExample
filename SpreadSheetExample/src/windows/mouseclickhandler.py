@@ -1,7 +1,7 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-from com.sun.star.awt import XEnhancedMouseClickHandler
+from com.sun.star.awt import XMouseClickHandler
 from com.sun.star.awt import MouseButton  # 定数
 from com.sun.star.frame.FrameAction import FRAME_UI_DEACTIVATING  # enum
 from com.sun.star.frame import XFrameActionListener
@@ -15,28 +15,29 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。impo
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
-	enhancedmouseclickhandler = EnhancedMouseClickHandler(controller, ctx, smgr, doc)
-	controller.addEnhancedMouseClickHandler(enhancedmouseclickhandler)  # EnhancedMouseClickHandler
-	doc.addDocumentEventListener(DocumentEventListener(enhancedmouseclickhandler))  # DocumentEventListener	
-class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
+	mouseclickhandler = MouseClickHandler(controller, ctx, smgr, doc)
+	controller.addMouseClickHandler(mouseclickhandler)  # EnhancedMouseClickHandler
+	doc.addDocumentEventListener(DocumentEventListener(mouseclickhandler))  # DocumentEventListener	
+class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 	def __init__(self, subj, ctx, smgr, doc):
 		self.subj = subj  # disposing()用。コントローラは取得し直さないと最新の画面の状態が反映されない。
 		self.args = ctx, smgr, doc
-	def mousePressed(self, enhancedmouseevent):
+	def mousePressed(self, MouseEvent):
 		ctx, smgr, doc = self.args
-		target = enhancedmouseevent.Target  # ターゲットのセルを取得。
-		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
+		target = doc.getCurrentSelection()  # ターゲットのセルを取得。
+		if MouseEvent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
 			if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
-				if enhancedmouseevent.ClickCount==2:  # ダブルクリックの時
+				if MouseEvent.ClickCount==2:  # ダブルクリックの時
 					controller = doc.getCurrentController()  # 現在のコントローラを取得。
 					frame = controller.getFrame()  # フレームを取得。
 					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
-					point = componentwindow.convertPointToLogic(Point(X=enhancedmouseevent.X, Y=enhancedmouseevent.Y), MeasureUnit.APPFONT)  # EnhancedMouseClickHandlerの座標をmaに変換。
+					source = MouseEvent.Source  # クリックした枠のコンポーネントウィンドウが返る。
+					point = componentwindow.convertPointToLogic(Point(X=MouseEvent.X, Y=MouseEvent.Y), MeasureUnit.APPFONT)  # EnhancedMouseClickHandlerの座標をmaに変換。
 					# コントロールダイアログの左上の座標を設定。
 					dialogX = point.X
 					dialogY = point.Y
 					m = 6  # コントロール間の間隔
-					nameX = {"PositionX": m, "Width": 75, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 名前Xの共通プロパティ。
+					nameX = {"PositionX": m, "Width": 105, "Height": 12, "NoLabel": True, "Align": 2, "VerticalAlign": MIDDLE}  # 名前Xの共通プロパティ。
 					numX = {"PositionX": nameX["PositionX"]+nameX["Width"], "Width": 20, "Height": nameX["Height"], "VerticalAlign": MIDDLE}  # X値入力欄の共通プロパティ。
 					unitX = {"PositionX": numX["PositionX"]+numX["Width"], "Width": 10, "Height": nameX["Height"], "Label": "px", "NoLabel": True, "VerticalAlign": MIDDLE}  # 単位の共通プロパティ。
 					nameY, numY, unitY = nameX.copy(), numX.copy(), unitX.copy()  # コントロールのプロパティの辞書をコピーする。
@@ -51,10 +52,10 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					for c in controls:
 						c["PositionY"] = m	
 					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
-					nameX["Label"] = "EnhancedMouseEvent.X: "
-					numX["Text"] = str(enhancedmouseevent.X)  # プロパティに代入するときは文字列に変更必要。
+					nameX["Label"] = "MouseEvent.X: "
+					numX["Text"] = str(MouseEvent.X)  # プロパティに代入するときは文字列に変更必要。
 					nameY["Label"] = ".Y: " 
-					numY["Text"] = str(enhancedmouseevent.Y)
+					numY["Text"] = str(MouseEvent.Y)
 					addControl("FixedText", nameX)
 					addControl("Edit", numX)  
 					addControl("FixedText", unitX)	
@@ -78,6 +79,40 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					addControl("Edit", numY)  
 					addControl("FixedText", unitY)	
 					# 3行目
+					y = nameX["PositionY"] + nameX["Height"] + m  
+					for c in controls:
+						c["PositionY"] = y
+					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+					nameX["Label"] = "Source.getPosSize().X: "
+					possize = source.getPosSize()  # コンポーネントウィンドウのPosSize。
+					point = componentwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)  # クリックしたセルの左上角の座標。1/100mmをpxに変換。
+					numX["Text"] = str(possize.X)
+					nameY["Label"] = ".Y: " 
+					numY["Text"] = str(possize.Y)				
+					addControl("FixedText", nameX)
+					addControl("Edit", numX)  
+					addControl("FixedText", unitX)	
+					addControl("FixedText", nameY)
+					addControl("Edit", numY)  
+					addControl("FixedText", unitY)		
+					# 4行目
+					y = nameX["PositionY"] + nameX["Height"] + m  
+					for c in controls:
+						c["PositionY"] = y
+					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
+					nameX["Label"] = "AccessibleContext.getLocation().X: "
+					accessiblecontext = source.getAccessibleContext()  # コンポーネントウィンドウのAccessibleContextを取得。
+					point = accessiblecontext.getLocation()  # 位置を取得。
+					numX["Text"] = str(point.X)
+					nameY["Label"] = ".Y: " 
+					numY["Text"] = str(point.Y)				
+					addControl("FixedText", nameX)
+					addControl("Edit", numX)  
+					addControl("FixedText", unitX)	
+					addControl("FixedText", nameY)
+					addControl("Edit", numY)  
+					addControl("FixedText", unitY)										
+					# 5行目
 					button = {"PositionY": nameX["PositionY"]+nameX["Height"]+m, "Height": nameX["Height"]+2, "Width": 30, "Label": "~Close", "PushButtonType": 2}  # ボタン。PushButtonTypeの値はEnumではエラーになる。
 					button["PositionX"] = unitY["PositionX"] + unitY["Width"] - button["Width"]
 					addControl("Button", button)
@@ -85,12 +120,12 @@ class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
 					toolkit = componentwindow.getToolkit()  # ピアからツールキットを取得。コンテナウィンドウでもコンポーネントウィンドウでも結果は同じ。
 					dialog.createPeer(toolkit, componentwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 					showModelessly(ctx, smgr, frame, dialog)  # ノンモダルダイアログとして表示。ダイアログのフレームを取得。
-					return False  # セル編集モードにしない。
-		return True  # セル編集モードにする。
-	def mouseReleased(self, enhancedmouseevent):
-		return True  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
+					return True  # セル編集モードにしない。
+		return False  # セル編集モードにする。
+	def mouseReleased(self, mouseevent):
+		return False  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
 	def disposing(self, eventobject):
-		self.subj.removeEnhancedMouseClickHandler(self)
+		self.subj.removeMouseClickHandler(self)
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションではリスナー動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。
@@ -166,13 +201,13 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 		return name
 	return dialog, addControl  # コントロールコンテナとそのコントロールコンテナにコントロールを追加する関数を返す。
 class DocumentEventListener(unohelper.Base, XDocumentEventListener):
-	def __init__(self, enhancedmouseclickhandler):
-		self.args = enhancedmouseclickhandler
+	def __init__(self, mouseclickhandler):
+		self.args = mouseclickhandler
 	def documentEventOccured(self, documentevent):
-		enhancedmouseclickhandler = self.args
+		mouseclickhandler = self.args
 		if documentevent.EventName=="OnUnload":  
 			source = documentevent.Source
-			source.removeEnhancedMouseClickHandler(enhancedmouseclickhandler)
+			source.removeMouseClickHandler(mouseclickhandler)
 			source.removeDocumentEventListener(self)
 	def disposing(self, eventobject):
 		eventobject.Source.removeDocumentEventListener(self)

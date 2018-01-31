@@ -27,9 +27,16 @@ from com.sun.star.document import XStorageChangeListener
 from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.chart import XChartDataChangeEventListener
 from com.sun.star.chart.ChartDataChangeType import ALL, DATA_RANGE, COLUMN_INSERTED, ROW_INSERTED, COLUMN_DELETED, ROW_DELETED  # enum
+# TCU = None
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnStartAppでもDocumentEventが入るがSourceはNoneになる。# import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	desktop = XSCRIPTCONTEXT.getDesktop()  # デスクトップの取得。
+	
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	global TCU
+# 	TCU = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	
 	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
 	thisscriptpath = unohelper.fileUrlToSystemPath(path)  # fileurlをsystempathに変換。
 	dirpath = os.path.dirname(thisscriptpath)  # このスクリプトのあるディレクトリのフルパスを取得。
@@ -335,6 +342,10 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 		self.subj = subj
 		self.args = dirpath, name	
 	def mousePressed(self, mouseevent):
+		
+		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+# 		TCU.wtree(mouseevent.Source)
+		
 		self._createLog(mouseevent, inspect.currentframe().f_code.co_name)
 		return False
 	def mouseReleased(self, mouseevent):
