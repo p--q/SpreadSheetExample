@@ -3,7 +3,8 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from itertools import zip_longest
 from com.sun.star.sheet import CellFlags as cf # 定数
-def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+def macro():
+# def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	outputs = [("", "X", "Y", "X onScreen", "Y onScreen"),]  # 出力する行。列数は統一する必要あり。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
