@@ -3,10 +3,21 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	doc = XSCRIPTCONTEXT.getDocument()
+	systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
+	tcu.wtree(systemclipboard.getContents())
+	
+	
+	
+	
+	
+# def macro():
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()
 
 
 
@@ -16,13 +27,13 @@ def macro():
 # 	print(len(sheet.getColumns()))
 
 
-	controller = doc.getCurrentController()  # コントローラの取得。
+# 	controller = doc.getCurrentController()  # コントローラの取得。
 # 	frame = controller.getFrame()  # フレームを取得。
 # 	componentwindow = frame.getComponentWindow()
 # 	
 # 	tcu.wtree(componentwindow.getToolkit())
 	
-	tcu.wtree(controller)
+# 	tcu.wtree(controller)
 	
 # 	containerwindow = frame.getContainerWindow()
 	
@@ -33,7 +44,7 @@ def macro():
 	
 # 	selection  = doc.getCurrentSelection()
 	
-	pass
+# 	pass
 # 	tcu.wtree(controller[0])
 	
 	
