@@ -3,8 +3,9 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 from itertools import zip_longest
 from com.sun.star.sheet import CellFlags as cf # 定数
-def macro():
-# def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+from com.sun.star.awt import Point  # Struct
+from com.sun.star.util import MeasureUnit
+def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	outputs = [("", "X", "Y", "X onScreen", "Y onScreen"),]  # 出力する行。列数は統一する必要あり。
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
@@ -16,6 +17,17 @@ def macro():
 	outputs.append(("PosSize", possize.X, possize.Y))
 	outputs.append(("AccessibleContext",))
 	accessiblecontext = containerwindow.getAccessibleContext()
+	location = accessiblecontext.getLocation()
+	outputs.append(("Location", location.X, location.Y), )
+	locationonscreen = accessiblecontext.getLocationOnScreen()
+	outputs.append(("LocationOnScreen", "", "", locationonscreen.X, locationonscreen.Y))
+	outputs.append(("",))	
+	# フレームの位置を取得。コンテナウィンドウの親AccessibleContextから取得。
+	outputs.append(("Frame",))	
+	accessiblecontextparent = accessiblecontext.getAccessibleParent()
+	possize = accessiblecontextparent.getPosSize()
+	outputs.append(("PosSize", possize.X, possize.Y))
+	accessiblecontext = accessiblecontextparent.getAccessibleContext()
 	location = accessiblecontext.getLocation()
 	outputs.append(("Location", location.X, location.Y), )
 	locationonscreen = accessiblecontext.getLocationOnScreen()
@@ -34,7 +46,13 @@ def macro():
 	outputs.append(("LocationOnScreen", "", "", locationonscreen.X, locationonscreen.Y))	
 	outputs.append(("",))	
 	# コントローラ
-	outputs.append(("Controller", "Left", "Top"))
+	outputs.append(("Controller",))
+	possize = controller.getPropertyValue("VisibleArea")  # 1/100mmで返ってくる。
+	point = componentwindow.convertPointToPixel(Point(possize.X, possize.Y), MeasureUnit.MM_100TH)  # クリックしたセルの左上角の座標。1/100mmをpxに変換。
+	outputs.append(("VisibleArea", point.X, point.Y))
+	possize = controller.getPropertyValue("VisibleAreaOnScreen")
+	outputs.append(("VisibleAreaOnScreen", "", "", possize.X, possize.Y))
+	outputs.append(("", "Left", "Top"))
 	border = controller.getBorder()
 	outputs.append(("Border", border.Left, border.Top))
 	# シートに出力。

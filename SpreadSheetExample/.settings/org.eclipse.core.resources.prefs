@@ -60,6 +60,7 @@ encoding//src/moveSheet/toAnotherDoc.py=utf-8
 encoding//src/unocontroldialog/gridcontrol.py=utf-8
 encoding//src/unocontroldialog/gridcontrollisteners.py=utf-8
 encoding//src/unocontroldialog/gridcontrollisteners2.py=utf-8
+encoding//src/unocontroldialog/gridcontrollisteners2forTCU.py=utf-8
 encoding//src/unocontroldialog/unitconverter.py=utf-8
 encoding//src/windows/AccessibleRole.py=utf-8
 encoding//src/windows/AccessibleWindowPositions.py=utf-8

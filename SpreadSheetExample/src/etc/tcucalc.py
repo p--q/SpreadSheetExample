@@ -7,9 +7,13 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-
-
-
+	controller = doc.getCurrentController()  # コントローラの取得。
+	frame = controller.getFrame()  # フレームを取得。
+	containerwindow = frame.getContainerWindow()  # コンテナウィンドウの取得。
+	accessiblecontext = containerwindow.getAccessibleContext()  # コンテナウィンドウのAccessibleContextを取得。
+	accessiblecontextparent = accessiblecontext.getAccessibleParent()  # AccessibleParentを取得。
+	tcu.wtree(accessiblecontextparent)
+	return
 
 # 	sheet = doc.getSheets()[0]
 # 	print(len(sheet.getRows()))
