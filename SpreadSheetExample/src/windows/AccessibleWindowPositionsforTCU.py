@@ -7,10 +7,10 @@ DIC_ACCESSIBLEROLE = {'26': 'HEADING', '24': 'GROUP_BOX', '39': 'PAGE_TAB_LIST',
 TCU=None
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	global TCU
-	TCU = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+# 	global TCU
+# 	TCU = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
@@ -47,9 +47,13 @@ def createOutput(head, xaccessible, outputs):  # XAccessibleからAccessibleRole
 	outputs.append(head+outputrow)		
 	
 	if accessiblerole==84:  # 50 84
-		TCU.wtree(xaccessible)
-		import sys
-		sys.exit()
+# 		TCU.wtree(xaccessible)
+# 		import sys
+# 		sys.exit()
+		i = xaccessible.getSelectedAccessibleChildCount()
+		pass
+	
+	
 	
 	
 	if accessiblerole==51:  # SCROLL_PANEの時。
