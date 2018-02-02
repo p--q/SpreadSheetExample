@@ -4,7 +4,14 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 from itertools import zip_longest
 from com.sun.star.sheet import CellFlags as cf # 定数
 DIC_ACCESSIBLEROLE = {'26': 'HEADING', '24': 'GROUP_BOX', '39': 'PAGE_TAB_LIST', '41': 'PARAGRAPH', '17': 'FILLER', '51': 'SCROLL_PANE', '48': 'ROW_HEADER', '29': 'INTERNAL_FRAME', '84': 'DOCUMENT_SPREADSHEET', '60': 'TEXT', '7': 'COMBO_BOX', '35': 'MENU_BAR', '36': 'MENU_ITEM', '70': 'CAPTION', '27': 'HYPER_LINK', '21': 'FRAME', '71': 'CHART', '11': 'DIRECTORY_PANE', '40': 'PANEL', '57': 'STATUS_BAR', '80': 'TREE_TABLE', '33': 'LIST_ITEM', '78': 'SECTION', '61': 'TEXT_FRAME', '32': 'LIST', '3': 'CANVAS', '0': 'UNKNOWN', '5': 'CHECK_MENU_ITEM', '20': 'FOOTNOTE', '64': 'TOOL_TIP', '13': 'DOCUMENT', '28': 'ICON', '69': 'BUTTON_MENU', '53': 'SEPARATOR', '81': 'COMMENT', '18': 'FONT_CHOOSER', '50': 'SCROLL_BAR', '56': 'SPLIT_PANE', '82': 'COMMENT_END', '45': 'PROGRESS_BAR', '38': 'PAGE_TAB', '47': 'RADIO_MENU_ITEM', '44': 'PUSH_BUTTON', '43': 'POPUP_MENU', '55': 'SPIN_BOX', '2': 'COLUMN_HEADER', '14': 'EMBEDDED_OBJECT', '72': 'EDIT_BAR', '49': 'ROOT_PANE', '77': 'RULER', '75': 'NOTE', '66': 'VIEW_PORT', '65': 'TREE', '79': 'TREE_ITEM', '19': 'FOOTER', '23': 'GRAPHIC', '67': 'WINDOW', '52': 'SHAPE', '34': 'MENU', '22': 'GLASS_PANE', '37': 'OPTION_PANE', '83': 'DOCUMENT_PRESENTATION', '8': 'DATE_EDITOR', '30': 'LABEL', '10': 'DESKTOP_PANE', '58': 'TABLE', '59': 'TABLE_CELL', '9': 'DESKTOP_ICON', '6': 'COLOR_CHOOSER', '85': 'DOCUMENT_TEXT', '46': 'RADIO_BUTTON', '76': 'PAGE', '68': 'BUTTON_DROPDOWN', '12': 'DIALOG', '1': 'ALERT', '25': 'HEADER', '42': 'PASSWORD_TEXT', '63': 'TOOL_BAR', '62': 'TOGGLE_BUTTON', '15': 'END_NOTE', '54': 'SLIDER', '74': 'IMAGE_MAP', '73': 'FORM', '31': 'LAYERED_PANE', '16': 'FILE_CHOOSER', '4': 'CHECK_BOX'}
+TCU=None
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
+	
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+	global TCU
+	TCU = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	controller = doc.getCurrentController()  # コントローラの取得。
 	outputs = [("ComponentWindowChild",)]
@@ -38,6 +45,13 @@ def createOutput(head, xaccessible, outputs):  # XAccessibleからAccessibleRole
 	accessiblerole = childaccessiblecontext.getAccessibleRole()
 	outputrow = "{}={}".format(DIC_ACCESSIBLEROLE[str(accessiblerole)], accessiblerole), bounds.X, bounds.Y, bounds.Width, bounds.Height, locationonscreen.X, locationonscreen.Y
 	outputs.append(head+outputrow)		
+	
+	if accessiblerole==84:  # 50 84
+		TCU.wtree(xaccessible)
+		import sys
+		sys.exit()
+	
+	
 	if accessiblerole==51:  # SCROLL_PANEの時。
 		getAccessibleChildren(("",)*7, xaccessible, outputs)		
 def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。

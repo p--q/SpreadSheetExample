@@ -64,6 +64,7 @@ encoding//src/unocontroldialog/gridcontrollisteners2forTCU.py=utf-8
 encoding//src/unocontroldialog/unitconverter.py=utf-8
 encoding//src/windows/AccessibleRole.py=utf-8
 encoding//src/windows/AccessibleWindowPositions.py=utf-8
+encoding//src/windows/AccessibleWindowPositionsforTCU.py=utf-8
 encoding//src/windows/EnhancedMouseClickHandler.py=utf-8
 encoding//src/windows/MouseClickHandler.py=utf-8
 encoding//src/windows/WindowPositions.py=utf-8

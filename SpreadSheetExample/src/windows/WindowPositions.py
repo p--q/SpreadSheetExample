@@ -28,6 +28,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。impo
 	possize = accessiblecontextparent.getPosSize()
 	outputs.append(("PosSize", possize.X, possize.Y))
 	accessiblecontext = accessiblecontextparent.getAccessibleContext()
+	outputs.append(("AccessibleContext",))
 	location = accessiblecontext.getLocation()
 	outputs.append(("Location", location.X, location.Y), )
 	locationonscreen = accessiblecontext.getLocationOnScreen()
