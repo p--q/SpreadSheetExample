@@ -32,6 +32,9 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 					frame = controller.getFrame()  # フレームを取得。
 					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
 					source = mouseevent.Source  # クリックした枠のコンポーネントウィンドウが返る。
+					
+					import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+					
 					point = componentwindow.convertPointToLogic(Point(X=mouseevent.X, Y=mouseevent.Y), MeasureUnit.APPFONT)  # EnhancedMouseClickHandlerの座標をmaに変換。
 					# コントロールダイアログの左上の座標を設定。
 					dialogX = point.X
@@ -85,6 +88,7 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 					nameX, numX, unitX, nameY, numY, unitY = [c.copy() for c in controls]  # addControlに渡した辞書は変更されるのでコピーを渡す。
 					nameX["Label"] = "Source.getPosSize().X: "
 					possize = source.getPosSize()  # サブウィンドウのPosSize。
+					point = componentwindow.convertPointToPixel(target.getPropertyValue("Position"), MeasureUnit.MM_100TH)  # クリックしたセルの左上角の座標。1/100mmをpxに変換。
 					numX["Text"] = str(possize.X)
 					nameY["Label"] = ".Y: " 
 					numY["Text"] = str(possize.Y)				
@@ -125,17 +129,6 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 		return False  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
 	def disposing(self, eventobject):
 		self.subj.removeMouseClickHandler(self)
-class DocumentEventListener(unohelper.Base, XDocumentEventListener):
-	def __init__(self, mouseclickhandler):
-		self.args = mouseclickhandler
-	def documentEventOccured(self, documentevent):
-		mouseclickhandler = self.args
-		if documentevent.EventName=="OnUnload":  
-			source = documentevent.Source
-			source.removeMouseClickHandler(mouseclickhandler)
-			source.removeDocumentEventListener(self)
-	def disposing(self, eventobject):
-		eventobject.Source.removeDocumentEventListener(self)
 def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイアログにする。オートメーションではリスナー動かない。ノンモダルダイアログではフレームに追加しないと閉じるボタンが使えない。
 	frame = smgr.createInstanceWithContext("com.sun.star.frame.Frame", ctx)  # 新しいフレームを生成。
 	frame.initialize(dialog.getPeer())  # フレームにコンテナウィンドウを入れる。
@@ -210,4 +203,15 @@ def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコ�
 			i += 1
 		return name
 	return dialog, addControl  # コントロールコンテナとそのコントロールコンテナにコントロールを追加する関数を返す。
+class DocumentEventListener(unohelper.Base, XDocumentEventListener):
+	def __init__(self, mouseclickhandler):
+		self.args = mouseclickhandler
+	def documentEventOccured(self, documentevent):
+		mouseclickhandler = self.args
+		if documentevent.EventName=="OnUnload":  
+			source = documentevent.Source
+			source.removeMouseClickHandler(mouseclickhandler)
+			source.removeDocumentEventListener(self)
+	def disposing(self, eventobject):
+		eventobject.Source.removeDocumentEventListener(self)
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
