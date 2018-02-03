@@ -1,19 +1,19 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-from com.sun.star.awt import XMouseClickHandler
-from com.sun.star.awt import MouseButton  # 定数
-from com.sun.star.frame.FrameAction import FRAME_UI_DEACTIVATING  # enum
-from com.sun.star.frame import XFrameActionListener
-from com.sun.star.util import MeasureUnit
-from com.sun.star.document import XDocumentEventListener
-from com.sun.star.style.VerticalAlignment import MIDDLE
 from com.sun.star.awt import XActionListener
-from com.sun.star.awt import Point  # Struct
-from com.sun.star.util import XCloseListener
 from com.sun.star.awt import XKeyListener
+from com.sun.star.awt import XMouseClickHandler
 from com.sun.star.awt import Key  # 定数
+from com.sun.star.awt import MouseButton  # 定数
+from com.sun.star.awt import Point  # Struct
 from com.sun.star.awt import Selection  # Struct
+from com.sun.star.document import XDocumentEventListener
+from com.sun.star.frame import XFrameActionListener
+from com.sun.star.frame.FrameAction import FRAME_UI_DEACTIVATING  # enum
+from com.sun.star.util import XCloseListener
+from com.sun.star.util import MeasureUnit  # 定数
+from com.sun.star.style.VerticalAlignment import MIDDLE
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -69,7 +69,7 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 					actionlistener.frame = dialogframe
 					keylistener.frame = dialogframe
 					frameactionlistener = FrameActionListener()
-					dialogframe.addFrameActionListener(frameactionlistener)  # FrameActionListener。ウィンドウを閉じる時はそのコンテナウィンドウをsetVisible(False)にするのでdialogを渡しておく。
+					dialogframe.addFrameActionListener(frameactionlistener)  # FrameActionListener。フレームがアクティブでなくなった時に閉じるため。
 					dialogframe.addCloseListener(CloseListener(dialog, frameactionlistener, actionlistener, keylistener))  # CloseListener
 					return True  # セル編集モードにしない。
 		return False  # セル編集モードにする。
