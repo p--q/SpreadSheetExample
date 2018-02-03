@@ -32,6 +32,9 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 					frame = controller.getFrame()  # フレームを取得。
 					componentwindow = frame.getComponentWindow()  # コンポーネントウィンドウを取得。
 					source = MouseEvent.Source  # クリックした枠のコンポーネントウィンドウが返る。
+					
+					import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+					
 					point = componentwindow.convertPointToLogic(Point(X=MouseEvent.X, Y=MouseEvent.Y), MeasureUnit.APPFONT)  # EnhancedMouseClickHandlerの座標をmaに変換。
 					# コントロールダイアログの左上の座標を設定。
 					dialogX = point.X
