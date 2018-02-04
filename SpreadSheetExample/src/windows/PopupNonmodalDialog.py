@@ -79,6 +79,10 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 		return False  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
 	def disposing(self, eventobject):
 		self.subj.removeMouseClickHandler(self)
+def XWidth(props, m=0):  # 左隣のコントロールからPositionXを取得。mは間隔。
+	return props["PositionX"] + props["Width"] + m  
+def YHeight(props, m=0):  # 上隣のコントロールからPositionYを取得。mは間隔。
+	return props["PositionY"] + props["Height"] + m
 class KeyListener(unohelper.Base, XKeyListener):
 	def __init__(self, target):
 		self.args = target
@@ -153,10 +157,6 @@ def showModelessly(ctx, smgr, parentframe, dialog):  # ノンモダルダイア�
 	parentframe.getFrames().append(frame)  # 新しく作ったフレームを既存のフレームの階層に追加する。
 	dialog.setVisible(True)  # ダイアログを見えるようにする。
 	return frame  # フレームにリスナーをつけるときのためにフレームを返す。
-def XWidth(props, m=0):  # 左隣のコントロールからPositionXを取得。mは間隔。
-	return props["PositionX"] + props["Width"] + m  
-def YHeight(props, m=0):  # 上隣のコントロールからPositionYを取得。mは間隔。
-	return props["PositionY"] + props["Height"] + m
 def dialogCreator(ctx, smgr, dialogprops):  # ダイアログと、それにコントロールを追加する関数を返す。まずダイアログモデルのプロパティを取得。
 	dialog = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", ctx)  # ダイアログの生成。
 	if "PosSize" in dialogprops:  # コントロールモデルのプロパティの辞書にPosSizeキーがあるときはピクセル単位でコントロールに設定をする。
