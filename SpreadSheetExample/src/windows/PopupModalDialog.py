@@ -70,7 +70,7 @@ class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 					return True  # セル編集モードにしない。
 		return False  # セル編集モードにする。
 	def mouseReleased(self, mouseevent):
-		return False  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
+		return False
 	def disposing(self, eventobject):
 		self.subj.removeMouseClickHandler(self)
 def XWidth(props, m=0):  # 左隣のコントロールからPositionXを取得。mは間隔。

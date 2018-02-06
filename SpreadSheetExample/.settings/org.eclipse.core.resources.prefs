@@ -69,6 +69,7 @@ encoding//src/windows/EnhancedMouseClickHandler.py=utf-8
 encoding//src/windows/MouseClickHandler.py=utf-8
 encoding//src/windows/MouseClickHandlerforDebugging.py=utf-8
 encoding//src/windows/PopupModalDialog.py=utf-8
+encoding//src/windows/PopupModalDialog2.py=utf-8
 encoding//src/windows/PopupModalDialogListenerLog.py=utf-8
 encoding//src/windows/PopupNonmodalDialog.py=utf-8
 encoding//src/windows/PopupNonmodalDialog2.py=utf-8
