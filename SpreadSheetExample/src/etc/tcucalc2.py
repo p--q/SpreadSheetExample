@@ -5,17 +5,9 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラの取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	cell = sheet["C1"]
-	address = cell.getCellAddress()  # セルアドレスを取得。
-	annotations = sheet.getAnnotations()  # シートのセル注釈コレクションを取得。
-	annotations.insertNew(address, "This is an annotation")  # セル注釈を挿入。
-	annotation = cell.getAnnotation()  # セル注釈を取得。
-	shape = annotation.getAnnotationShape()  # CellAnnotationShapeを取得。
-	tcu.wtree(shape)
-	
+	tcu.wtree(controller[3])
 	
 	
 	
