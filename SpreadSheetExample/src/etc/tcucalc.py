@@ -7,26 +7,26 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。
-	frame = controller.getFrame()  # フレームを取得。
-	containerwindow = frame.getContainerWindow()  # コンテナウィンドウの取得。
-	accessiblecontext = containerwindow.getAccessibleContext()  # コンテナウィンドウのAccessibleContextを取得。
-	accessiblecontextparent = accessiblecontext.getAccessibleParent()  # AccessibleParentを取得。
-	tcu.wtree(accessiblecontextparent)
-	return
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+# 	frame = controller.getFrame()  # フレームを取得。
+# 	containerwindow = frame.getContainerWindow()  # コンテナウィンドウの取得。
+# 	accessiblecontext = containerwindow.getAccessibleContext()  # コンテナウィンドウのAccessibleContextを取得。
+# 	accessiblecontextparent = accessiblecontext.getAccessibleParent()  # AccessibleParentを取得。
+# 	tcu.wtree(accessiblecontextparent)
+# 	return
 
 # 	sheet = doc.getSheets()[0]
 # 	print(len(sheet.getRows()))
 # 	print(len(sheet.getColumns()))
 
 
-	controller = doc.getCurrentController()  # コントローラの取得。
+# 	controller = doc.getCurrentController()  # コントローラの取得。
 # 	frame = controller.getFrame()  # フレームを取得。
 # 	componentwindow = frame.getComponentWindow()
 # 	
 # 	tcu.wtree(componentwindow.getToolkit())
 	
-	tcu.wtree(controller)
+# 	tcu.wtree(controller)
 	
 # 	containerwindow = frame.getContainerWindow()
 	
@@ -37,7 +37,7 @@ def macro():
 	
 # 	selection  = doc.getCurrentSelection()
 	
-	pass
+
 # 	tcu.wtree(controller[0])
 	
 	
@@ -124,8 +124,12 @@ def macro():
 # 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 # 	
 # 	
-# 	sheets = doc.getSheets()  # シートコレクション。
-# 	sheet = sheets[0]  # 最初のシート。
+	sheets = doc.getSheets()  # シートコレクション。
+	sheet = sheets[0]  # 最初のシート。
+	
+	tcu.wtree(sheet)
+	return
+	
 # 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
 # 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
 # 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
