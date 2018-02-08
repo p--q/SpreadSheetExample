@@ -5,7 +5,8 @@ import os
 import inspect
 import platform
 from datetime import datetime
-from com.sun.star.awt import XEnhancedMouseClickHandler
+# from com.sun.star.awt import XEnhancedMouseClickHandler
+from com.sun.star.awt import XMouseClickHandler
 from com.sun.star.awt import XKeyHandler
 from com.sun.star.awt import XTopWindowListener
 from com.sun.star.awt import Key  # 定数
@@ -26,9 +27,16 @@ from com.sun.star.document import XStorageChangeListener
 from com.sun.star.sheet import XActivationEventListener
 from com.sun.star.chart import XChartDataChangeEventListener
 from com.sun.star.chart.ChartDataChangeType import ALL, DATA_RANGE, COLUMN_INSERTED, ROW_INSERTED, COLUMN_DELETED, ROW_DELETED  # enum
+# TCU = None
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnStartAppでもDocumentEventが入るがSourceはNoneになる。# import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	desktop = XSCRIPTCONTEXT.getDesktop()  # デスクトップの取得。
+	
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	global TCU
+# 	TCU = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	
 	path = doc.getURL() if __file__.startswith("vnd.sun.star.tdoc:") else __file__  # このスクリプトのパス。fileurlで返ってくる。埋め込みマクロの時は埋め込んだドキュメントのURLで代用する。
 	thisscriptpath = unohelper.fileUrlToSystemPath(path)  # fileurlをsystempathに変換。
 	dirpath = os.path.dirname(thisscriptpath)  # このスクリプトのあるディレクトリのフルパスを取得。
@@ -49,7 +57,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnSt
 	listeners["containerwindow_topwindowlistener"] = TopWindowListener(dirpath, "containerwindow_topwindowlistener")
 	containerwindow.addTopWindowListener(listeners["containerwindow_topwindowlistener"])
 	controller.addActivationEventListener(ActivationEventListener(dirpath, "controller_activationeventlistener", controller))  # ActivationEventListener
-	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(dirpath, "controller_enhancedmouseclickhandler", controller))  # EnhancedMouseClickHandler
+	controller.addMouseClickHandler(MouseClickHandler(dirpath, "controller_mouseclickhandler", controller))  # EnhancedMouseClickHandler
 	controller.addSelectionChangeListener(SelectionChangeListener(dirpath, "controller_selectionchangelistener", controller))  # SelectionChangeListener
 	controller.addBorderResizeListener(BorderResizeListener(dirpath, "controller_borderresizelistener", controller))  # BorderResizeListener
 	controller.addTitleChangeListener(TitleChangeListener(dirpath, "controller_titlechangelistener", controller))  # TitleChangeListener	
@@ -329,28 +337,30 @@ class SelectionChangeListener(unohelper.Base, XSelectionChangeListener):
 		filename = "_".join((name, inspect.currentframe().f_code.co_name))
 		createLog(dirpath, filename, "Source: {}".format(eventobject.Source))	
 		self.subj.removeSelectionChangeListener(self)
-class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
+class MouseClickHandler(unohelper.Base, XMouseClickHandler):
 	def __init__(self, dirpath, name, subj):
 		self.subj = subj
 		self.args = dirpath, name	
-	def mousePressed(self, enhancedmouseevent):
-		self._createLog(enhancedmouseevent, inspect.currentframe().f_code.co_name)
-		return True
-	def mouseReleased(self, enhancedmouseevent):
-		self._createLog(enhancedmouseevent, inspect.currentframe().f_code.co_name)
-		return True
+	def mousePressed(self, mouseevent):
+		
+		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
+# 		TCU.wtree(mouseevent.Source)
+		
+		self._createLog(mouseevent, inspect.currentframe().f_code.co_name)
+		return False
+	def mouseReleased(self, mouseevent):
+		self._createLog(mouseevent, inspect.currentframe().f_code.co_name)
+		return False
 	def disposing(self, eventobject):
 		dirpath, name = self.args
 		filename = "_".join((name, inspect.currentframe().f_code.co_name))
 		createLog(dirpath, filename, "Source: {}".format(eventobject.Source))	
-		self.subj.removeEnhancedMouseClickHandler(self)
-	def _createLog(self, enhancedmouseevent, methodname):
+		self.subj.removeMouseClickHandler(self)
+	def _createLog(self, mouseevent, methodname):
 		dirpath, name = self.args
-		target = enhancedmouseevent.Target
-		target = getStringAddressFromCellRange(target) or target  # sourceがセル範囲の時は選択範囲の文字列アドレスを返す。
-		clickcount = enhancedmouseevent.ClickCount
+		clickcount = mouseevent.ClickCount
 		filename = "_".join((name, methodname, "ClickCount", str(clickcount)))
-		createLog(dirpath, filename, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, Target: {}\nX: {}, Y: {}\nSource: {}".format(enhancedmouseevent.Buttons, clickcount, enhancedmouseevent.PopupTrigger, enhancedmouseevent.Modifiers, target, enhancedmouseevent.X, enhancedmouseevent.Y, enhancedmouseevent.Source))	
+		createLog(dirpath, filename, "Buttons: {}, ClickCount: {}, PopupTrigger {}, Modifiers: {}, \nSource: {}".format(mouseevent.Buttons, clickcount, mouseevent.PopupTrigger, mouseevent.Modifiers, mouseevent.Source))
 class ActivationEventListener(unohelper.Base, XActivationEventListener):
 	def __init__(self, dirpath, name, subj):
 		self.subj = subj

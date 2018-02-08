@@ -1,101 +1,66 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
+from com.sun.star.awt import XEnhancedMouseClickHandler
+from com.sun.star.awt import MouseButton  # 定数
 from com.sun.star.view import XSelectionChangeListener
-def enableRemoteDebugging(func):  # デバッグサーバーに接続したい関数やメソッドにつけるデコレーター。主にリスナーのメソッドのデバッグ目的。ただしマウスハンドラはフリーズするので直接pydevを書き込んだほうがよい。
-	def wrapper(*args, **kwargs):
-		frame = None
-		doc = XSCRIPTCONTEXT.getDocument()
-		if doc:  # ドキュメントが取得できた時
-			frame = doc.getCurrentController().getFrame()  # ドキュメントのフレームを取得。
-		else:
-			currentframe = XSCRIPTCONTEXT.getDesktop().getCurrentFrame()  # モードレスダイアログのときはドキュメントが取得できないので、モードレスダイアログのフレームからCreatorのフレームを取得する。
-			frame = currentframe.getCreator()
-		if frame:   
-			import time
-			indicator = frame.createStatusIndicator()  # フレームからステータスバーを取得する。
-			maxrange = 2  # ステータスバーに表示するプログレスバーの目盛りの最大値。2秒ロスするが他に適当な告知手段が思いつかない。
-			indicator.start("Trying to connect to the PyDev Debug Server for about 20 seconds.", maxrange)  # ステータスバーに表示する文字列とプログレスバーの目盛りを設定。
-			t = 1  # プレグレスバーの初期値。
-			while t<=maxrange:  # プログレスバーの最大値以下の間。
-				indicator.setValue(t)  # プレグレスバーの位置を設定。
-				time.sleep(1)  # 1秒待つ。
-				t += 1  # プログレスバーの目盛りを増やす。
-			indicator.end()  # reset()の前にend()しておかないと元に戻らない。
-			indicator.reset()  # ここでリセットしておかないと例外が発生した時にリセットする機会がない。
-		import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)  # デバッグサーバーを起動していた場合はここでブレークされる。import pydevdは時間がかかる。
-		try:
-			func(*args, **kwargs)  # Step Intoして中に入る。	
-		except:
-			import traceback; traceback.print_exc()  # これがないとPyDevのコンソールにトレースバックが表示されない。stderrToServer=Trueが必須。
-	return wrapper
-def macro(documentevent=None):  # 引数は文書のイベント駆動用。  
-	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
+from com.sun.star.table import BorderLine2  # Struct
+from com.sun.star.table import BorderLineStyle  # 定数
+from com.sun.star.table import TableBorder2  # Struct
+def macro(documentevent=None):  # 引数は文書のイベント駆動用。   
+	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメントのモデルを取得。 
 	controller = doc.getCurrentController()  # コントローラの取得。
-	controller.addSelectionChangeListener(SelectionChangeListener())
+	colors = {"clearblue": 0x9999FF, "magenta": 0xFF00FF}  # 色の設定。
+	# 枠線の作成。
+	noneline = BorderLine2(LineStyle=BorderLineStyle.NONE)  # 枠線を消すための空線。
+	firstline = BorderLine2(LineStyle=BorderLineStyle.DASHED, LineWidth=62, Color=colors["clearblue"])  # 青色の枠線。
+	secondline =  BorderLine2(LineStyle=BorderLineStyle.DASHED, LineWidth=62, Color=colors["magenta"])	# 桃色の枠線。
+	tableborder2 = TableBorder2(TopLine=firstline, LeftLine=firstline, RightLine=secondline, BottomLine=secondline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=True, IsRightLineValid=True)  # 上下左右の枠線。
+	topbottomtableborder = TableBorder2(TopLine=firstline, LeftLine=firstline, RightLine=secondline, BottomLine=secondline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=False, IsRightLineValid=False)  # 上下の枠線。
+	leftrighttableborder = TableBorder2(TopLine=firstline, LeftLine=firstline, RightLine=secondline, BottomLine=secondline, IsTopLineValid=False, IsBottomLineValid=False, IsLeftLineValid=True, IsRightLineValid=True)  # 左右の枠線。
+	borders = noneline, tableborder2, topbottomtableborder, leftrighttableborder  # 作成した枠線をまとめたタプル。
+	controller.addSelectionChangeListener(SelectionChangeListener(colors, borders))
+	controller.addEnhancedMouseClickHandler(EnhancedMouseClickHandler(controller, borders))  # EnhancedMouseClickHandler。このリスナーのメソッドの引数からコントローラーを取得する方法がない。
+class EnhancedMouseClickHandler(unohelper.Base, XEnhancedMouseClickHandler):
+	def __init__(self, controller, borders):
+		self.controller = controller
+		self.args = borders
+	def mousePressed(self, enhancedmouseevent):  # セルをクリックした時に発火する。固定行列の最初のクリックは同じ相対位置の固定していないセルが返ってくる(表示されている自由行の先頭行に背景色がる時のみ）。
+		borders = self.args
+		target = enhancedmouseevent.Target  # ターゲットのセルを取得。
+		if enhancedmouseevent.Buttons==MouseButton.LEFT:  # 左ボタンのとき
+			if target.supportsService("com.sun.star.sheet.SheetCell"):  # ターゲットがセルの時。
+				if enhancedmouseevent.ClickCount==1:  # シングルクリックの時。
+					sheet = target.getSpreadsheet()
+					drowBorders(self.controller, sheet, target, borders)
+		return True  # Falseを返すと右クリックメニューがでてこなくなる。		
+	def mouseReleased(self, enhancedmouseevent):
+		pass
+		return True  # シングルクリックでFalseを返すとセル選択範囲の決定の状態になってどうしようもなくなる。
+	def disposing(self, eventobject):  # eventobject.SourceはNone。
+		self.controller.removeEnhancedMouseClickHandler(self)	
 class SelectionChangeListener(unohelper.Base, XSelectionChangeListener):
-# 	@enableRemoteDebugging  # 使えない
-	def selectionChanged(self, event):
-# 		import traceback; traceback.print_exc()  # GUIが使えなくなるのでショートカットキーでの操作が必要。
-		source = event.Source
-		if source.supportsService("com.sun.star.sheet.SpreadsheetView"):  # Calcコントローラの時。
-			selection = source.getSelection()
-			if selection.supportsService("com.sun.star.sheet.SheetCellRange"):  # セル範囲の時。
-				selection[0, 0].setString("Test")
-				
-		
-
+	def __init__(self, colors, borders):
+		self.args = colors, borders
+	def selectionChanged(self, eventobject):  # マウスから呼び出した時の反応が遅い。このメソッドでエラーがでるとショートカットキーでの操作が必要。
+		colors, borders = self.args	
+		controller = eventobject.Source
+		sheet = controller.getActiveSheet()
+		selection = controller.getSelection()
+		if selection.supportsService("com.sun.star.sheet.SheetCell"):  # 選択範囲がセルの時。矢印キーでセルを移動した時。マウスクリックハンドラから呼ばれると何回も発火するのでその対応。
+			currenttableborder2 = selection.getPropertyValue("TableBorder2")  # 選択セルの枠線を取得。
+			if all((currenttableborder2.TopLine.Color==currenttableborder2.LeftLine.Color==colors["clearblue"],\
+					currenttableborder2.RightLine.Color==currenttableborder2.BottomLine.Color==colors["magenta"])):  # 枠線の色を確認。
+				return  # すでに枠線が書いてあったら何もしない。
+		if selection.supportsService("com.sun.star.sheet.SheetCellRange"):  # 選択範囲がセル範囲の時。
+			drowBorders(controller, sheet, selection, borders)	
 	def disposing(self, eventobject):
-		pass	
+		eventobject.Source.removeSelectionChangeListener(self)	
+def drowBorders(controller, sheet, cellrange, borders):  # ターゲットを交点とする行列全体の外枠線を描く。
+	noneline, tableborder2, topbottomtableborder, leftrighttableborder = borders	
+	sheet[:, :].setPropertyValue("TopBorder2", noneline)  # 1辺をNONEにするだけですべての枠線が消える。
+	rangeaddress = cellrange.getRangeAddress()  # セル範囲アドレスを取得。
+	sheet[:, rangeaddress.StartColumn:rangeaddress.EndColumn+1].setPropertyValue("TableBorder2", leftrighttableborder)  # 列の左右に枠線を引く。			
+	sheet[rangeaddress.StartRow:rangeaddress.EndRow+1, :].setPropertyValue("TableBorder2", topbottomtableborder)  # 行の上下に枠線を引く。	
+	cellrange.setPropertyValue("TableBorder2", tableborder2)  # 選択範囲の消えた枠線を引き直す。	
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
-if __name__ == "__main__":  # オートメーションで実行するとき
-	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
-		import officehelper
-		from functools import wraps
-		import sys
-		from com.sun.star.beans import PropertyValue  # Struct
-		from com.sun.star.script.provider import XScriptContext  
-		def connectOffice(func):  # funcの前後でOffice接続の処理
-			@wraps(func)
-			def wrapper():  # LibreOfficeをバックグラウンドで起動してコンポーネントテクストとサービスマネジャーを取得する。
-				try:
-					ctx = officehelper.bootstrap()  # コンポーネントコンテクストの取得。
-				except:
-					print("Could not establish a connection with a running office.", file=sys.stderr)
-					sys.exit()
-				print("Connected to a running office ...")
-				smgr = ctx.getServiceManager()  # サービスマネジャーの取得。
-				print("Using {} {}".format(*_getLOVersion(ctx, smgr)))  # LibreOfficeのバージョンを出力。
-				return func(ctx, smgr)  # 引数の関数の実行。
-			def _getLOVersion(ctx, smgr):  # LibreOfficeの名前とバージョンを返す。
-				cp = smgr.createInstanceWithContext('com.sun.star.configuration.ConfigurationProvider', ctx)
-				node = PropertyValue(Name = 'nodepath', Value = 'org.openoffice.Setup/Product' )  # share/registry/main.xcd内のノードパス。
-				ca = cp.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
-				return ca.getPropertyValues(('ooName', 'ooSetupVersion'))  # LibreOfficeの名前とバージョンをタプルで返す。
-			return wrapper
-		@connectOffice  # createXSCRIPTCONTEXTの引数にctxとsmgrを渡すデコレータ。
-		def createXSCRIPTCONTEXT(ctx, smgr):  # XSCRIPTCONTEXTを生成。
-			class ScriptContext(unohelper.Base, XScriptContext):
-				def __init__(self, ctx):
-					self.ctx = ctx
-				def getComponentContext(self):
-					return self.ctx
-				def getDesktop(self):
-					return ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
-				def getDocument(self):
-					return self.getDesktop().getCurrentComponent()
-			return ScriptContext(ctx)  
-		XSCRIPTCONTEXT = createXSCRIPTCONTEXT()  # XSCRIPTCONTEXTの取得。
-		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-		doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
-	# 	doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
-		if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
-			XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
-		flg = True
-		while flg:
-			doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
-			if doc is not None:
-				flg = (not doc.supportsService(doctype[1]))  # ドキュメントタイプが確認できたらwhileを抜ける。
-		return XSCRIPTCONTEXT
-	XSCRIPTCONTEXT = automation()  # XSCRIPTCONTEXTを取得。	
-	macro()  # マクロの実行。

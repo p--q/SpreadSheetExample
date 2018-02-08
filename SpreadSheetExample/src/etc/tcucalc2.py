@@ -1,56 +1,26 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-
-from com.sun.star.lang import Locale  # Struct
-from com.sun.star.i18n import TransliterationType  # 定数
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	transliteration = smgr.createInstanceWithContext("com.sun.star.i18n.Transliteration", ctx)  # Transliteration 
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.NONE)
-	if availablemodules:
-		print("NONE")
-		print(availablemodules)
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.ONE_TO_ONE)
-	if availablemodules:
-		print("ONE_TO_ONE")
-		print(availablemodules)		
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.NUMERIC)
-	if availablemodules:
-		print("NUMERIC")
-		print(availablemodules)	
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.ONE_TO_ONE_NUMERIC)
-	if availablemodules:
-		print("ONE_TO_ONE_NUMERIC")
-		print(availablemodules)			
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.IGNORE)
-	if availablemodules:
-		print("IGNORE")
-		print(availablemodules)			
-	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.CASCADE)
-	if availablemodules:
-		print("CASCADE")
-		print(availablemodules)			
-		
-		
-
-	
-	
-	
-# 	tcu.wtree(transliteration)
-	return
-	
-	
 	doc = XSCRIPTCONTEXT.getDocument()
-# 	controller = doc.getCurrentController()  # コントローラの取得。
-# 	frame = controller.getFrame()  # フレームを取得。
-# 	containerwindow = frame.getContainerWindow()  # コンテナウィンドウの取得。
-# 	accessiblecontext = containerwindow.getAccessibleContext()  # コンテナウィンドウのAccessibleContextを取得。
-# 	accessiblecontextparent = accessiblecontext.getAccessibleParent()  # AccessibleParentを取得。
-# 	tcu.wtree(accessiblecontextparent)
-# 	return
+	controller = doc.getCurrentController()  # コントローラの取得。
+	tcu.wtree(controller[3])
+	
+	
+	
+	
+# def macro():
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()
+
+
+
 
 # 	sheet = doc.getSheets()[0]
 # 	print(len(sheet.getRows()))
@@ -74,7 +44,7 @@ def macro():
 	
 # 	selection  = doc.getCurrentSelection()
 	
-
+# 	pass
 # 	tcu.wtree(controller[0])
 	
 	
@@ -161,12 +131,8 @@ def macro():
 # 	docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
 # 	
 # 	
-	sheets = doc.getSheets()  # シートコレクション。
-	sheet = sheets[0]  # 最初のシート。
-	
-	tcu.wtree(sheet)
-	return
-	
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
 # 	cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
 # 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
 # 	textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
