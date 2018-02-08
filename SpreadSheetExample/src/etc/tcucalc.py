@@ -1,11 +1,48 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
+
+from com.sun.star.lang import Locale  # Struct
+from com.sun.star.i18n import TransliterationType  # 定数
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	transliteration = smgr.createInstanceWithContext("com.sun.star.i18n.Transliteration", ctx)  # Transliteration 
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.NONE)
+	if availablemodules:
+		print("NONE")
+		print(availablemodules)
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.ONE_TO_ONE)
+	if availablemodules:
+		print("ONE_TO_ONE")
+		print(availablemodules)		
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.NUMERIC)
+	if availablemodules:
+		print("NUMERIC")
+		print(availablemodules)	
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.ONE_TO_ONE_NUMERIC)
+	if availablemodules:
+		print("ONE_TO_ONE_NUMERIC")
+		print(availablemodules)			
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.IGNORE)
+	if availablemodules:
+		print("IGNORE")
+		print(availablemodules)			
+	availablemodules = transliteration.getAvailableModules(Locale(Language = "ja", Country = "JP"), TransliterationType.CASCADE)
+	if availablemodules:
+		print("CASCADE")
+		print(availablemodules)			
+		
+		
+
+	
+	
+	
+# 	tcu.wtree(transliteration)
+	return
+	
+	
 	doc = XSCRIPTCONTEXT.getDocument()
 # 	controller = doc.getCurrentController()  # コントローラの取得。
 # 	frame = controller.getFrame()  # フレームを取得。
