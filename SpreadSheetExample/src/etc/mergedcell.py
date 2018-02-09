@@ -1,12 +1,10 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
-def macro():
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。
-	sheet = controller.getActiveSheet()
+# def macro():
+# 	doc = XSCRIPTCONTEXT.getDocument()
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+# 	sheet = controller.getActiveSheet()
 # 	rows = 5
 # 	columns = 5
 # 	sheet[:rows, :columns].setDataArray([[getStringAddressFromCellRange(sheet[r, c]).split(".")[-1] for c in range(columns)] for r in range(rows)])
@@ -16,10 +14,28 @@ def macro():
 # 	print([sheet[r, c].getString() for c in range(columns)])
 # 	c = 3
 # 	print([sheet[r, c].getString() for r in range(rows)])
+# 	print([sheet[r, c].getIsMerged() for r in range(rows)])
+	
+	
+def macro():
+	doc = XSCRIPTCONTEXT.getDocument()
+	controller = doc.getCurrentController()  # コントローラの取得。
+	sheet = controller.getActiveSheet()
+	
+	cellranges = sheet["D1"].queryVisibleCells()
+	print(cellranges.getRangeAddressesAsString())
 
-	cellranges = sheet[1, :].queryEmptyCells()
-	pass
+	
+# 	cellranges = sheet[:, 3].queryEmptyCells()
+# 	print(cellranges.getRangeAddressesAsString())
 
+# 	cellranges = sheet[:, 3].queryVisibleCells()
+# 	print(cellranges.getRangeAddressesAsString())
+
+
+# 	cell = sheet["D4"]
+# 	
+# 	pass
 
 
 
