@@ -14,6 +14,7 @@ encoding//src/clipboard/Clipboard.py=utf-8
 encoding//src/clipboard/clipboardforcalc.py=utf-8
 encoding//src/clipboard/clipboardforcalc2.py=utf-8
 encoding//src/clipboard/simplecopy.py=utf-8
+encoding//src/colorpalette/ColorPalette_writeable.py=utf-8
 encoding//src/contextmenu/DeleteDefaultContextMenuEntries.py=utf-8
 encoding//src/contextmenu/ExtractContexMenuItems2.py=utf-8
 encoding//src/contextmenu/ExtractContexMenuItemsforTCU.py=utf-8
