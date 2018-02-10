@@ -6,41 +6,51 @@ import glob
 from itertools import zip_longest
 from xml.etree import ElementTree
 from com.sun.star.sheet import CellFlags as cf # 定数
+from com.sun.star.table.CellHoriJustify import CENTER  # enum
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。import pydevd; pydevd.settrace(stdoutToServer=True, stderrToServer=True)
 	doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	pathsettingssingleton = ctx.getByName('/singletons/com.sun.star.util.thePathSettings')  # thePathSettings
 	fileurls = pathsettingssingleton.getPropertyValue("Palette").split(";")  # Paletteへのパスを取得。セミコロン区切りで複数返ってくるのでリストにする。
-	for fileurl in reversed(fileurls):  # ユーザーフォルダにある方を先に取得。
-		palettepath = os.path.normpath(unohelper.fileUrlToSystemPath(fileurl)) 
-		path = os.path.join(palettepath, "*.soc")  # libreoffice5.4/share/palette/*.soc
+	lst_socs = ["standard.soc", "chart-palettes.soc"]  # 出力順を決まっているファイル名。
+	for fileurl in reversed(fileurls):  # ユーザーフォルダにある方を先に取得するため逆順にする。
+		sheet = getNewSheet(doc, "Palette")  # レイヤー毎にシートを作成する。
+		c = 0  # 出力列インデックス。
+		palettepath = os.path.normpath(unohelper.fileUrlToSystemPath(fileurl))  # システムパスに変換。
+		os.chdir(palettepath)  # socファイルのあるフォルダに移動。
+		set_socs = set(glob.glob("*.soc"))  # socファイルのリストを集合にして取得。
+		socs = lst_socs.copy()
+		socs.extend(set_socs.difference(lst_socs))  # ファイルの順番を変更。
 		xpath = './/draw:color'
 		namespaces1 = {"draw": "{http://openoffice.org/2000/drawing}"}  # 名前空間の辞書。replace()で置換するのに使う。
 		replaceWithValue1, replaceWithKey1 = createReplaceFunc(namespaces1)	
 		namespaces2 = {"draw": "{urn:oasis:names:tc:opendocument:xmlns:drawing:1.0}"}  # drawはもうひとつの名前空間が割り当てられている。
-		replaceWithValue2, replaceWithKey2 = createReplaceFunc(namespaces2)		
-		for socpath in glob.iglob(path):  # socファイルを取得。
-			datarows = [("name", "hex", "int")]  # 出力行を入れるリスト。
-			tree = ElementTree.parse(socpath)  # xmlの木を取得。
-			xpath1 = replaceWithValue1(xpath)  # 名前空間の辞書のキーを値に変換。
-			nodes = tree.findall(xpath1)  # xpahのノードを取得。	
-			if nodes:  # ノードが取得出来た時。
-				getAttrib(nodes, datarows, replaceWithKey1)
-			else:  # ノードが取得出来なかった時。
-				xpath2 = replaceWithValue2(xpath)  # 名前空間を変える。
-				nodes = tree.findall(xpath2)  # xpahのノードを取得。	
-				getAttrib(nodes, datarows, replaceWithKey2)
-			sheet = getNewSheet(doc, os.path.basename(socpath))  # socファイル名の新規シートを取得する。		
-			if datarows:  # 出力行が取得できた時。
-				rowsToSheet(sheet["A2"], datarows)  # シートに書き込む。
-				rows = sheet[2:len(datarows)+1, 0].getRows()  # 行インデックス2以降について行コレクションを取得する。
-				for row in rows:  # 各行について。
-					txt = row[0, 2].getString()  # 列インデックス2の文字列を取得。
-					if txt.isdigit():  # 文字列が数字だけの時。
-						row[0, 3].setPropertyValue("CellBackColor", int(txt))  # セルの背景色に設定する。
-			sheet["A1:D1"].merge(True)	
-			sheet["A1"].setString(socpath)  # A1セルにsocファイルのフルパスを代入。
-def getAttrib(nodes, datarows, replaceWithKey):
+		replaceWithValue2, replaceWithKey2 = createReplaceFunc(namespaces2)	
+		for socname in socs:  # socファイルを取得。
+			if os.path.exists(socname):
+				tree = ElementTree.parse(socname)  # xmlの木を取得。
+				xpath1 = replaceWithValue1(xpath)  # 名前空間1の辞書のキーを値に変換。
+				nodes = tree.findall(xpath1)  # xpahのノードを取得。	
+				replaceWithKey = replaceWithKey1  # 名前空間1を戻す関数。
+				if not nodes:  # ノードが取得出来なかった時。
+					xpath2 = replaceWithValue2(xpath)  # 名前空間を2に変える。
+					nodes = tree.findall(xpath2)  # xpahのノードを取得。	
+					replaceWithKey = replaceWithKey2  # 名前空間2を戻す関数。
+				if nodes:  # ノードが取得出来た時。
+					outputs = getAttrib(nodes, replaceWithKey)
+					rowsToSheet(sheet[2, c], outputs)  # シートに書き込む。
+					sheet[1, c].setString(socname)  # socファイル名を出力。
+					sheet[1, c:c+5].merge(True)
+					sheet[1, c:c+5].setPropertyValue("HoriJustify", CENTER)
+					rows = sheet[2:2+len(outputs), c+3].getDataArray()  # 色の10進数を取得。
+					for i, row in enumerate(rows):
+						if row[0]!="":  # 0の時もあるので空文字かどうかで判断する。
+							sheet[2+i, c].setPropertyValue("CellBackColor", int(row[0]))  # floatで返ってくるのでintにしないといけない。律速。
+					c += 5
+		sheet["A1"].setString(palettepath)
+		sheet["A1:H1"].merge(True)
+def getAttrib(nodes, replaceWithKey):
+	outputs = []
 	c = 0  # 行カウンタ。
 	for node in nodes:  # 取得した各ノードについて。
 		name, color = "", ""
@@ -52,10 +62,11 @@ def getAttrib(nodes, datarows, replaceWithKey):
 				color = val.upper().replace("#", "0x")  # Pythonの16進数にする。#を0xに変換する。
 		if name:  # 色名が取得出来ている時。
 			if c==12:  # 12行ずつ空行を挿入。
-				datarows.append(("",))
+				outputs.append(("",))
 				c = 0
-			datarows.append((name, color, int(color, 16)))  # 出力行に追加。
+			outputs.append(("", name, color, int(color, 16)))  # 出力行に追加。
 			c += 1
+	return outputs
 def createReplaceFunc(namespaces):  # 引数はキー名前空間名、値は名前空間を波括弧がくくった文字列、の辞書。
 	def replaceWithValue(txt):  # 名前空間の辞書のキーを値に置換する。
 		for key, val in namespaces.items():
