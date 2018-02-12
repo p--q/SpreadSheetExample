@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 
+from com.sun.star.awt.MessageBoxType import ERRORBOX  # enum
+from com.sun.star.awt import MessageBoxButtons  # 定数
+
+
 # from com.sun.star.lang import Locale  # Struct
 # from com.sun.star.i18n import TransliterationType  # 定数
 def macro():
@@ -9,9 +13,18 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	sheets = doc.getSheets()  # シートコレクション。
-	sheet = sheets[0]  # 最初のシート。
-	tcu.wtree(sheet)
+	controller = doc.getCurrentController()  # コントローラの取得。
+	msg = "ID、漢字名、カナ名、入院日\nすべてを入力してください。"
+	componentwindow = controller.ComponentWindow
+	msgbox = componentwindow.getToolkit().createMessageBox(componentwindow, ERRORBOX, MessageBoxButtons.BUTTONS_OK, "myRs", msg)
+	msgbox.execute()
+	tcu.wtree(msgbox)
+	
+	
+	
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
+# 	tcu.wtree(sheet)
 	return
 	
 	
