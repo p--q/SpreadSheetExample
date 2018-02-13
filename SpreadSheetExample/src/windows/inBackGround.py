@@ -8,7 +8,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	sheets = doc.getSheets()  # シートコレクションを取得。
 	sheets.insertNewByName("New", len(sheets))  # Newという名前の新規シートを最後に挿入。
 	newsheet = sheets["New"]  # 新規シートを取得。
-	doc.lockControllers()  # コントローラーへの更新の通知を保留。
+	doc.lockControllers()  # コントローラをロック。
 # 	doc.addActionLock()  # ドキュメントの更新を保留
 	controller.setActiveSheet(newsheet)  # 新規シートをアクティブにする。
 	controller.freezeAtPosition(4, 5)  # E6で行と列を固定。

@@ -37,7 +37,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。OnSt
 	listeners["desktop_frameactionlistener"] = FrameActionListener(dirpath, "desktop_frameactionlistener")
 	desktop.addTerminateListener(listeners["desktop_terminatelistener"])  # TerminateListener
 	desktop.addFrameActionListener(listeners["desktop_frameactionlistener"])  # FrameActionListener
-	controller = doc.getCurrentController()  # コントローラーの取得。
+	controller = doc.getCurrentController()  # コントローラの取得。
 	frame = controller.getFrame()  # フレームの取得。
 	listeners["frame_frameactionlistener"] = FrameActionListener(dirpath, "frame_frameactionlistener")
 	listeners["frame_closelistener"] = CloseListener(dirpath, "frame_closelistener")
