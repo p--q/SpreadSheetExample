@@ -13,12 +13,16 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。
-	msg = "ID、漢字名、カナ名、入院日\nすべてを入力してください。"
-	componentwindow = controller.ComponentWindow
-	msgbox = componentwindow.getToolkit().createMessageBox(componentwindow, ERRORBOX, MessageBoxButtons.BUTTONS_OK, "myRs", msg)
-	msgbox.execute()
-	tcu.wtree(msgbox)
+	
+	namedranges = doc.getPropertyValue("NamedRanges")
+	tcu.wtree(namedranges)
+	
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+# 	msg = "ID、漢字名、カナ名、入院日\nすべてを入力してください。"
+# 	componentwindow = controller.ComponentWindow
+# 	msgbox = componentwindow.getToolkit().createMessageBox(componentwindow, ERRORBOX, MessageBoxButtons.BUTTONS_OK, "myRs", msg)
+# 	msgbox.execute()
+# 	tcu.wtree(msgbox)
 	
 	
 	
