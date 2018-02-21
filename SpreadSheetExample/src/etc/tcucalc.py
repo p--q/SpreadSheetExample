@@ -17,7 +17,7 @@ def macro():
 	namedranges = doc.getPropertyValue("NamedRanges")
 	
 	celladdress = CellAddress(Sheet=0, Column=2, Row=0)
-	if "Name1" in namedranges:
+	if not "Name1" in namedranges:
 		namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)
 
 	name1 = namedranges["Name1"]
