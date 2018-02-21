@@ -2,20 +2,26 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 
-from com.sun.star.awt.MessageBoxType import ERRORBOX  # enum
-from com.sun.star.awt import MessageBoxButtons  # 定数
+# from com.sun.star.awt.MessageBoxType import ERRORBOX  # enum
+# from com.sun.star.awt import MessageBoxButtons  # 定数
 
 
 # from com.sun.star.lang import Locale  # Struct
 # from com.sun.star.i18n import TransliterationType  # 定数
+from com.sun.star.table import CellAddress  # Struct
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	
 	namedranges = doc.getPropertyValue("NamedRanges")
-	tcu.wtree(namedranges)
+	
+	celladdress = CellAddress(Sheet=0, Column=0, Row=2)
+	namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)
+
+	name1 = namedranges["Name1"]
+	
+	tcu.wtree(name1)
 	
 # 	controller = doc.getCurrentController()  # コントローラの取得。
 # 	msg = "ID、漢字名、カナ名、入院日\nすべてを入力してください。"
