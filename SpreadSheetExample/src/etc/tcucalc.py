@@ -14,14 +14,12 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-	namedranges = doc.getPropertyValue("NamedRanges")
-	
-	celladdress = CellAddress(Sheet=0, Column=2, Row=0)
-	if not "Name1" in namedranges:
-		namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)
-
+	sheet = doc.getSheets()[0]
+	namedranges = sheet.getPropertyValue("NamedRanges")  # ドキュメントのNamedRangesを取得。
+	celladdress = CellAddress(Sheet=0, Column=2, Row=0)  # 原点となるセルのアドレス。C1セル。
+	if not "Name1" in namedranges:  # Name1がない時のみ。重複しているとエラーになる。
+		namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)  # 名前、式(相対アドレス)、原点となるセル、NamedRangeFlag。
 	name1 = namedranges["Name1"]
-	
 	tcu.wtree(name1)
 	
 # 	controller = doc.getCurrentController()  # コントローラの取得。
