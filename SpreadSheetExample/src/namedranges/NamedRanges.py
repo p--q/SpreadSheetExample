@@ -7,11 +7,33 @@ def macro():
 	
 	sheets = doc.getSheets()
 	
+# 	sheet = sheets[0]
+# 	sheet["A1"].setString("Index0")
+# 	
+# 	return
+	
+	sheet0 = sheets[0]
+	sheet1 = sheets[1]
+	sheet2 = sheets[2]
+	
 	namedranges = doc.getPropertyValue("NamedRanges")
-	celladdress = CellAddress(Sheet=0, Column=0, Row=1)
-	namedranges.addNewByName("Name2", "A1+B1", celladdress, 0)
+	if not "Name1" in namedranges:
+		celladdress = CellAddress(Sheet=0, Column=2, Row=0)
+		namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)
 
-	name1 = namedranges["Name2"]
+	name1 = namedranges["Name1"]
+	
+
+	
+# 	name11 = sheets["Name1"]  # key not found
+
+	if not "Name2" in namedranges:
+		celladdress = CellAddress(Sheet=0, Column=2, Row=1)
+		namedranges.addNewByName("Name2", "B1", celladdress, 0)
+		
+	name2 = namedranges["Name2"]
+
+
 
 	pass
 
