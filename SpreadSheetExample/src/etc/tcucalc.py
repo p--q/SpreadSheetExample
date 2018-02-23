@@ -8,16 +8,18 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 
 # from com.sun.star.lang import Locale  # Struct
 # from com.sun.star.i18n import TransliterationType  # 定数
-from com.sun.star.table import CellAddress  # Struct
+# from com.sun.star.table import CellAddress  # Struct
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	doc = XSCRIPTCONTEXT.getDocument()
-# 	sheet = doc.getSheets()[0]
-	
-	rowlabelranges = doc.getPropertyValue("RowLabelRanges") 
-	tcu.wtree(rowlabelranges)
+	controller = doc.getCurrentController()  # コントローラの取得。 
+	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
+	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
+	labelrange = columnlabelranges[0]
+	tcu.wtree(labelrange)
 	
 # 	namedranges = sheet.getPropertyValue("NamedRanges")  # ドキュメントのNamedRangesを取得。
 # 	celladdress = CellAddress(Sheet=0, Column=2, Row=0)  # 原点となるセルのアドレス。C1セル。

@@ -12,14 +12,14 @@ def macro():
 # 	
 # 	return
 	
-	sheet0 = sheets[0]
-	sheet1 = sheets[1]
-	sheet2 = sheets[2]
+# 	sheet0 = sheets[0]
+# 	sheet1 = sheets[1]
+# 	sheet2 = sheets[2]
 	
 	namedranges = doc.getPropertyValue("NamedRanges")
 	if not "Name1" in namedranges:
 		celladdress = CellAddress(Sheet=0, Column=2, Row=0)
-		namedranges.addNewByName("Name1", "A1+B1", celladdress, 0)
+		namedranges.addNewByName("Name1", "A1:B1+A2:B2", celladdress, 0)
 
 	name1 = namedranges["Name1"]
 	
