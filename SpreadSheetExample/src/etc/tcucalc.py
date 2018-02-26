@@ -13,13 +13,19 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。 
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
-	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
-	labelrange = columnlabelranges[0]
-	tcu.wtree(labelrange)
+	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログ。
+	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナ。
+	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
+
+	
+	
+# 	doc = XSCRIPTCONTEXT.getDocument()
+# 	controller = doc.getCurrentController()  # コントローラの取得。 
+# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+# 	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
+# 	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
+# 	labelrange = columnlabelranges[0]
+# 	tcu.wtree(labelrange)
 	
 # 	namedranges = sheet.getPropertyValue("NamedRanges")  # ドキュメントのNamedRangesを取得。
 # 	celladdress = CellAddress(Sheet=0, Column=2, Row=0)  # 原点となるセルのアドレス。C1セル。
