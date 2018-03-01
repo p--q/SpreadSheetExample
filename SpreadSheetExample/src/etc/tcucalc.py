@@ -12,23 +12,23 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 # 	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログ。
 # 	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナ。
 # 	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
 
-	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')  # TypeDescriptionManagerをシングルトンでインスタンス化。
-	idl = 
+# 	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')  # TypeDescriptionManagerをシングルトンでインスタンス化。
+# 	idl = 
+# 	
+# 	tdm.getByHierarchicalName(idl)
 	
-	tdm.getByHierarchicalName(idl)
-	
-# 	doc = XSCRIPTCONTEXT.getDocument()
-# 	controller = doc.getCurrentController()  # コントローラの取得。 
-# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+	doc = XSCRIPTCONTEXT.getDocument()
+	controller = doc.getCurrentController()  # コントローラの取得。 
+	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
 # 	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
 # 	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
 # 	labelrange = columnlabelranges[0]
-# 	tcu.wtree(labelrange)
+	tcu.wtree(sheet)
 	
 # 	namedranges = sheet.getPropertyValue("NamedRanges")  # ドキュメントのNamedRangesを取得。
 # 	celladdress = CellAddress(Sheet=0, Column=2, Row=0)  # 原点となるセルのアドレス。C1セル。
