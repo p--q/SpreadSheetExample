@@ -12,12 +12,15 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログ。
-	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナ。
-	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログ。
+# 	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナ。
+# 	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
 
+	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')  # TypeDescriptionManagerをシングルトンでインスタンス化。
+	idl = 
 	
+	tdm.getByHierarchicalName(idl)
 	
 # 	doc = XSCRIPTCONTEXT.getDocument()
 # 	controller = doc.getCurrentController()  # コントローラの取得。 
