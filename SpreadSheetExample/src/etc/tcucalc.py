@@ -13,9 +13,19 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-# 	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログ。
-# 	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナ。
-# 	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
+	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログモデル。
+	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナモデル。
+	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
+
+
+# 	tcu.wtree(XSCRIPTCONTEXT)
+
+# 	tcu.wtree(unocontroldialogmodel)
+# 	tcu.wtree(unocontrolcontainermodel)
+
+# 	unocontroldialog = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", ctx)  # コントロールダイアログ。
+# 	tcu.wtree(unocontroldialog)
+
 
 # 	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')  # TypeDescriptionManagerをシングルトンでインスタンス化。
 # 	idl = 
@@ -23,12 +33,17 @@ def macro():
 # 	tdm.getByHierarchicalName(idl)
 	
 	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()  # コントローラの取得。 
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
-	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
-	labelrange = columnlabelranges[0]
-	tcu.wtree(labelrange)
+# 	controller = doc.getCurrentController()  # コントローラの取得。 
+# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+# 	columnlabelranges = doc.getPropertyValue("ColumnLabelRanges") 
+# 	columnlabelranges.addNew(sheet["A2:C2"].getRangeAddress(), sheet["A3:C4"].getRangeAddress())
+# 	labelrange = columnlabelranges[0]
+# 	tcu.wtree(labelrange)
+
+# 	tcu.wtree(sheet)
+	
+# 	tcu.wtree(doc)
+	
 	
 # 	namedranges = sheet.getPropertyValue("NamedRanges")  # ドキュメントのNamedRangesを取得。
 # 	celladdress = CellAddress(Sheet=0, Column=2, Row=0)  # 原点となるセルのアドレス。C1セル。
@@ -49,7 +64,7 @@ def macro():
 # 	sheets = doc.getSheets()  # シートコレクション。
 # 	sheet = sheets[0]  # 最初のシート。
 # 	tcu.wtree(sheet)
-	return
+# 	return
 	
 	
 # 	controller = doc.getCurrentController()  # コントローラの取得。
