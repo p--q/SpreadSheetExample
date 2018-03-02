@@ -9,10 +9,23 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.lang import Locale  # Struct
 # from com.sun.star.i18n import TransliterationType  # 定数
 # from com.sun.star.table import CellAddress  # Struct
+
+from com.sun.star.beans import PropertyValue
 def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+	prop = PropertyValue(Name="Hidden",Value=True)
+	wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))  # Writerドキュメントをバックグラウンドで開く。
+	tcu.wcompare(doc, wdoc)
+	
+	
+# def macro():
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	tcu.wtree(ctx)
 # 	unocontroldialogmodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialogModel", ctx)  # コントロールダイアログモデル。
 # 	unocontrolcontainermodel = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlContainerModel", ctx)  # コントロールコンテナモデル。
 # 	tcu.wcompare(unocontroldialogmodel, unocontrolcontainermodel)
@@ -160,9 +173,9 @@ def macro():
 # 	cellrangeaddress = doc.createInstance("com.sun.star.sheet.SheetCellRanges")  # com.sun.star.sheet.SheetCellRangesをインスタンス化。
 # 	tcu.wtree(cellrangeaddress)
 	
-	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-	controller = doc.getCurrentController()  # コントローラの取得。
-	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+# 	controller = doc.getCurrentController()  # コントローラの取得。
+# 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
 # 	cell = sheet["C1"]
 # 	address = cell.getCellAddress()
 # 	annotations = sheet.getAnnotations()
@@ -258,7 +271,7 @@ def macro():
 
 # 	tcu.wcompare(sheet["A1"], sheet[0, 0])  # どちらもセル。
 # 	tcu.wcompare(sheet["A1"], sheet[0:1, 0])  # セルとセル範囲
-	tcu.wcompare(sheet[0, 0], sheet[0:1, 0])  # セルとセル範囲
+# 	tcu.wcompare(sheet[0, 0], sheet[0:1, 0])  # セルとセル範囲
 
 # 	print(sheet["A1"])
 # 	print(sheet[0, 0])
