@@ -10,15 +10,14 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.i18n import TransliterationType  # 定数
 # from com.sun.star.table import CellAddress  # Struct
 
-from com.sun.star.beans import PropertyValue
 def macro():
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-	prop = PropertyValue(Name="Hidden",Value=True)
-	wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))  # Writerドキュメントをバックグラウンドで開く。
-	tcu.wcompare(doc, wdoc)
+    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+    desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
+    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+    docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+    tcu.wcompare(desktop, docframe)
 	
 	
 # def macro():
