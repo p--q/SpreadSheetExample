@@ -12,30 +12,33 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 
 
 # def macro():
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-# 	sheets = doc.getSheets()  # シートコレクション。
-# 	sheet = sheets[0]  # 最初のシート。
-# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
-# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
-# 	row = rows[0]  # 1行目。
-# 	tcu.wcompare(cells, row)
-# 	
-# 	tcu.wtree(sheet)
-	
+#     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+#     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+#     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+#     doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+#     docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
+#     tcu.wtree(docframe)  # フレーム。
 	
 def macro():
     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    doc = XSCRIPTCONTEXT.getDocument()
-    frame = doc.getCurrentController().getFrame() 
-    containerwindow = frame.getContainerWindow()
-    componentwindow = frame.getComponentWindow()
-    tcu.wcompare(containerwindow, componentwindow)	
-	
+    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+    sheets = doc.getSheets()  # シートコレクション。
+    sheet = sheets[0]  # 最初のシート。
+    tcu.wcompare(doc, sheet)
+ 
+# def macro():
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()
+# 	frame = doc.getCurrentController().getFrame() 
+# 	containerwindow = frame.getContainerWindow()
+# 	unocontroldialog = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", ctx)  # コントロールダイアログ。
+# 	tcu.wcompare(unocontroldialog, containerwindow
+
+ 	
 	
 # def macro():
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
