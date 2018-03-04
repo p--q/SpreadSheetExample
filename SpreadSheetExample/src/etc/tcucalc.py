@@ -10,14 +10,31 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.i18n import TransliterationType  # 定数
 # from com.sun.star.table import CellAddress  # Struct
 
+
+# def macro():
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+# 	sheets = doc.getSheets()  # シートコレクション。
+# 	sheet = sheets[0]  # 最初のシート。
+# 	cells = sheet[2:5, 3:6]  # 行インデックス2以上5未満、列インデックス3以上6未満(つまりD3:F5と同じ)のセル範囲。 
+# 	rows = sheet.getRows()  # 行アクセスオブジェクト。
+# 	row = rows[0]  # 1行目。
+# 	tcu.wcompare(cells, row)
+# 	
+# 	tcu.wtree(sheet)
+	
+	
 def macro():
     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # com.sun.star.frame.Desktopはdeprecatedになっている。
-    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-    docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
-    tcu.wcompare(desktop, docframe)
+    doc = XSCRIPTCONTEXT.getDocument()
+    frame = doc.getCurrentController().getFrame() 
+    containerwindow = frame.getContainerWindow()
+    componentwindow = frame.getComponentWindow()
+    tcu.wcompare(containerwindow, componentwindow)	
 	
 	
 # def macro():
