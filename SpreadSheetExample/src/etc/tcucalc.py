@@ -11,22 +11,24 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.table import CellAddress  # Struct
 
 
+def macro():
+    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+    doc = XSCRIPTCONTEXT.getDocument()
+    controller = doc.getCurrentController()  # コントローラの取得。
+    frame = controller.getFrame()  # フレームを取得。
+    containerwindow = frame.getContainerWindow()
+    tcu.wtree(containerwindow.getToolkit())
+	
 # def macro():
 #     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 #     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 #     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 #     doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-#     docframe = doc.getCurrentController().getFrame()  # モデル→コントローラ→フレーム、でドキュメントのフレームを取得。
-#     tcu.wtree(docframe)  # フレーム。
-	
-def macro():
-    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-    sheets = doc.getSheets()  # シートコレクション。
-    sheet = sheets[0]  # 最初のシート。
-    tcu.wcompare(doc, sheet)
+#     sheets = doc.getSheets()  # シートコレクション。
+#     sheet = sheets[0]  # 最初のシート。
+#     tcu.wcompare(doc, sheet)
  
 # def macro():
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
