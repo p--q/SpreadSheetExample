@@ -11,29 +11,36 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.table import CellAddress  # Struct
 
 
-# def macro():
-#     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-#     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-#     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-#     doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-#     sheets = doc.getSheets()  # シートの採集。
-#     sheet = sheets[0]  # 最初のシート。
-#     cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
-#     textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
-#     tcu.wtree(textcursor)  # A1セル内のテキストカーサー。
-    
-
-
-from com.sun.star.beans import PropertyValue
 def macro():
     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
     doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-    prop = PropertyValue(Name="Hidden",Value=True)
-    wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))  # Writerドキュメントをバックグラウンドで開く。
-    tcu.wcompare(doc, wdoc)
- 
+    sheets = doc.getSheets()  # シートコレクション。
+    sheet = sheets[0]  # 最初のシート。
+    columns = sheet.getColumns()  # 列アクセスオブジェクト。
+    column = columns[0]  # 1列目。
+    tcu.wtree(column)  # 列
+	
+	
+#	 ed = smgr.createInstanceWithContext("mytools.Mri", ctx)  # サービス名か実装名でインスタンス化。
+#	 tcu.wtree(ed)  # A1セル内のテキストカーサー。
+
+
+# from com.sun.star.beans import PropertyValue
+# def macro():
+#	 ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+#	 smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+#	 tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+# 	doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+# 	prop = PropertyValue(Name="Hidden",Value=True)
+# 	wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))  # Writerドキュメントをバックグラウンドで開く。
+# 	tcu.wcompare(doc, wdoc)
+
+
+
+
+
 # def macro():
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 # 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
@@ -44,8 +51,7 @@ def macro():
 # 	unocontroldialog = smgr.createInstanceWithContext("com.sun.star.awt.UnoControlDialog", ctx)  # コントロールダイアログ。
 # 	tcu.wcompare(unocontroldialog, containerwindow
 
- 	
-	
+
 # def macro():
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 # 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
