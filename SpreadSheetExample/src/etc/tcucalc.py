@@ -11,24 +11,28 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.table import CellAddress  # Struct
 
 
-def macro():
-    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    doc = XSCRIPTCONTEXT.getDocument()
-    controller = doc.getCurrentController()  # コントローラの取得。
-    frame = controller.getFrame()  # フレームを取得。
-    containerwindow = frame.getContainerWindow()
-    tcu.wtree(containerwindow.getToolkit())
-	
 # def macro():
 #     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 #     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 #     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 #     doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-#     sheets = doc.getSheets()  # シートコレクション。
+#     sheets = doc.getSheets()  # シートの採集。
 #     sheet = sheets[0]  # 最初のシート。
-#     tcu.wcompare(doc, sheet)
+#     cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
+#     textcursor = cell.createTextCursor()  # A1セル内のテキストカーサー。
+#     tcu.wtree(textcursor)  # A1セル内のテキストカーサー。
+    
+
+
+from com.sun.star.beans import PropertyValue
+def macro():
+    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
+    prop = PropertyValue(Name="Hidden",Value=True)
+    wdoc = XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/swriter", "_blank", 0, (prop,))  # Writerドキュメントをバックグラウンドで開く。
+    tcu.wcompare(doc, wdoc)
  
 # def macro():
 # 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -341,7 +345,7 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 		XSCRIPTCONTEXT = createXSCRIPTCONTEXT()  # XSCRIPTCONTEXTの取得。
 		doc = XSCRIPTCONTEXT.getDocument()  # 現在開いているドキュメントを取得。
 		doctype = "scalc", "com.sun.star.sheet.SpreadsheetDocument"  # Calcドキュメントを開くとき。
-	#  doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
+# 		doctype = "swriter", "com.sun.star.text.TextDocument"  # Writerドキュメントを開くとき。
 		if (doc is None) or (not doc.supportsService(doctype[1])):  # ドキュメントが取得できなかった時またはCalcドキュメントではない時
 			XSCRIPTCONTEXT.getDesktop().loadComponentFromURL("private:factory/{}".format(doctype[0]), "_blank", 0, ())  # ドキュメントを開く。ここでdocに代入してもドキュメントが開く前にmacro()が呼ばれてしまう。
 		flg = True
