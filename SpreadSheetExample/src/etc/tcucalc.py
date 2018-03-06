@@ -15,12 +15,8 @@ def macro():
     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-    sheets = doc.getSheets()  # シートコレクション。
-    sheet = sheets[0]  # 最初のシート。
-    columns = sheet.getColumns()  # 列アクセスオブジェクト。
-    column = columns[0]  # 1列目。
-    tcu.wtree(column)  # 列
+    systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
+    tcu.wtree(systemclipboard.getContents())
 	
 	
 #	 ed = smgr.createInstanceWithContext("mytools.Mri", ctx)  # サービス名か実装名でインスタンス化。
