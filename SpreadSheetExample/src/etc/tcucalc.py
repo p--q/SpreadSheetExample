@@ -10,15 +10,18 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.i18n import TransliterationType  # 定数
 # from com.sun.star.table import CellAddress  # Struct
 
-
+from com.sun.star.beans import PropertyValue
 def macro():
-    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx) # TempFile
-    ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker
-    content = ucb.queryContent(ucb.createContentIdentifier(tempfile.Uri))  # Tempfileのコンテントを取得。
-    tcu.wtree(content)
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')
+	tcu.wtree(tdm)
+
+	
+# 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメント。
+# 	zipfileaccess = smgr. createInstanceWithArgumentsAndContext("com.sun.star.packages.zip.ZipFileAccess", (doc.getURL(),), ctx)  # ZipFileAccess。第2引数はinitialize()メソッドで後でも渡せる。
+# 	tcu.wtree(zipfileaccess)
 
 	
 #	 ed = smgr.createInstanceWithContext("mytools.Mri", ctx)  # サービス名か実装名でインスタンス化。
