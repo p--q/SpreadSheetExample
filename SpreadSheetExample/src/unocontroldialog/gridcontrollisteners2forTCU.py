@@ -91,7 +91,12 @@ def createDialog(ctx, smgr, doc, flg):
 	dialog.getModel().setPropertyValue("Height", button1["PositionY"]+button1["Height"]+m)  # コントロールダイアログの高さを設定。
 	dialog.createPeer(toolkit, containerwindow)  # ダイアログを描画。親ウィンドウを渡す。ノンモダルダイアログのときはNone(デスクトップ)ではフリーズする。Stepを使うときはRoadmap以外のコントロールが追加された後にピアを作成しないとStepが重なって表示される。
 
-	TCU.wtree(column1)
+
+# 	TCU.wtree(griddata)
+# 	return 
+
+
+	TCU.wtree(gridcolumn)
 	return 
 	
 	dialog.addTopWindowListener(TopWindowListener())  # ログ出力用。

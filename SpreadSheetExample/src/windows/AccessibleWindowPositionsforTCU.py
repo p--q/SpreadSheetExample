@@ -48,10 +48,12 @@ def createOutput(head, xaccessible, outputs):  # XAccessibleからAccessibleRole
 	
 	if accessiblerole==84:  # 50 84
 		TCU.wtree(xaccessible.getAccessibleContext())
-# 		import sys
-# 		sys.exit()
-		i = xaccessible.getSelectedAccessibleChildCount()
-		pass
+
+# 		TCU.wtree(xaccessible)
+		import sys
+		sys.exit()
+# 		i = xaccessible.getSelectedAccessibleChildCount()
+# 		pass
 	
 	
 	

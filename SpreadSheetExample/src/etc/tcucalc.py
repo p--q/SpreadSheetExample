@@ -15,9 +15,11 @@ def macro():
     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    systemclipboard = smgr.createInstanceWithContext("com.sun.star.datatransfer.clipboard.SystemClipboard", ctx)
-    tcu.wtree(systemclipboard.getContents())
-	
+    tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx) # TempFile
+    ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker
+    content = ucb.queryContent(ucb.createContentIdentifier(tempfile.Uri))  # Tempfileのコンテントを取得。
+    tcu.wtree(content)
+
 	
 #	 ed = smgr.createInstanceWithContext("mytools.Mri", ctx)  # サービス名か実装名でインスタンス化。
 #	 tcu.wtree(ed)  # A1セル内のテキストカーサー。
