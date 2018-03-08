@@ -55,6 +55,7 @@ encoding//src/etc/onload.py=utf-8
 encoding//src/etc/progressbar.py=utf-8
 encoding//src/etc/tcucalc.py=utf-8
 encoding//src/etc/tcucalc2.py=utf-8
+encoding//src/etc/tcuclaclines.py=utf-8
 encoding//src/etc/wclick.py=utf-8
 encoding//src/henkan/transliteration.py=utf-8
 encoding//src/moveSheet/ExportSheet.py=utf-8

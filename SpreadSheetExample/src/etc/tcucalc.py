@@ -11,13 +11,16 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 # from com.sun.star.table import CellAddress  # Struct
 
 # from com.sun.star.uno.TypeClass import CONSTANTS
-# def macro():
-# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-# 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-# 	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')
-# 	service = tdm.getByHierarchicalName("com.sun.star.sheet.SpreadsheetDocument")
-# 	tcu.wtree(service)
+
+# from com.sun.star.uno.TypeClass import INTERFACE_METHOD  # enum
+def macro():
+	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')
+	typedef = tdm.getByHierarchicalName("com.sun.star.util.Color")
+	tcu.wtree(typedef)
+
 
 # 	color = tdm.getByHierarchicalName("com.sun.star.util.Color")
 # 	typeclass = color.getTypeClass()
@@ -27,15 +30,19 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 
 
 
-def macro():
-    ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-    smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
-    tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-    doc = XSCRIPTCONTEXT.getDocument()  # Calcドキュメント。
-    sheets = doc.getSheets()  # シートの採集。
-    sheet = sheets[0]  # 最初のシート。
-    cell = sheet[0, 0]  # 行インデックス0、列インデックス0、のセル(つまりA1セル)。
-    tcu.wtree(cell)  # A1セル。
+# def macro():
+#     ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+#     smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
+#     tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
+#     doc = XSCRIPTCONTEXT.getDocument()
+#     controller = doc.getCurrentController()  # コントローラの取得。
+#     frame = controller.getFrame()  # フレームを取得。
+#     containerwindow = frame.getContainerWindow()
+#     tcu.wtree(containerwindow.getToolkit())
+	
+	
+	
+	
 	
 # 	doc = XSCRIPTCONTEXT.getDocument()  # ドキュメント。
 # 	zipfileaccess = smgr. createInstanceWithArgumentsAndContext("com.sun.star.packages.zip.ZipFileAccess", (doc.getURL(),), ctx)  # ZipFileAccess。第2引数はinitialize()メソッドで後でも渡せる。
