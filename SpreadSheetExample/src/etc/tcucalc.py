@@ -17,7 +17,10 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	print("\n".join(tcu.treelines(tcu)))
+# 	print("\n".join(tcu.treelines(tcu)))
+	
+	extensionmanager = ctx.getByName('/singletons/com.sun.star.deployment.ExtensionManager')
+	tcu.wtree(extensionmanager)
 	
 # 	tdm = ctx.getByName('/singletons/com.sun.star.reflection.theTypeDescriptionManager')
 # 	typedef = tdm.getByHierarchicalName("com.sun.star.util.Color")
