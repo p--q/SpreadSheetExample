@@ -4,6 +4,7 @@ import unohelper  # オートメーションには必須(必須なのはuno)。
 from wsgiref.simple_server import make_server
 import webbrowser
 import time
+import re
 import xml.etree.ElementTree as ET
 from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.ucb import XCommandEnvironment
@@ -25,11 +26,11 @@ def macro():
 			"Container Window": containerwindow,\
 			"Component Window": componentwindow,\
 			"Toolkit": toolkit\
-			}
+			}  # ツリーを出力するオブジェクトの辞書。
 	dic_objs = {\
 			"Container Window vs. Component Window": (containerwindow, componentwindow),\
 			"Desktop vs. Frame": (desktop, frame)\
-			}
+			}  # 比較ツリーを出力するオブジェクトの辞書。
 	createTrees(ctx, tcu, dic_obj, dic_objs)
 def createTrees(ctx, tcu, dic_obj, dic_objs):
 	start = time.perf_counter()
@@ -38,7 +39,7 @@ def createTrees(ctx, tcu, dic_obj, dic_objs):
 	ca = cp.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
 	libreversion = ca.getPropertyValues(('ooName', 'ooSetupVersionAboutBox'))  # LibreOfficeの名前とバージョンをタプルで返す。
 	extensionmanager = ctx.getByName('/singletons/com.sun.star.deployment.ExtensionManager')
-	extension = extensionmanager.getDeployedExtension("user", "pq.Tcu", "TCU.oxt", None)
+	extension = extensionmanager.getDeployedExtension("user", "pq.Tcu", "TCU.oxt", None)  # TCUの名前とバージョン番号の取得のため。
 	colors = "#FFCC99", "#FFCCCC", "#FF99CC", "#FFCCFF", "#CC99FF", "#CCCCFF", "#99CCFF", "#CCFFFF", "#99FFCC", "#CCFFCC" , "#CCFF99"  # Orange10, Red10, Pink10, Magenta10, Violet10, Blue10, SkyBlue10, Cyan10, Turquoise10, Green10, YellowGreen10	
 	nodepairs = []
 	[nodepairs.append(createNodes(key, tcu.wtreelines(val))) for key, val in dic_obj.items()]
@@ -66,7 +67,9 @@ def createNodes(name, lines):
 	tabnode = Elem("a", {"href": "#{}".format(i)}, text=name)
 	tabbodynode = Elem("div", {"id": i})
 	tabbodynode.append(Elem("p", text=name))
-	txt = "<br/>".join(lines).replace(" ", chr(0x00A0))  # 連続したスペースはブラウザで一つにされるのでUnicodeのノーブレークスペースに置換する。
+# 	txt = "<br/>".join(lines)
+# 	spaces = sorted(set(re.findall(r'\u0020{2,}', txt)), reverse=True)  # 連続したスペースのリストを長いもの順に取得。
+# 	[txt.replace(s, chr(0x00A0)*len(s)) for s in spaces]  # 連続したスペースはブラウザで一つにされるのでノーブレークスペースに置換する。
 	xml = "<tt style='white-space: nowrap;'>{}</tt>".format(txt)
 	tabbodynode.append(ET.XML(xml))
 	return tabnode, tabbodynode
@@ -76,28 +79,39 @@ def createRoot():
 	rt[0].append(Elem("title", text="TCU - Tree Command for UNO"))
 	rt[0].append(Elem("meta", {"meta": "UTF-8"}))
 	rt.append(Elem("body"))
+# 	display: inline-block;			/* インラインブロック化 */
+# 	border-width: 1px 1px 0px 1px;	/* 下以外の枠線を引く */
+# 	border-style: solid;			  /* 枠線の種類：実線 */
+# 	border-color: black;			  /* 枠線の色：黒色 */
+# 	border-radius: 0.75em 0.75em 0 0; /* 枠線の左上角と右上角だけを丸く */
+# 	padding: 0.75em 1em;			  /* 内側の余白 */
+# 	text-decoration: none;			/* リンクの下線を消す */
+# 	color: black;					 /* 文字色：黒色 */
+# 	background-color: white;		  /* 背景色：白色 */
+# 	font-weight: bold;				/* 太字 */
+# 	position: relative;			   /* JavaScriptでz-indexを調整するために必要 */
+# 	outline: none;		/* 選択時の点線を消す */
 	style = """\
 #tabcontrol {
 	margin: 0;  /* タブ領域全体 */
 }
 /* タブ */
 #tabcontrol a {
-	display: inline-block;			/* インラインブロック化 */
-	border-width: 1px 1px 0px 1px;	/* 下以外の枠線を引く */
-	border-style: solid;			  /* 枠線の種類：実線 */
-	border-color: black;			  /* 枠線の色：黒色 */
-	border-radius: 0.75em 0.75em 0 0; /* 枠線の左上角と右上角だけを丸く */
-	padding: 0.75em 1em;			  /* 内側の余白 */
-	text-decoration: none;			/* リンクの下線を消す */
-	color: black;					 /* 文字色：黒色 */
-	background-color: white;		  /* 背景色：白色 */
-	font-weight: bold;				/* 太字 */
-	position: relative;			   /* JavaScriptでz-indexを調整するために必要 */
-	outline: none;					/* 選択時の点線を消す */
+	position: relative;
+	display: inline-block;
+	font-weight: bold;
+	padding: 8px 10px 5px 10px;
+	text-decoration: none;
+	color: #FFA000;
+	background: #fff1da;
+	border-bottom: solid 4px #FFA000;
+	border-radius: 15px 15px 0 0;
+	transition: .4s;	
 }
 /* タブにマウスポインタが載った際 */
 #tabcontrol a:hover {
-	text-decoration: underline;   /* リンクの下線を引く */
+	background: #ffc25c;
+	color: #FFF;
 }
 /* タブの中身 */
 #tabbody div {
@@ -163,11 +177,6 @@ class Elem(ET.Element):
 			super().__init__(tag, attrib, **kwargs)
 	def _text(self, txt):
 		self.text = txt
-# class CommandEnv(unohelper.Base, XCommandEnvironment):
-# 	def getInteractionHandler(self):
-# 		return self.act.__class__.Interactionhalder(self.act)	
-# 	def getProgressHandler(self):
-# 		return self.act.__class__.ProgressHandler()
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
