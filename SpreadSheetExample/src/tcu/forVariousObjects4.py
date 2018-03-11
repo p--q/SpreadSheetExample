@@ -19,8 +19,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	componentwindow = frame.getComponentWindow()
 	toolkit = containerwindow.getToolkit()
 	
-	# 順番つき辞書にする。
-	
+
 	
 	obj = ("Desktop", desktop),\
 		("Frame", frame),\
@@ -55,18 +54,33 @@ def createTrees(obj, objs):
 	node = PropertyValue(Name = 'nodepath', Value = 'org.openoffice.Setup/Product' )  # share/registry/main.xcd内のノードパス。
 	configurationaccess = configurationprovider.createInstanceWithArguments('com.sun.star.configuration.ConfigurationAccess', (node,))
 	libreversion = configurationaccess.getPropertyValues(('ooName', 'ooSetupVersionAboutBox'))  # LibreOfficeの名前とバージョンをタプルで返す。
-	headernode = Elem("div", {"id": "tcuheader"})  # ヘッダーノード。flexコンテナ。3つのflexアイテムをspace-betweenで配置。
-	headernode.append(Elem("div", text="{} {}".format(*libreversion)))  # 左端のflexアイテム。
-	headernode.append(Elem("div"))  # 真ん中のflexアイテム。
+	headernode = Elem("div", {"id": "tcuheader"})  # ヘッダーノード。flexコンテナ。space-betweenで配置。
+	headernode.append(Elem("div", {"class": "tcutitle"}, text="{} {}".format(*libreversion)))  # 左端のflexアイテム。
+	headernode.append(Elem("div", {"style":"display:flex"})) # 右端のflexアイテム。
 	image = "data:image/gif;base64,R0lGODlhyAAYAKIAANbW1v///97e3vf39+bm5u/v7wAAAAAAACH5BAAHAP8ALAAAAADIABgAAAPZGLpaAjDKSau9OOvNu//gJRQDYzKEQJBD675wLM90bd94ru98Pzu\
 q0qkRHBqPyKRyyWw6n9Boc5AqDB1CqXbL7Xq/3sHIhAWbz+i0eim2LsbruHxOd4qFBEJ9z+/P8woAWX6EhYZQggV6h4yNjiYjcI+TlH1Ag5WZmmgDEJiboKFanqKlpk+kp6qrJ52SrLCnDoqxtaYrnZ+2u465A\
 YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6CQA7"	
-	formnode = Elem("div", {"id": "tcuform", "style": "background: url({}) left top no-repeat;".format(image)})  # 右端のflexアイテム。
+	flexcontainer = Elem("div", {"style": "display:flex;flex-direction:column;align-items:flex-end;"}) # flexコンテナ。flexアイテムを縦に並べる。
+	formnode = Elem("div", {"id": "tcuform", "style": "background: url({}) left top no-repeat;".format(image)})  # フォームノード。
 	formnode.append(Elem("input", {"type": "serach", "name": "q", "placeholder": "Search the tree...", "aria-label": "Search through tree content", "accesskey": "s", "required": ""}))  # requiredは空文字を渡しても有効になる。 
 	image = "data:image/gif;base64,R0lGODlhEgASALMAAIeHh////9fX18XFxbS0tO7u7qSkpN7e3pKSkvj4+MzMzL29vebm5q2trY6OjpmZmSH5BAA\
-	HAP8ALAAAAAASABIAAARhMMiZpr2yqMEPvgdBCMdCKNVXjGlQLMoXKAt2NAX2eley8JZXDqMQ6AYMTGIAtHAwDNwnapysECwbgXlQbAcOByF5KQgGMM8SATAIWhR4QmEAPAZwmWsBaOiVTX+Cg4QYEQA7"  # これはなぜかタブをつけても画像が有効になる。
-	formnode.append(Elem("img", {"src": image, "alt": ""})) 	
-	headernode.append(formnode)
+	HAP8ALAAAAAASABIAAARhMMiZpr2yqMEPvgdBCMdCKNVXjGlQLMoXKAt2NAX2eley8JZXDqMQ6AYMTGIAtHAwDNwnapysECwbgXlQbAcOByF5KQgGMM8SATAIWhR4QmEAPAZwmWsBaOiVTX+Cg4QYEQA7"  # これはなぜかタブをつけても画像が有効になる。	
+	formnode.append(Elem("img", {"src": image, "alt": ""}))
+	flexcontainer.append(formnode)
+	resetnode = Elem("div")
+	resetnode.append(Elem("button", {"type": "button"}, text="Reset"))  # リセットボタン。
+	flexcontainer.append(resetnode)
+	headernode[-1].append(flexcontainer)
+	flexcontainer = Elem("div", {"style": "display:flex;flex-direction:column;"}) # flexコンテナ。flexアイテムを縦に並べる。
+	comparecheck = Elem("div")
+	comparecheck.append(Elem("label"))  # チェックボックスのラベル。ラベルをクリックしてもチェックボックスを切替できるようにチェックボックスはこのサブノードにする。
+	comparecheck[-1].append(Elem("input", {"type": "checkbox"}, text="Do not display the compare mode"))  # チェックボックス。	
+	flexcontainer.append(comparecheck)
+	resetcheck = Elem("div")
+	resetcheck.append(Elem("label"))  # チェックボックスのラベル。ラベルをクリックしてもチェックボックスを切替できるようにチェックボックスはこのサブノードにする。
+	resetcheck[-1].append(Elem("input", {"type": "checkbox", "checked": ""}, text="Clear search terms"))  # チェックボックス。	
+	flexcontainer.append(resetcheck)
+	headernode[-1].append(flexcontainer)
 	# フッタノードの作成。
 	extensionmanager = ctx.getByName('/singletons/com.sun.star.deployment.ExtensionManager')
 	extension = extensionmanager.getDeployedExtension("user", "pq.Tcu", "TCU.oxt", None)  # TCUの名前とバージョン番号の取得のため。	
@@ -97,7 +111,7 @@ def createNodes(name, lines):  # name: タブの表示名(ユニークでない�
 	tabbodynode.append(Elem("p", text=name))  # タブボディに表示するタイトル。
 	html = "<br/>".join(lines).replace(" ", chr(0x00A0))  # 半角スペースをノーブレークスペースに置換する。
 	html = re.sub(r'(?<!\u00A0)\u00A0(?!\u00A0)', " ", html)  # タグ内にノーブレークスペースはエラーになるので連続しないノーブレークスペースを半角スペースに戻す。
-	xml = "<tt>{}</tt>".format(html)  # ツリーのhtmlを完成させる。
+	xml = "<code>{}</code>".format(html)  # ツリーのhtmlを完成させる。
 	tabbodynode.append(ET.XML(xml))  # タブボディノードにツリーを部分木にして追加する。
 	return tabnode, tabbodynode  # タブノードとタブボディノードのタプルを返す。
 def createRoot():  # ルートノードを返す。
@@ -114,10 +128,11 @@ def createRoot():  # ルートノードを返す。
 	border-bottom: 1px solid #C4CFE5;
 	padding: 0.5em
 }
-#tcuheader div:nth-child(1) {  /* ヘッダーノード内の1番目のdivタグ。*/
+#tcuheader .tcutitle {  /* ページタイトル */
 	font-family: Tahoma, Arial, sans-serif;
 	font-size: 150%;
 	font-weight: bold;
+	padding: 10px;
 }
 #tcuform {  /* 検索ノード */
 	width: 200px;  
@@ -138,6 +153,43 @@ def createRoot():  # ルートノードを返す。
 	top: 3px;  
 	left: 174px;  
 	cursor: pointer;
+}
+#tcureset {
+	display: flex;
+}
+#tcureset button {
+	margin: 5px 0;
+	border-style: none;
+	padding: 5px;
+	border-radius: 5px;
+	font-weight: bold;
+	color: #2A3D61";
+	outline: none;  /* 選択時の点線を消す */
+}
+#tcureset button:hover {
+	text-decoration: underline;  /* 下線を引く */
+	background-color: #24d;
+	color: #fff;
+	cursor: pointer;
+}
+/* Firefox */
+#tcureset button::-moz-focus-inner {
+  border: 0;  /* 選択時の点線を消す */
+}
+#tcureset label {
+	display: block;
+	position: relative;
+	color: #2A3D61;
+	font-size: 14px;
+	padding-left: 1.2em;
+	cursor: pointer;
+}
+#tcureset label input {
+	position: absolute;
+	margin: auto;
+	left: 0;
+	cursor: pointer;
+	outline: none;  /* 選択時の点線を消す */
 }
 #tcutab {  /* タブノード。flexコンテナ。 */
 	padding: 0.5em;
@@ -169,7 +221,7 @@ def createRoot():  # ルートノードを返す。
 	font-size: 150%;
 	font-weight: bold;
 }
-#tcutabbody div tt {  /* タブボディノード内のttタグ */
+#tcutabbody div code {  /* タブボディノード内のttタグ */
 	white-space: nowrap;
 }
 #tcufooter {  /* フッタノード */
@@ -201,12 +253,14 @@ var pq_TCU = pq_TCU || function() {
 		mouseDownTab: function(e) {  // タブノードをクリックした時。
 			var target = e.target; // イベントを発生した要素を取得。タブのDOMが返ってくる。
 			var tabname = target.className  // タブ名を取得する。
-			var tabbodys = g.tabbody.children  // HTMLCollection(≠配列)が返る。childNodesだとTextNodeまでも返ってくる。
-			for (var i=0;i<tabbodys.length;i++) {  // childrenではTextNodeを除外して取得できるが配列ではないのでforEachは使えないらしい。タブノードのHTMLCollection。
-				if (tabbodys[i].className==tabname) {  // タブ名が一致する時。
-					tabbodys[i].style.display = "inline-block";  // タブボディを表示する
-				} else {  // タブ名が一致しない時。
-					tabbodys[i].style.display = "none";  // 非表示にする。
+			if (tabname) {  // タブ名を取得できたのみ実行。そうしないとボタンを以外をクリックしても反応する。
+				var tabbodys = g.tabbody.children  // HTMLCollection(≠配列)が返る。childNodesだとTextNodeまでも返ってくる。
+				for (var i=0;i<tabbodys.length;i++) {  // childrenではTextNodeを除外して取得できるが配列ではないのでforEachは使えないらしい。タブノードのHTMLCollection。
+					if (tabbodys[i].className==tabname) {  // タブ名が一致する時。
+						tabbodys[i].style.display = "inline-block";  // タブボディを表示する
+					} else {  // タブ名が一致しない時。
+						tabbodys[i].style.display = "none";  // 非表示にする。
+					}
 				}
 			}
 		},
@@ -233,7 +287,7 @@ var pq_TCU = pq_TCU || function() {
 			}
 		},
 		_searchQuery: function(q) {
-			var a
+			g.tabbody.getElementsByTagName('code')
 		
 		
 		
@@ -256,8 +310,8 @@ class Wsgi:
 		httpd = make_server(host, port, self.app)  # appへの接続を受け付けるWSGIサーバを生成。
 		url = "http://localhost:{}".format(port)  # 出力先のurlを取得。
 		webbrowser.open_new_tab(url)   # デフォルトブラウザでurlを開く。
-		httpd.serve_forever()  # JavaScriptのデバッグ時はサーバーを立ち上がておく。
-# 		httpd.handle_request()  # リクエストを1回だけ受け付けたらサーバを終了させる。ローカルファイルはセキュリティの制限で開けない。
+# 		httpd.serve_forever()  # JavaScriptのデバッグ時はサーバーを立ち上がておく。
+		httpd.handle_request()  # リクエストを1回だけ受け付けたらサーバを終了させる。ローカルファイルはセキュリティの制限で開けない。
 def toBrowser(root):  # ブラウザにルートとなるElementオブジェクトを渡す。
 	html = ET.tostring(root, encoding="utf-8",  method="html")  # utf-8にエンコードしてhtmlにする。utf-8ではなくunicodeにすると文字列になる。method="html"にしないと<script>内がhtmlエンティティになってしまう。
 	server = Wsgi(html)  # エンコード済のhtmlを渡す。

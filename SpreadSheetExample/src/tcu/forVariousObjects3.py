@@ -103,7 +103,7 @@ def createNodes(name, lines):
 	tabbodynode.append(Elem("p", text=name))
 	html = "<br/>".join(lines).replace(" ", chr(0x00A0))  # 半角スペースをノーブレークスペースに置換する。
 	html = re.sub(r'(?<!\u00A0)\u00A0(?!\u00A0)', " ", html)  # タグ内にノーブレークスペースはエラーになるので連続しないノーブレークスペースを半角スペースに戻す。
-	xml = "<tt style='white-space: nowrap;'>{}</tt>".format(html)
+	xml = "<code style='white-space: nowrap;'>{}</code>".format(html)
 	tabbodynode.append(ET.XML(xml))
 	return tabnode, tabbodynode
 def createRoot():

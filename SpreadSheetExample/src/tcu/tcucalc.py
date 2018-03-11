@@ -18,16 +18,16 @@ def macro():
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 	
-# 	doc = XSCRIPTCONTEXT.getDocument()
-# 	tcu.wtree(doc)
+	doc = XSCRIPTCONTEXT.getDocument()
+	tcu.wtree(doc)
 	
 	
-	canvasfactory = smgr.createInstanceWithContext("com.sun.star.rendering.CanvasFactory", ctx)
+# 	canvasfactory = smgr.createInstanceWithContext("com.sun.star.rendering.CanvasFactory", ctx)
 # 	bitmapcanvas = canvasfactory.createInstance("com.sun.star.rendering.BitmapCanvas")
-	canvas = canvasfactory.createInstance("com.sun.star.rendering.Canvas")
-	devicecolorspace = canvas.getDeviceColorSpace()
-	
-	tcu.wtree(devicecolorspace)
+# 	canvas = canvasfactory.createInstance("com.sun.star.rendering.Canvas")
+# 	devicecolorspace = canvas.getDeviceColorSpace()
+# 	
+# 	tcu.wtree(devicecolorspace)
 	
 	
 	
