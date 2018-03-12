@@ -46,6 +46,7 @@ encoding//src/datepicker/datepicker.py=utf-8
 encoding//src/documentevents/docevents.py=utf-8
 encoding//src/documentevents/docevents2.py=utf-8
 encoding//src/documentevents/sheetevents.py=utf-8
+encoding//src/dom/domex.py=utf-8
 encoding//src/etc/calcmacro.py=utf-8
 encoding//src/etc/cellcursor.py=utf-8
 encoding//src/etc/endcell.py=utf-8
