@@ -44,18 +44,17 @@ def createTrees(ctx, dic_obj, dic_objs):
 	extensionmanager = ctx.getByName('/singletons/com.sun.star.deployment.ExtensionManager')
 	extension = extensionmanager.getDeployedExtension("user", "pq.Tcu", "TCU.oxt", None)  # TCUの名前とバージョン番号の取得のため。
 	colors = 0xFFCC99, 0xFFCCCC, 0xFF99CC, 0xFFCCFF, 0xCC99FF, 0xCCCCFF, 0x99CCFF, 0xCCFFFF, 0x99FFCC, 0xCCFFCC , 0xCCFF99  # Orange10, Red10, Pink10, Magenta10, Violet10, Blue10, SkyBlue10, Cyan10, Turquoise10, Green10, YellowGreen10	
-	nodepairs = []
-	[nodepairs.append(createNodes(key, tcu.wtreelines(val))) for key, val in dic_obj.items()]
-	[nodepairs.append(createNodes(key, tcu.wcomparelines(*val))) for key, val in dic_objs.items()]
-	n = len(colors)
+	rgbcolors = [colorToRGB(i) for i in colors]  # RGBタプルのリストにする。
+	nodepairs = []  # タブノードとタブボディノードのタプルのリスト。
+	[nodepairs.append(createNodes(key, tcu.wtreelines(val))) for key, val in dic_obj.items()]  # wtreelines()についてタブノードとタブボディノードを作成。
+	[nodepairs.append(createNodes(key, tcu.wcomparelines(*val))) for key, val in dic_objs.items()]  # wcomparelines()についてタブノードとタブボディノードを作成。
+	n = len(colors)  # 色は順繰りに使う。
 	style = "\n".join(["#tabcontrol a:nth-child({0}), #tabbody div:nth-child({0}) {{background-color:rgb({1}, {2}, {3});box-shadow: 0 5px 20px rgba({1}, {2}, {3}, .5);}}"\
-					.format(i, *colorToRGB(colors[i%n])) for i in range(1, len(nodepairs)+1)])
-	
-	
-	stylenode = Elem("style", text=style)				
-	tabnodes = Elem("p", {"id": "tabcontrol"})
-	tabbodynodes = Elem("div", {"id": "tabbody"})
-	for tabnode, tabbodynode in nodepairs:
+					.format(i, *rgbcolors[i%n]) for i in range(1, len(nodepairs)+1)])
+	stylenode = Elem("style", text=style)  # タブの動的CSS。				
+	tabnodes = Elem("p", {"id": "tabcontrol"})  # タブを入れるノード。
+	tabbodynodes = Elem("div", {"id": "tabbody"})  # タブボディを入れるノード。
+	for tabnode, tabbodynode in nodepairs:  # tabnodesとtabbodynodesの作成。
 		tabnodes.append(tabnode)
 		tabbodynodes.append(tabbodynode)
 	root, scriptnode = createRoot()  # scriptノードは最後に挿入したいので別に取得する。
@@ -96,7 +95,7 @@ def colorToRGB(color):
 	green = int(redmodulo/0x100)
 	blue = redmodulo % 0x100
 	return red, green, blue
-def createNodes(name, lines):
+def createNodes(name, lines):  # name
 	i = name.replace(" ", "").replace(".", "")
 	tabnode = Elem("a", {"href": "#{}".format(i)}, text=name)
 	tabbodynode = Elem("div", {"id": i})
