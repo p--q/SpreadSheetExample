@@ -95,15 +95,24 @@ YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6C
 	toBrowser(root)
 	
 def createCSS(root):
-	xpath_id = './/*[@id]'  # idのあるノードを取得するXPath。
-	xpath_style = './/*[@style]'  # sytleのあるノードを取得するXPath。
-	xpath_class = './/*[@class]'  # classのあるノードを取得するXPath。
-	nodes_id = root.findall(xpath_id)
-	props = {}  # styleのプロパティをキー、パスを値とする辞書。
-	for node in nodes_id:
-		for child in node:
-			if "style" in child.keys():
-				child.get("style").split(";")
+	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
+	
+	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
+	while style_nodes:
+		n = style_nodes.pop()
+		pass
+	
+	
+
+	
+	
+	
+# 	nodes_id = root.findall(xpath_id)
+# 	props = {}  # styleのプロパティをキー、パスを値とする辞書。
+# 	for node in nodes_id:
+# 		for child in node:
+# 			if "style" in child.keys():
+# 				child.get("style").split(";")
 			
 		
 		
@@ -169,13 +178,15 @@ var pq_TCU = pq_TCU || function() {
 	var g = { // モジュール内の"グローバル"変数。
 		tab: document.getElementById('tcutab'),  // タブノード。
 		tabbody: document.getElementById('tcutabbody'),  // タブボディノード。
-		form:  document.getElementById('tcuform')  // 検索ノード。
+		form:  document.getElementById('tcuform'),  // 検索ノード。
+		tabclasses: ["tcutree", "tcucompare"]  // タブクラス名。
 	};  // end of g
 	var eh = {  // イベントハンドラオブジェクト。
 		mouseDownTab: function(e) {  // タブノードをクリックした時。
 			var target = e.target; // イベントを発生した要素を取得。タブのDOMが返ってくる。
-			var tabname = target.textContent.replace(/\s+/g, "")  // タブ名を空白を除いて取得。
-			if (tabname) {  // タブ名を取得できたのみ実行。そうしないとボタンを以外をクリックしても反応する。
+			var tabclass = target.className  // ターゲットのクラスを取得。
+			if (g.tabclasses.indexOf(tabclass)!=-1) {  // タブがクリックされたときのみ実行。そうしないとボタンを以外をクリックしても反応する。
+				var tabname = target.textContent.replace(/\s+/g, "")  // タブ名を空白を除いて取得。
 				var tabbodys = g.tabbody.children  // HTMLCollection(≠配列)が返る。childNodesだとTextNodeまでも返ってくる。
 				for (var i=0;i<tabbodys.length;i++) {  // childrenではTextNodeを除外して取得できるが配列ではないのでforEachは使えないらしい。タブノードのHTMLCollection。
 					if (tabbodys[i].id==tabname) {  // タブ名が一致する時。
@@ -191,7 +202,7 @@ var pq_TCU = pq_TCU || function() {
 			if (target.tagName.toLowerCase()=="a") {  // aタグの時。タグ名は大文字で返ってくるらしい。
 				if (target.href.startsWith("file")) {  // ローカルファイルをアンカーしている時。
 					if (!target.baseURI.startsWith("file")) {  // ローカルファイルのページでない時。
-						window.alert("You can not move to the local reference page for security reasons.\\n You have to save this file to the disk and reopen it.");  // 改行は/nだとエスケープしていないと言われる。
+						window.alert("You can not move to the local reference page for security reasons.\\n You have to save this file to the disk and reopen it.");  // \\nの\\はエスケープが必要(Pythonの文字列のため)。
 					}
 				}
 			} 
