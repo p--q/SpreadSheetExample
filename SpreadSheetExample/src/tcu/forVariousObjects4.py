@@ -96,11 +96,33 @@ YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6C
 	
 def createCSS(root):
 	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
-	
+	getParentNode = createParentGetterr(root)
 	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
-	while style_nodes:
-		n = style_nodes.pop()
-		pass
+	while style_nodes:  # styleのあるノードがある間実行。
+		n = style_nodes.pop()  # スタイルのあるノードを取得。
+		getParentNode(root, n)
+		
+def getElementCSSSelector(n):
+	label = n.tag.split(":")[0].islower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
+
+
+
+def createParentGetterr(root):  # root: ElementオブジェクトかElementTree。
+	def getParentNode(n):  # n: Elementオブジェクト。親ノードを返す。
+		idprop = n.get("id")  # id属性があればそれを取得。
+		if idprop:  # id属性のあるノードのとき。xpathで必ず一つに絞れる。
+			xpath = './/*[@id={}]..'.format(idprop)  # 親ノードのxpathを作成。
+			return root.find(xpath)  
+		else:  # id属性がなければsytle属性で絞り込むしかない。
+			xpath = './/*[@style={}]..'.format(n.get("style"))  # 親ノードのxpathを作成。各ノードの親ノードは一つしかないがstyle属性だけでは一つノードに絞り込めないので複数ノードが返ってくる可能性がある。
+			for p in root.iterfind(xpath):  # 各親ノードに対して。
+				if n in list(p):  # 子ノードが一致したのが親ノード。
+					return p
+		return None  # 親ノードが見つからなければNoneを返す。
+	return getParentNode
+		
+		
+
 	
 	
 
