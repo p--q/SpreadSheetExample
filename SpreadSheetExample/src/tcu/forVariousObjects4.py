@@ -89,61 +89,105 @@ YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6C
 	bodynode.append(footernode)
 	bodynode.append(scriptnode)
 	
-	createCSS(root)
+	
+# 	dic = createCSS(root)
+	
+# 	dic = createCSS(headernode)
+# 	print("\n".join(dic.keys()))
+	
+	dic = createXPath(root)
+	print("\n".join(dic.keys()))
 	
 	
-	toBrowser(root)
-	
-def createCSS(root):
+# 	toBrowser(root)
+
+#####################XPath##############################	
+def createXPath(root):  # CSSパスの辞書を返す。
+	dic = {}  # キー:XPath、値:style属性の値、の辞書。
 	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
-	getParentNode = createParentGetterr(root)
 	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
+	getParentNode = createParentGetterr(root)  # Elementオブジェクトから親Elementオブジェクトを取得する関数を取得。
 	while style_nodes:  # styleのあるノードがある間実行。
 		n = style_nodes.pop()  # スタイルのあるノードを取得。
-		getParentNode(root, n)
-		
-def getElementCSSSelector(n):
-	label = n.tag.split(":")[0].islower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
+		xpath = getElementXPath(getParentNode, n)  # ノードのCSSパスを取得。
+		dic[xpath] = n.get("style")  # 同じCSSパスがでてくるのでその処理が必要。
+	return dic
+def getElementXPath(getParentNode, n):
+	idprop = n.get("id")
+	if idprop:
+		return '//*[@id="{}"]'.format(idprop)
+	else:
+		return getElementTreeXPath(getParentNode, n)
+def getElementTreeXPath(getParentNode, n):
+	paths = []
+	while n is not None:
+		p = getParentNode(n)
+		if p is not None:
+			children = list(p)
+			index = children.index(n) + 1
+			pathindex = "[{}]".format(index) if index<len(children) else ""
+			paths.append("".join((n.tag, pathindex)))
+		n = p
+	return "/{}".format("/".join(reversed(paths))) if paths else None
+	
+	
+	
+	
+	
+	
 
 
 
+#####################XPath終わり##############################	
+
+#####################CSS パス##############################	
+def createCSS(root):  # CSSパスの辞書を返す。
+# 	dic = {}  # キー:CSSパス、値:style属性の値、の辞書。
+	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
+	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
+	getParentNode = createParentGetterr(root)  # Elementオブジェクトから親Elementオブジェクトを取得する関数を取得。
+	while style_nodes:  # styleのあるノードがある間実行。
+		n = style_nodes.pop()  # スタイルのあるノードを取得。
+		csspath = getElementCSSPath(getParentNode, n)  # ノードのCSSパスを取得。
+# 		dic[csspath] = n.get("style")  # 同じCSSパスがでてくるのでその処理が必要。
+# 	return dic
+def getElementCSSPath(getParentNode, n):  # getParentNodeに渡したルートからのCSSパスを取得。
+	paths = []
+	while n is not None:  # Elementオブジェクトは子要素ない時はFalseになる(リストと同じ)なのでNoneで判断しないといけない。
+		paths.append(getElementCSSSelector(n))
+		n = getParentNode(n)
+	return " ".join(reversed(paths))
+def getElementCSSSelector(n):  # ノードnのみのセレクタを返す。
+	label = n.tag.split(":")[-1].lower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
+	idprop = n.get("id")  # id属性があればそれを取得。
+	if idprop:
+		label = "".join((label, "#{}".format(idprop)))
+	classes = n.get("class")
+	if classes:
+		label = "".join((label, *[".{}".format(i) for i in classes.split(" ")]))
+	return label	
 def createParentGetterr(root):  # root: ElementオブジェクトかElementTree。
 	def getParentNode(n):  # n: Elementオブジェクト。親ノードを返す。
 		idprop = n.get("id")  # id属性があればそれを取得。
 		if idprop:  # id属性のあるノードのとき。xpathで必ず一つに絞れる。
-			xpath = './/*[@id={}]..'.format(idprop)  # 親ノードのxpathを作成。
+			xpath = './/*[@id="{}"]/..'.format(idprop)  # 親ノードのxpathを作成。
 			return root.find(xpath)  
-		else:  # id属性がなければsytle属性で絞り込むしかない。
-			xpath = './/*[@style={}]..'.format(n.get("style"))  # 親ノードのxpathを作成。各ノードの親ノードは一つしかないがstyle属性だけでは一つノードに絞り込めないので複数ノードが返ってくる可能性がある。
-			for p in root.iterfind(xpath):  # 各親ノードに対して。
-				if n in list(p):  # 子ノードが一致したのが親ノード。
-					return p
+		# id属性以外の時は複数のノードが選択される可能性があるのでfindall() or iterfind()を使う。
+		tag = n.tag
+		classprop = n.get("class")
+		styleprop = n.get("style")
+		if classprop:  # class属性があるとき。
+			xpath = './/{}[@class="{}"]/..'.format(tag, classprop)
+		elif styleprop:  # style属性があるとき。
+			xpath = './/{}[@style="{}"]/..'.format(tag, styleprop)  # 親ノードのxpathを作成。各ノードの親ノードは一つしかないがstyle属性だけでは一つノードに絞り込めないので複数ノードが返ってくる可能性がある。
+		else:  # 特定できる属性がないときはタグ名のみで検索するしかない。
+			xpath = './/{}/..'.format(tag)
+		for p in root.iterfind(xpath):  # 各親ノード候補に対して。
+			if n in list(p):  # 子ノードが一致したのが親ノード。
+				return p
 		return None  # 親ノードが見つからなければNoneを返す。
 	return getParentNode
-		
-		
-
-	
-	
-
-	
-	
-	
-# 	nodes_id = root.findall(xpath_id)
-# 	props = {}  # styleのプロパティをキー、パスを値とする辞書。
-# 	for node in nodes_id:
-# 		for child in node:
-# 			if "style" in child.keys():
-# 				child.get("style").split(";")
-			
-		
-		
-		
-		
-		
-		
-
-
+#####################CSS パス 終わり##############################	
 
 
 def colorToRGB(color):  # 色をRGBのタプルで返す。	16進数で渡しても10進数で計算されている。
@@ -153,7 +197,7 @@ def colorToRGB(color):  # 色をRGBのタプルで返す。	16進数で渡して
 	blue = redmodulo % 0x100  # redとgreenの要素を削除した残りがblue。
 	return red, green, blue
 def createNodes(name, lines, linestype):  # linestype: wtreelines()かwcomparelines()かの区別、name: タブの表示名(ユニークでないといけない)、lines: ツリーのhtmlの行のリスト。
-	tabbodyid = name.replace(" ", "")  # nameからタブボディのidを作成する。空白を削除する。英数字、'_'、'-'、'.' 以外の文字はHTML4では不可。	
+	tabbodyid = name.replace(" ", "").replace(".", "")  # nameからタブボディのidを作成する。空白を削除する。英数字、'_'、'-'、'.' 以外の文字はHTML4では不可。CSSセレクタ作成時に困るのでドットも削除する。	
 	tabnodestyle = "display:inline-block;padding: 0.8em 1em;margin:0.2em;border-radius:1.6em;font-size:18px;font-family:'Lato',sans-serif;font-weight:700;text-align:center;cursor:pointer;color:#2A3D61;"
 	tabnode = Elem("div", {"class": linestype, "style": tabnodestyle}, text=name)  # ユニークな名前のタブノードを作成。
 	tabbodynode = Elem("div", {"id": tabbodyid, "class": linestype, "style": "padding:1em;border-radius:1.6em;color:#2A3D61;display:none"})  # タブボディノードにはタブの表示名から作成したclassnameをつける。
