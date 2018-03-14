@@ -90,103 +90,131 @@ YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6C
 	bodynode.append(scriptnode)
 	
 	
-# 	dic = createCSS(root)
+	dic = createCSS(root)
 	
-# 	dic = createCSS(headernode)
 # 	print("\n".join(dic.keys()))
 	
-	dic = createXPath(root)
-	print("\n".join(dic.keys()))
+# 	dic = createXPath(root)
+	print("\n".join(["{}  {}".format(k, v) for k, v in sorted(dic.items(), key=lambda x: (x[1], x[0]))]))
+	
 	
 	
 # 	toBrowser(root)
 
 #####################XPath##############################	
 def createXPath(root):  # CSSパスの辞書を返す。
+	parent_map = {c:p for p in root.iter() for c in p}  # 木の、子:親の辞書。
 	dic = {}  # キー:XPath、値:style属性の値、の辞書。
 	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
 	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
-	getParentNode = createParentGetterr(root)  # Elementオブジェクトから親Elementオブジェクトを取得する関数を取得。
 	while style_nodes:  # styleのあるノードがある間実行。
 		n = style_nodes.pop()  # スタイルのあるノードを取得。
-		xpath = getElementXPath(getParentNode, n)  # ノードのCSSパスを取得。
-		dic[xpath] = n.get("style")  # 同じCSSパスがでてくるのでその処理が必要。
+		xpath = getElementXPath(parent_map, n)  # ノードのCSSパスを取得。
+		dic[xpath] = n.get("style")
 	return dic
-def getElementXPath(getParentNode, n):
-	idprop = n.get("id")
-	if idprop:
-		return '//*[@id="{}"]'.format(idprop)
+def getElementXPath(parent_map, n):
+	idxpath = idElementXPath(n)
+	if idxpath:
+		return idxpath
 	else:
-		return getElementTreeXPath(getParentNode, n)
-def getElementTreeXPath(getParentNode, n):
-	paths = []
-	while n is not None:
-		p = getParentNode(n)
-		if p is not None:
-			children = list(p)
-			index = children.index(n) + 1
-			pathindex = "[{}]".format(index) if index<len(children) else ""
-			paths.append("".join((n.tag, pathindex)))
-		n = p
-	return "/{}".format("/".join(reversed(paths))) if paths else None
-	
-	
-	
-	
-	
-	
-
-
-
+		paths = []
+		while n is not None:
+			if n in parent_map:  # 親ノードがあるとき。
+				p = parent_map[n]  # 親ノードを取得。
+				idxpath = idElementXPath(p)
+				if idxpath:  # idがあるノードのときはそれ以上の親は追求しない。
+					paths.append(idxpath)
+					break
+				else:
+					children = [i for i in list(p) if i.tag==n.tag]  # 親ノードの子ノードのうち同じタグのノードのリストを取得。p.iter()だとすべての要素が返ってしまう。
+					pathindex = "[{}]".format(children.index(n)+1) if len(children)>1 else ""  # 同じタグが複数あるときのみインデックスを表示。インデックスは1から始まる。
+					paths.append("".join((n.tag, pathindex)))
+			else:  # 親ノードがないときはnがrootのとき。
+				paths.append(n.tag)
+				break
+			n = p  # 親の親を調べに行く。
+		return "/{}".format("/".join(reversed(paths))) if paths else None
+def idElementXPath(n):
+	idprop = n.get("id")
+	return '//*[@id="{}"]'.format(idprop) if idprop else None
 #####################XPath終わり##############################	
 
 #####################CSS パス##############################	
 def createCSS(root):  # CSSパスの辞書を返す。
-# 	dic = {}  # キー:CSSパス、値:style属性の値、の辞書。
+	parent_map = {c:p for p in root.iter() for c in p}  # 木の、子:親の辞書。
+	dic = {}  # キー:CSSパス、値:style属性の値、の辞書。
 	style_xpath = './/*[@style]'  # sytleのあるノードを取得するXPath。
-	style_nodes = root.findall(style_xpath)  # styleのあるノードをすべて取得。
-	getParentNode = createParentGetterr(root)  # Elementオブジェクトから親Elementオブジェクトを取得する関数を取得。
+	style_nodes = set(root.findall(style_xpath))  # styleのあるノードをすべて取得。
 	while style_nodes:  # styleのあるノードがある間実行。
 		n = style_nodes.pop()  # スタイルのあるノードを取得。
-		csspath = getElementCSSPath(getParentNode, n)  # ノードのCSSパスを取得。
-# 		dic[csspath] = n.get("style")  # 同じCSSパスがでてくるのでその処理が必要。
-# 	return dic
-def getElementCSSPath(getParentNode, n):  # getParentNodeに渡したルートからのCSSパスを取得。
+		csspath = getElementCSSPath(parent_map, n)  # ノードのCSSパスを取得。
+		dic[csspath] = n.get("style")  # CSSパスをキーとしてstyle属性の値を辞書に取得。最初にできたCSSパスのみ調べる。
+		xpath = csspathToxpath(csspath)  # CSSパスをxpathに変換。
+		csspathnodes = set(root.findall(xpath))  # CSSパスで取得できるノードを取得。
+		style_nodes.difference_update(csspathnodes)  # CSSパスで取得できるノードはもう調べない。
+	return dic
+def getElementCSSPath(parent_map, n):  # getParentNodeに渡したルートからのCSSパスを取得。
 	paths = []
-	while n is not None:  # Elementオブジェクトは子要素ない時はFalseになる(リストと同じ)なのでNoneで判断しないといけない。
-		paths.append(getElementCSSSelector(n))
-		n = getParentNode(n)
+	while n is not None:  # Elementオブジェクトは子要素がない時はFalseになる(リストと同じ)なのでNoneで判断しないといけない。
+		label = n.tag.split(":")[-1].lower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
+		idprop = n.get("id")
+		if idprop:  # id属性があれば#でつなげる。。
+			label = "".join((label, "#{}".format(idprop)))
+		classes = n.get("class")
+		if classes:  # クラス属性があるときはドットでつなげる。
+			label = "".join((label, *[".{}".format(i) for i in classes.split(" ")]))		
+		paths.append(label)
+		n = parent_map[n] if n in parent_map else None
 	return " ".join(reversed(paths))
-def getElementCSSSelector(n):  # ノードnのみのセレクタを返す。
-	label = n.tag.split(":")[-1].lower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
-	idprop = n.get("id")  # id属性があればそれを取得。
-	if idprop:
-		label = "".join((label, "#{}".format(idprop)))
-	classes = n.get("class")
-	if classes:
-		label = "".join((label, *[".{}".format(i) for i in classes.split(" ")]))
-	return label	
-def createParentGetterr(root):  # root: ElementオブジェクトかElementTree。
-	def getParentNode(n):  # n: Elementオブジェクト。親ノードを返す。
-		idprop = n.get("id")  # id属性があればそれを取得。
-		if idprop:  # id属性のあるノードのとき。xpathで必ず一つに絞れる。
-			xpath = './/*[@id="{}"]/..'.format(idprop)  # 親ノードのxpathを作成。
-			return root.find(xpath)  
-		# id属性以外の時は複数のノードが選択される可能性があるのでfindall() or iterfind()を使う。
-		tag = n.tag
-		classprop = n.get("class")
-		styleprop = n.get("style")
-		if classprop:  # class属性があるとき。
-			xpath = './/{}[@class="{}"]/..'.format(tag, classprop)
-		elif styleprop:  # style属性があるとき。
-			xpath = './/{}[@style="{}"]/..'.format(tag, styleprop)  # 親ノードのxpathを作成。各ノードの親ノードは一つしかないがstyle属性だけでは一つノードに絞り込めないので複数ノードが返ってくる可能性がある。
-		else:  # 特定できる属性がないときはタグ名のみで検索するしかない。
-			xpath = './/{}/..'.format(tag)
-		for p in root.iterfind(xpath):  # 各親ノード候補に対して。
-			if n in list(p):  # 子ノードが一致したのが親ノード。
-				return p
-		return None  # 親ノードが見つからなければNoneを返す。
-	return getParentNode
+def csspathToxpath(csspath):
+	newpaths = ["./"]
+	paths = csspath.split(" ")
+	for path in paths:
+		if "#" in path:
+			newpaths = ['.//*[@id="{}"]'.format(path.split("#")[-1].split(".")[0])]
+		elif "." in path:
+			tag, *classnames = path.split(".")
+			newpaths.append('{}[@class="{}"]'.format(tag, " ".join(classnames)))
+		else:
+			newpaths.append(path)	
+	return "/".join(newpaths)
+			
+	
+	
+
+
+# def getElementCSSSelector(n):  # ノードnのみのセレクタを返す。
+# 	label = n.tag.split(":")[-1].lower()  # localName、つまりタブ名を小文字で取得。コロンがあればその前は無視する。
+# 	idprop = n.get("id")  # id属性があればそれを取得。
+# 	if idprop:
+# 		label = "".join((label, "#{}".format(idprop)))
+# 	classes = n.get("class")
+# 	if classes:
+# 		label = "".join((label, *[".{}".format(i) for i in classes.split(" ")]))
+# 	return label	
+
+
+# def createParentGetterr(root):  # root: ElementオブジェクトかElementTree。
+# 	def getParentNode(n):  # n: Elementオブジェクト。親ノードを返す。
+# 		idprop = n.get("id")  # id属性があればそれを取得。
+# 		if idprop:  # id属性のあるノードのとき。xpathで必ず一つに絞れる。
+# 			xpath = './/*[@id="{}"]/..'.format(idprop)  # 親ノードのxpathを作成。
+# 			return root.find(xpath)  
+# 		# id属性以外の時は複数のノードが選択される可能性があるのでfindall() or iterfind()を使う。
+# 		tag = n.tag
+# 		classprop = n.get("class")
+# 		styleprop = n.get("style")
+# 		if classprop:  # class属性があるとき。
+# 			xpath = './/{}[@class="{}"]/..'.format(tag, classprop)
+# 		elif styleprop:  # style属性があるとき。
+# 			xpath = './/{}[@style="{}"]/..'.format(tag, styleprop)  # 親ノードのxpathを作成。各ノードの親ノードは一つしかないがstyle属性だけでは一つノードに絞り込めないので複数ノードが返ってくる可能性がある。
+# 		else:  # 特定できる属性がないときはタグ名のみで検索するしかない。
+# 			xpath = './/{}/..'.format(tag)
+# 		for p in root.iterfind(xpath):  # 各親ノード候補に対して。
+# 			if n in list(p):  # 子ノードが一致したのが親ノード。
+# 				return p
+# 		return None  # 親ノードが見つからなければNoneを返す。
+# 	return getParentNode
 #####################CSS パス 終わり##############################	
 
 
