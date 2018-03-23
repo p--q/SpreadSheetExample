@@ -1,0 +1,800 @@
+
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="&#25991;&#23383;&#21015;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;">&#25991;&#23383;&#21015;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;<a class="anchor-link" href="#&#25991;&#23383;&#21015;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[1]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 文字列をutf-8エンコーディングのバイト列にする。</span>
+<span class="c1"># Unicode文字は\xエスケープで2桁ずつ16進数で表示される。</span>
+<span class="c1"># バイト列内で2桁の16進数のASCII文字コードに一致する部分はASCII文字で表示される。</span>
+<span class="n">u8</span> <span class="o">=</span> <span class="s1">&#39;3日Sun.&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+<span class="n">u8</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[1]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;3\xe6\x97\xa5Sun.&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>ASCII文字のutf-8エンコーディングはASCII文字コードと一致するのでASCII文字でない文字だけ2桁の16進数で表示されています。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[2]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列を16進数表示の文字列にする。ASCII文字もすべて16進数表示になる。</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">u8</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+<span class="n">h</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[2]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;33e697a553756e2e&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[3]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 16進数表示の文字列をバイト列に変換する。</span>
+<span class="c1"># bytesは組み込みクラスでfromhex()はクラスメソッド、</span>
+<span class="n">b</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="n">b</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[3]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;3\xe6\x97\xa5Sun.&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[4]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列をutf-8として文字列にデコードする。</span>
+<span class="n">b</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[4]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;3日Sun.&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="&#25991;&#23383;&#21015;&#8594;utf-16&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;">&#25991;&#23383;&#21015;&#8594;utf-16&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;<a class="anchor-link" href="#&#25991;&#23383;&#21015;&#8594;utf-16&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#34920;&#31034;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#21015;">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[5]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 文字列をutf-16エンコーディングのバイト列にする。</span>
+<span class="c1"># バイト列内で2桁の16進数のASCII文字コードに一致する部分はASCII文字で表示される。</span>
+<span class="n">u16</span> <span class="o">=</span> <span class="s1">&#39;3日Sun.&#39;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-16&quot;</span><span class="p">)</span>
+<span class="n">u16</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[5]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;\xff\xfe3\x00\xe5eS\x00u\x00n\x00.\x00&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>\xの次に2桁の16進数が続くはずですが、バイト列だとASCII文字コードに一致してしまうとASCII文字で表示されます。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>正確な16進数表示をみたいときはhex()メソッドで16進数にしないといけません。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[6]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列を16進数表示の文字列にする。</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">u16</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+<span class="n">h</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[6]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;fffe3300e565530075006e002e00&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[7]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 16進数の文字列をバイト列に変換する。</span>
+<span class="c1"># bytesは組み込みクラスでfromhex()はクラスメソッド。</span>
+<span class="n">b</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="n">b</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[7]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;\xff\xfe3\x00\xe5eS\x00u\x00n\x00.\x00&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[8]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列をutf-16として文字列にデコードする。</span>
+<span class="n">b</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-16&quot;</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[8]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;3日Sun.&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="&#12469;&#12525;&#12466;&#12540;&#12488;&#12506;&#12450;&#12398;&#12467;&#12540;&#12489;&#12509;&#12452;&#12531;&#12488;&#12434;&#21462;&#24471;&#12377;&#12427;">&#12469;&#12525;&#12466;&#12540;&#12488;&#12506;&#12450;&#12398;&#12467;&#12540;&#12489;&#12509;&#12452;&#12531;&#12488;&#12434;&#21462;&#24471;&#12377;&#12427;<a class="anchor-link" href="#&#12469;&#12525;&#12466;&#12540;&#12488;&#12506;&#12450;&#12398;&#12467;&#12540;&#12489;&#12509;&#12452;&#12531;&#12488;&#12434;&#21462;&#24471;&#12377;&#12427;">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>サロゲートペアというのはUnicodeが16ビット(4桁の16進数、2バイト)から拡張するときに、16ビットを前提としたシステムへの影響を最小限にするために考えだされたものだそうです(<a href="https://ja.wikipedia.org/wiki/Unicode#%E3%82%B5%E3%83%AD%E3%82%B2%E3%83%BC%E3%83%88%E3%83%9A%E3%82%A2">Unicode - Wikipedia</a>)。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>なので、サロゲートペアは2桁の16進数を2つ組み合わせたものになっています。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[9]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\ud83d\ude4f</span><span class="s2">&quot;</span>  <span class="c1"># サロゲートペアのUnicodeラテラル。</span>
+<span class="n">s</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[9]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\ud83d\ude4f&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>Pythonでは、サロゲートペアのUnicodeラテラルは文字に変換されないのでこれを文字に変換されるUnicodeラテラルにします。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[10]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># surrogatepassエラーハンドラをつけてutf-16でバイト列にエンコードする。</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-16&#39;</span><span class="p">,</span> <span class="s1">&#39;surrogatepass&#39;</span><span class="p">)</span>
+<span class="n">b</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[10]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;\xff\xfe=\xd8O\xde&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[11]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">d</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-16&#39;</span><span class="p">)</span>  <span class="c1"># utf-16として文字列にデコードする。</span>
+<span class="n">d</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[11]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;🙏&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>これでサロゲートペアの文字が表示されるようになりました。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[12]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">d</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;unicode_escape&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span>  <span class="c1"># 文字列をUnicodeラテラルにする。</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt"></div>
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>\U0001f64f
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>これでこのサロゲートペアのコードポイントがU+1F64Fとわかりました。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[13]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="n">u</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\U0001F64F</span><span class="s2">&quot;</span>  <span class="c1"># \Uでエスケープして8桁の16進数のUnicodeラテラルにする。</span>
+<span class="n">u</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[13]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;🙏&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>utf-8やutf-32のエンコーディングでもsurrogatepassエラーハンドラが使えますが、utf-16以外ではうまく文字列にデコードできませんでした。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[14]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="s2">&quot;</span><span class="se">\uD83C\uDF1F</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-16&#39;</span><span class="p">,</span> <span class="s1">&#39;surrogatepass&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s1">&#39;utf-16&#39;</span><span class="p">)</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[14]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;🌟&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>これで1行でサロゲートペアを文字列にできます。</p>
+
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<h4 id="&#12494;&#12540;&#12502;&#12524;&#12540;&#12463;&#12473;&#12506;&#12540;&#12473;&#12434;&#12289;Unicode&#12522;&#12486;&#12521;&#12523;&#8594;&#25991;&#23383;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#12289;&#12395;&#22793;&#25563;&#12377;&#12427;&#12290;">&#12494;&#12540;&#12502;&#12524;&#12540;&#12463;&#12473;&#12506;&#12540;&#12473;&#12434;&#12289;Unicode&#12522;&#12486;&#12521;&#12523;&#8594;&#25991;&#23383;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#12289;&#12395;&#22793;&#25563;&#12377;&#12427;&#12290;<a class="anchor-link" href="#&#12494;&#12540;&#12502;&#12524;&#12540;&#12463;&#12473;&#12506;&#12540;&#12473;&#12434;&#12289;Unicode&#12522;&#12486;&#12521;&#12523;&#8594;&#25991;&#23383;&#8594;utf-8&#12456;&#12531;&#12467;&#12540;&#12487;&#12451;&#12531;&#12464;&#8594;16&#36914;&#25968;&#8594;&#12496;&#12452;&#12488;&#21015;&#8594;&#25991;&#23383;&#12289;&#12395;&#22793;&#25563;&#12377;&#12427;&#12290;">&#182;</a></h4>
+</div>
+</div>
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[15]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># ノーブレークスペースのコードポイントはU+00A0</span>
+<span class="c1"># ノーブレークスペースはグリフ(文字)がないので\xエスケープで16進数が表示される。</span>
+<span class="n">u</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\u00A0</span><span class="s2">&quot;</span>
+<span class="n">u</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[15]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\xa0&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[16]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># utf-8エンコーディングでバイト列にする。</span>
+<span class="n">u8</span> <span class="o">=</span> <span class="n">u</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+<span class="n">u8</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[16]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;\xc2\xa0&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[17]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列を16進数表示の文字列にする。</span>
+<span class="n">h</span> <span class="o">=</span> <span class="n">u8</span><span class="o">.</span><span class="n">hex</span><span class="p">()</span>
+<span class="n">h</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[17]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;c2a0&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[18]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># 16進数表示の文字列をバイト列にする。</span>
+<span class="n">b</span> <span class="o">=</span> <span class="nb">bytes</span><span class="o">.</span><span class="n">fromhex</span><span class="p">(</span><span class="n">h</span><span class="p">)</span>
+<span class="n">b</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[18]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>b&#39;\xc2\xa0&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[19]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="c1"># バイト列をutf-8としてデコードして文字列にする。</span>
+<span class="n">s</span> <span class="o">=</span> <span class="n">b</span><span class="o">.</span><span class="n">decode</span><span class="p">()</span>
+<span class="n">s</span>
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt output_prompt">Out[19]:</div>
+
+
+
+<div class="output_text output_subarea output_execute_result">
+<pre>&#39;\xa0&#39;</pre>
+</div>
+
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing code_cell rendered">
+<div class="input">
+<div class="prompt input_prompt">In&nbsp;[20]:</div>
+<div class="inner_cell">
+    <div class="input_area">
+<div class=" highlight hl-ipython3"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;unicode_escape&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">())</span> 
+</pre></div>
+
+</div>
+</div>
+</div>
+
+<div class="output_wrapper">
+<div class="output">
+
+
+<div class="output_area">
+<div class="prompt"></div>
+
+<div class="output_subarea output_stream output_stdout output_text">
+<pre>\xa0
+</pre>
+</div>
+</div>
+
+</div>
+</div>
+
+</div>
+<div class="cell border-box-sizing text_cell rendered">
+<div class="prompt input_prompt">
+</div>
+<div class="inner_cell">
+<div class="text_cell_render border-box-sizing rendered_html">
+<p>もとの文字がUnicode文字ではなくASCII文字だけなので\u00a0にはなりませんでした。</p>
+
+</div>
+</div>
+</div>
+ 
+
