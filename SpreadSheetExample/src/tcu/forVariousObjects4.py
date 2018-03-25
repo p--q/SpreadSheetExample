@@ -90,16 +90,16 @@ YC8wY/AAQBuwsiEdwtlyc51bWQCus/VX53HDAUABNTW309UrycE3CTg6FOK3N7aAg8h8fLz9PX29SO6C
 	bodynode.append(scriptnode)
 	
 	
-	dic = createCSS(root)
+# 	dic = createCSS(root)
 	
 # 	print("\n".join(dic.keys()))
 	
 # 	dic = createXPath(root)
-	print("\n".join(["{}  {}".format(k, v) for k, v in sorted(dic.items(), key=lambda x: (x[1], x[0]))]))
+# 	print("\n".join(["{}  {}".format(k, v) for k, v in sorted(dic.items(), key=lambda x: (x[1], x[0]))]))
 	
 	
 	
-# 	toBrowser(root)
+	toBrowser(root)
 
 #####################XPath##############################	
 def createXPath(root):  # CSSパスの辞書を返す。
@@ -238,8 +238,8 @@ def createNodes(name, lines, linestype):  # linestype: wtreelines()かwcompareli
 def createRoot():  # ルートノードを返す。
 	rt = Elem("html")
 	rt.append(Elem("head"))
-	rt[-1].append(Elem("title", text="TCU - Tree Command for UNO"))
 	rt[-1].append(Elem("meta", {"meta": "UTF-8"}))
+	rt[-1].append(Elem("title", text="TCU - Tree Command for UNO"))
 	rt.append(Elem("body"))
 	# CSSの作成。
 	style = """\
