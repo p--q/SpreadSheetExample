@@ -17,18 +17,24 @@ def macro():
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。 
 	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-	from com.sun.star.awt.MessageBoxType import QUERYBOX   # enum
-	from com.sun.star.awt import MessageBoxButtons  # 定数
-	from com.sun.star.awt.MessageBoxType import ERRORBOX  # enum
-	doc = XSCRIPTCONTEXT.getDocument()
-	controller = doc.getCurrentController()
-	componentwindow = controller.ComponentWindow
-	msgbox = componentwindow.getToolkit().createMessageBox(componentwindow, ERRORBOX, MessageBoxButtons.BUTTONS_OK, "myRs", "")
-
 	
 	
+	unocontrolnumericfield = smgr.createInstanceWithContext("UnoControlNumericField", ctx)
+	tcu.wtree(unocontrolnumericfield)
 	
-	tcu.wtree(msgbox)
+	
+# 	from com.sun.star.awt.MessageBoxType import QUERYBOX   # enum
+# 	from com.sun.star.awt import MessageBoxButtons  # 定数
+# 	from com.sun.star.awt.MessageBoxType import ERRORBOX  # enum
+# 	doc = XSCRIPTCONTEXT.getDocument()
+# 	controller = doc.getCurrentController()
+# 	componentwindow = controller.ComponentWindow
+# 	msgbox = componentwindow.getToolkit().createMessageBox(componentwindow, ERRORBOX, MessageBoxButtons.BUTTONS_OK, "myRs", "")
+# 
+# 	
+# 	
+# 	
+# 	tcu.wtree(msgbox)
 	
 	
 # 	canvasfactory = smgr.createInstanceWithContext("com.sun.star.rendering.CanvasFactory", ctx)

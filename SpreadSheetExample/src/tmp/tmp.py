@@ -1,11 +1,45 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
+from com.sun.star.lang import Locale  # Struct
+from com.sun.star.table import BorderLine2, TableBorder2 # Struct
+from com.sun.star.table import BorderLineStyle  # 定数
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
-	selection = doc.getCurrentSelection()
-	rng = selection
-	if selection.supportsService("com.sun.star.sheet.SheetCellRanges"):
-		rng = selection[0]
-	rng[0, 0].setString(rng.getPropertyValue("AbsoluteName"))	
+	controller = doc.getCurrentController()  # コントローラの取得。
+	sheet = controller.getActiveSheet()
+	
+	sheet["A2:B2"].setDataArray(((1,2),))
+	
+# 	firstline = BorderLine2(LineStyle=BorderLineStyle.DASHED, LineWidth=45, Color=0)
+# 	tableborder2 = TableBorder2(TopLine=firstline, LeftLine=firstline, RightLine=firstline, BottomLine=firstline, IsTopLineValid=True, IsBottomLineValid=True, IsLeftLineValid=True, IsRightLineValid=True)
+# 	sheet["A1"].setPropertyValue("TableBorder2", tableborder2)
+	
+# 	formatstring = "YYYY/M/D"
+# 	numberformats = doc.getNumberFormats()  # ドキュメントのフォーマット一覧を取得。デフォルトのフォーマット一覧はCalcの書式→セル→数値でみれる。
+# 	locale = Locale(Language="ja", Country="JP")  # フォーマット一覧をくくる言語と国を設定。インストールしていないUIの言語でもよい。。 
+# 	formatkey = numberformats.queryKey(formatstring, locale, True)  # formatstringが既存のフォーマット一覧にあるか調べて取得。第3引数のブーリアンは意味はないはず。 
+# 	if formatkey == -1:  # デフォルトのフォーマットにformatstringがないとき。
+# 		formatkey = numberformats.addNew(formatstring, locale)  # フォーマット一覧に追加する。保存はドキュメントごと。 	
+# 	sheet["A1"].setPropertyValue("NumberFormat", formatkey)
+	
+# 	formulaarray = sheet["A1:C1"].getFormulaArray()
+# 	dataarray = sheet["A1:C1"].getDataArray()
+# 	sheet["A2:C2"].setFormulaArray(formulaarray)
+# 	
+# 	print(formulaarray)
+# 	print(dataarray)
+	
+	
+# 	sheet.clearContents(511)  # シート内容をクリア。
+	
+# 	doc.getSheets()["Sheet1"]
+	
+	
+	
+# 	selection = doc.getCurrentSelection()
+# 	rng = selection
+# 	if selection.supportsService("com.sun.star.sheet.SheetCellRanges"):
+# 		rng = selection[0]
+# 	rng[0, 0].setString(rng.getPropertyValue("AbsoluteName"))	
 		
 
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。
